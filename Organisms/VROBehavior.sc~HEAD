@@ -1,0 +1,363 @@
+VROBehavior : LiveCodingEnvironment{
+	classvar instanceCount, instances;
+	classvar currentArrayBlock, <classSymbol;
+	classvar <classKillingBlock, <classMatingBlock,
+	<classSearchingBlock, <classPainBlock, <classContactBlock;
+
+	var <instanceNumber;
+
+	var <killingBlock, <matingBlock,
+	<searchingBlock, <painBlock, <contactBlock;
+	var <blocks;
+
+	var behaviorBusses;
+	var isPlaying, isArmed = false;
+	var <group;
+
+	*new{ |killingBlock, matingBlock, searchingBlock, painBlock, contactBlock|
+		var return;
+
+		instances = instances ? List.new;
+
+		instanceCount = instanceCount ? 0;
+
+		this.prCheckVROBlocks(
+			killingBlock,
+			matingBlock,
+			searchingBlock,
+			painBlock,
+			contactBlock
+		);
+
+		return = super.new.prInitVROBehavior;
+
+		instanceCount = instanceCount + 1;
+
+		instances.add(return);
+
+		^return;
+	}
+
+
+	prInitVROBehavior{
+		killingBlock = classKillingBlock;
+		matingBlock = classMatingBlock;
+		searchingBlock = classSearchingBlock;
+		painBlock = classPainBlock;
+		contactBlock = classContactBlock;
+
+		instanceNumber = instanceCount;
+
+	}
+
+	*prCheckVROBlocks{|k, m, se, pn, c|
+		classKillingBlock = this.checkBlock(k);
+		classMatingBlock = this.checkBlock(m);
+		classSearchingBlock = this.checkBlock(se);
+		classPainBlock = this.checkBlock(pn);
+		classContactBlock = this.checkBlock(c);
+<<<<<<< HEAD:VRParticles/Organisms/VROBehavior.sc
+
+		this.prScaleVROBehavior(
+			classKillingBlock, classMatingBlock,
+			classSearchingBlock, classPainBlock,
+			classContactBlock
+		);
+	}
+
+	*checkBlock{|input|
+		var return;
+		if(input.class!=VROBlock){
+			return = VROBlock.newRand;
+		}/*ELSE*/{
+			return = input;
+		};
+		^return;
+	}
+
+	checkBlock{|input|
+		var return;
+		if(input.class!=VROBlock){
+			return = VROBlock.newRand;
+		}/*ELSE*/{
+			return = input;
+		};
+		^return;
+	}
+
+	*prScaleVROBehavior{|k, m, se, pn, c|
+		[k, m, se, pn, c].do{|block|
+
+			if(block.rateCurve.isUnscaled){
+				block.rateCurve.min = rateLo;
+				block.rateCurve.max = rateHi;
+			};
+
+			//block.posCurve.min = posLo;
+			//block.posCurve.max = posHi;
+
+			block.ampCurve.env.levels[0] = 0;
+			block.ampCurve.env.levels[
+				block.ampCurve.env.levels.size - 1
+			] = 0;
+
+			// block.ampCurve.min = ampLo;
+			// block.ampCurve.max = ampHi;
+
+			if(block.filterCurve.isUnscaled){
+				block.filterCurve.min = ffreqLo;
+				block.filterCurve.max = ffreqHi;
+			};
+		}
+=======
+>>>>>>> parent of 520a4d7... Raw and wriggling!:VRParticles/Organisms/VROBehaviors.sc
+	}
+
+	prInitBehaviorBusDictionary{
+		var d = Dictionary.new;
+		d.add(\rate -> Bus.audio(server, 1));
+		d.add(\pos -> Bus.audio(server, 1));
+		d.add(\amp -> Bus.audio(server, 1));
+		d.add(\ffreq -> Bus.audio(server, 1));
+
+		^d;
+	}
+
+	*defineSynthDefs{
+		var getRole = {|index|
+			var return;
+
+			case
+			{index==0}{
+				return = "Rate"
+			}
+
+			{index==1}{
+				return = "Pos"
+			}
+
+			{index==2}{
+				return = "Amp"
+			}
+
+			{index==3}{
+				return = "Ffreq"
+			};
+
+			return;
+		};
+
+		var getType = {|index|
+			var return;
+
+			case
+			{index==0}{
+				return = "killing"
+			}
+
+			{index==1}{
+				return = "mating"
+			}
+
+			{index==2}{
+				return = "searching"
+			}
+
+			{index==3}{
+				return = "pain"
+			}
+
+			{index==4}{
+				return = "contacting"
+			};
+
+			return;
+		};
+
+		var synthdef = SynthDef.new(\Sound, {
+			var buf = \buf.kr(0);
+
+			var rate = \rate.ar(1);
+			var pos = \pos.ar(0);
+			var amp = \amp.ar(0);
+			var ffreq = \ffreq.ar(0);
+
+			var frames = BufFrames.kr(buf);
+			var phasor = pos * frames;
+			var sig = BufRd.ar(
+				1, buf, BufRateScale.kr(buf) * rate,
+				phasor
+			);
+			var filteredSig = BPF.ar(
+				sig,
+				ffreq,
+				\rq.kr(0.2)
+			);
+			var out = filteredSig * amp * \ampDB.kr(-12).dbamp;
+			OffsetOut.ar(\out.kr(0), out)
+		});
+
+		this.registerSynthDef(synthdef);
+
+		[
+			classKillingBlock, classMatingBlock,
+			classSearchingBlock, classPainBlock,
+			classContactBlock
+		].do{|block, i|
+			block.do{|curve, x|
+
+				var type = getType.value(i);
+				var role = getRole.value(x);
+				var name = format("%%", type, role);
+
+				name = name++"Env";
+				name = name.asSymbol;
+
+				synthdef = SynthDef.new(name, {
+					Out.ar(\out.kr(0), EnvGen.ar(curve.env,
+						timeScale: \timescale.kr(1),
+						doneAction: \doneAction.kr(0);
+					));
+				});
+
+				this.registerSynthDef(synthdef);
+			};
+		};
+	}
+
+	*prSetClassSymbol{
+
+		classSymbol = super.prFormatClassSymbol(this, true, instanceCount);
+		^classSymbol;
+
+	}
+
+	getInstanceNumberSymbol{
+		var symb = this.prFormatClassSymbol(this);
+		symb = format("%%", symb.asString, instanceNumber).asSymbol;
+		^symb;
+	}
+
+
+	freeBusses{
+
+		behaviorBusses.do{|bus|
+
+			bus.free;
+
+		};
+
+		behaviorBusses.clear;
+		behaviorBusses = nil;
+	}
+
+	prArmToPlay{ |target, action|
+
+		if(target.isNil.not and: {action.isNil.not}){
+			group = Group.new(target, action);
+		};
+
+		if(target.isNil.not and:{action.isNil}){
+			group = Group.new(target);
+		};
+
+		if(target.isNil and: {action.isNil.not}){
+			group = Group.new(addAction: action);
+		};
+
+		if(target.isNil and: {action.isNil}){
+			group = Group.new;
+		};
+
+		behaviorBusses = this.prInitBehaviorBusDictionary;
+
+		isArmed = true;
+
+	}
+
+	prUnarmFromPlay{
+		this.freeBusses;
+		group.free;
+		isArmed = false;
+	}
+
+	play{|type, buffer, timescale = 1, outBus = 0, target, action|
+		var localSymb = this.localClassSymbol;
+
+		var soundSynth;
+		var rateEnv, posEnv,
+		ampEnv, filterEnv;
+
+		var rateName, posName,
+		ampName, filterName;
+
+		var formatName = {|input|
+			var return = format("%_%", localSymb, input);
+			return;
+		};
+
+		type = type ? 'killing';
+
+		if(isArmed==false){
+			this.prArmToPlay(target, action);
+		};
+
+		rateName = format("%%", type, "RateEnv").asSymbol;
+		rateEnv = Synth(formatName.value(rateName), [
+			\out, behaviorBusses[\rate],
+			\timescale, timescale
+		], group);
+
+		posName = format("%%", type, "PosEnv").asSymbol;
+		posEnv = Synth(formatName.value(posName), [
+			\out, behaviorBusses[\pos],
+			\timescale, timescale
+		], group);
+
+		ampName = format("%%", type, "AmpEnv").asSymbol;
+		ampEnv = Synth(formatName.value(ampName), [
+			\out, behaviorBusses[\amp],
+			\timescale, timescale,
+			doneAction: 2
+		], group).onFree({
+
+			[rateEnv, posEnv, filterEnv, soundSynth].do(_.free);
+			this.prUnarmFromPlay;
+		});
+
+		filterName = format("%%", type, "FfreqEnv").asSymbol;
+		filterEnv = Synth(formatName.value(filterName), [
+			\out, behaviorBusses[\ffreq],
+			\timescale, timescale
+		], group);
+
+		soundSynth = Synth(formatName.value(\Sound), [
+			\buf, buffer,
+			\rate, behaviorBusses[\rate].asMap,
+			\pos,  behaviorBusses[\pos].asMap,
+			\amp, behaviorBusses[\amp].asMap,
+			\ffreq, behaviorBusses[\ffreq].asMap,
+			\out, outBus,
+		], group, 'addToTail');
+
+	}
+
+	localClassSymbol{
+		var return = this.class.superclass
+		.prFormatClassSymbol(this, false, instanceNumber);
+		^return;
+	}
+
+	free{
+		var localSymb = this.localClassSymbol;
+
+		super.free;
+		instances.remove(this);
+
+		if(isArmed){
+			this.prUnarmFromPlay;
+		};
+
+		LiveCodingEnvironment.synthDefDictionary.removeAt(localSymb);
+	}
+}
