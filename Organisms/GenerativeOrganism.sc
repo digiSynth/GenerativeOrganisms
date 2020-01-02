@@ -59,6 +59,8 @@ GenerativeOrganism{
 			bf = `bf;
 		};
 
+		bf.value.normalize;
+
 		bufferReference = bf;
 
 		setResourcesFunc = {

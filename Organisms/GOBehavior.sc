@@ -17,11 +17,12 @@ GOBehavior : LiveCodingEnvironment{
 	*new{ |matingBlock, searchingBlock,
 		painBlock, contactBlock, eatingBlock,
 		spawnBlock, deathBlock, options|
-		var return;
+		var return, copyCount;
 
 		goBehaviorInstances = goBehaviorInstances ? List.new;
 
 		instanceCount = instanceCount ? 0;
+		copyCount = instanceCount;
 
 		this.pr_CheckGOBlocks(
 			matingBlock,
@@ -34,8 +35,9 @@ GOBehavior : LiveCodingEnvironment{
 		);
 
 		return = super.new(classSymbol:
-			this.prFormatClassSymbol(this, instanceCount))
-		.pr_InitGOBehavior(options);
+			this.prFormatClassSymbol(this, instanceCount)
+		)
+		.pr_InitGOBehavior(options, copyCount);
 
 		goBehaviorInstances.add(return);
 
@@ -49,7 +51,8 @@ GOBehavior : LiveCodingEnvironment{
 		^return;
 	}
 
-	pr_InitGOBehavior{|boptions|
+	pr_InitGOBehavior{|boptions, num|
+
 		matingBlock = classMatingBlock;
 		searchingBlock = classSearchingBlock;
 		painBlock = classPainBlock;
@@ -58,24 +61,24 @@ GOBehavior : LiveCodingEnvironment{
 		spawnBlock = classSpawnBlock;
 		deathBlock = classDeathBlock;
 
-		instanceNumber = instanceCount;
+		instanceNumber = num;
 
 		options = boptions ? GOBehaviorOptions.new;
 	}
 
 	*pr_CheckGOBlocks{|m, se, pn, c, e, sp, d|
 
-		classMatingBlock = this.checkBlock(m);
-		classSearchingBlock = this.checkBlock(se);
-		classPainBlock = this.checkBlock(pn);
-		classContactBlock = this.checkBlock(c);
-		classEatingBlock = this.checkBlock(e);
-		classSpawnBlock = this.checkBlock(sp);
-		classDeathBlock = this.checkBlock(d);
+		classMatingBlock = this.pr_CheckBlock(m);
+		classSearchingBlock = this.pr_CheckBlock(se);
+		classPainBlock = this.pr_CheckBlock(pn);
+		classContactBlock = this.pr_CheckBlock(c);
+		classEatingBlock = this.pr_CheckBlock(e);
+		classSpawnBlock = this.pr_CheckBlock(sp);
+		classDeathBlock = this.pr_CheckBlock(d);
 
 	}
 
-	*checkBlock{|input|
+	*pr_CheckBlock{|input|
 		var return;
 
 		if(input.class!=GOBlock){
@@ -99,17 +102,6 @@ GOBehavior : LiveCodingEnvironment{
 
 		^return;
 	}
-	/*
-	*pr_ScaleGOBehavior{|...blocks|
-
-	blocks.do{|block|
-
-	block.ampCurve.env.levels =
-	[0]++block.ampCurve.env.levels++[0];
-
-	};
-
-	}*/
 
 	*defineSynthDefs{
 		var symbol = this.prFormatClassSymbol(this, instanceCount);
