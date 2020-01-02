@@ -45,6 +45,21 @@ GOBehavior : LiveCodingEnvironment{
 			ServerQuit.add({
 				this.resetInstanceCount;
 			});
+
+			ServerTree.add({
+
+				if(goBehaviorInstances.isEmpty.not){
+
+					goBehaviorInstances.copy.do{|instance|
+
+						goBehaviorInstances.removeAt(0).free;
+
+					};
+
+				};
+
+			});
+
 			classInitialized = true;
 		};
 
