@@ -172,12 +172,13 @@ GOBehavior : LiveCodingEnvironment{
 					rq
 				);
 
-				var out = filteredSig * amp
+				var out = Normalizer.ar(filteredSig) * amp
 				* EnvGen.ar(
 					Env([0, 1, 1, 1, 0], [0.05, 1, 1, 0.05].normalizeSum,
 						curve: \welch), timeScale: timescale,
 					doneAction: Done.freeSelf
 				) * \ampDB.kr(-12).dbamp;
+
 				Out.ar(\out.kr(0), out);
 
 			});
