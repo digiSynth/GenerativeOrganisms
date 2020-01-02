@@ -1,5 +1,5 @@
 SpaceCellHOA : SpaceCell{
-	classvar <classSymbol, instances;
+	classvar <classSymbol, hoaInstances;
 	// classvar encoder, decoder;
 	classvar <order = 2, orderChannels;
 	classvar <decoderOrder = 1, decoderOrderChannels;
@@ -7,9 +7,9 @@ SpaceCellHOA : SpaceCell{
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all instances of active particles
-		instances = instances ? List.new;
-		instances.add(return);
+		//adds a copy to manage all hoaInstances of active particles
+		hoaInstances = hoaInstances ? List.new;
+		hoaInstances.add(return);
 
 		if(orderChannels.isNil){
 			orderChannels = (order + 1).pow(2);
@@ -43,11 +43,11 @@ SpaceCellHOA : SpaceCell{
 
 	free{
 		super.free;
-		instances.remove(this);
+		hoaInstances.remove(this);
 	}
 
 	*freeAll{
-		instances.do{
+		hoaInstances.do{
 			|item|
 			item.free;
 		}
@@ -100,5 +100,11 @@ SpaceCellHOA : SpaceCell{
 				this.class.synthDefDictionary.removeAt(classSymbol);
 			};
 		}
+	}
+
+	*instances{
+
+		^hoaInstances;
+
 	}
 }

@@ -1,5 +1,5 @@
 SpaceCellMover : LiveCodingEnvironment{
-	classvar <instances, <isInitialized = false;
+	classvar moverInstances, <isInitialized = false;
 
 	var <azimuthMin, <azimuthMax;
 	var <elevationMin, <elevationMax;
@@ -17,13 +17,12 @@ SpaceCellMover : LiveCodingEnvironment{
 	*new{|targetSpaceCell, azimuthRate = 0.5, elevationRate = 0.5, distanceRate = 0.5|
 		var return;
 
-
 		return = super.new
 		(this.prFormatClassSymbol(this))
 		.pr_InitSpaceCellMover(targetSpaceCell, azimuthRate, elevationRate, distanceRate);
 
-		instances = instances ? List.new;
-		instances.add(return);
+		moverInstances = moverInstances ? List.new;
+		moverInstances.add(return);
 
 
 		^return;
@@ -39,24 +38,36 @@ SpaceCellMover : LiveCodingEnvironment{
 			this.pr_MakeSynths(ar, er, dr);
 
 			target !? {
+
 				forkIfNeeded{
+
 					server.sync;
+
 					this.mapTo(target);
+
 				};
 			};
 
 		};
 
 		if(isInitialized==false){
+
 			forkIfNeeded{
+
 				server.sync;
+
 				returnFunction.value(targetSpaceCell);
+
 				server.sync;
+
 				isInitialized = true;
+
 			};
 
 		}/*ELSE*/{
+
 			returnFunction.value(targetSpaceCell);
+
 		}
 
 	}
@@ -64,19 +75,23 @@ SpaceCellMover : LiveCodingEnvironment{
 	mapTo{|inputSpaceCell|
 
 		if(inputSpaceCell.isNil.not){
+
 			if(inputSpaceCell.isSpaceCell.not){
+
 				Error("Can only map a SpaceCellMover to a SpaceCell.").throw;
+
 			};
 
 			if(mappedSpaceCell.isNil.not){
+
 				this.unmap;
+
 			};
 
 			if(this.isPlaying){
 
 				this.group = inputSpaceCell.group;
 
-				inputSpaceCell.playSpaceCell;
 				inputSpaceCell.synth.map(\azimuth, azimuthBus);
 				inputSpaceCell.synth.map(\elevation, elevationBus);
 				inputSpaceCell.synth.map(\distance, distanceBus);
@@ -84,7 +99,7 @@ SpaceCellMover : LiveCodingEnvironment{
 				inputSpaceCell.mover_(this);
 				mappedSpaceCell = inputSpaceCell;
 
-			}
+			};
 
 		}
 
@@ -112,20 +127,28 @@ SpaceCellMover : LiveCodingEnvironment{
 			azimuthBus, elevationBus, distanceBus].do{|item|
 
 			if(item.isNil){
+
 				^false;
+
 			};
 
 			if(item.class==Synth){
 				if(item.isPlaying.not){
+
 					^false;
+
 				}
 			};
 
 			if(item.class==Bus){
 				if(item.index.isNil){
+
 					^false;
-				}
-			}
+
+				};
+
+			};
+
 		};
 
 		^true;
@@ -308,14 +331,14 @@ SpaceCellMover : LiveCodingEnvironment{
 		};
 
 		super.free;
-		instances.remove(this);
+		moverInstances.remove(this);
 	}
 
 
 	*freeAll{
-		if(instances.isNil.not){
+		if(moverInstances.isNil.not){
 
-			instances.copy.do{|item|
+			moverInstances.copy.do{|item|
 
 				item.free;
 
@@ -377,5 +400,10 @@ SpaceCellMover : LiveCodingEnvironment{
 		this.registerSynthDef(synthDef, false, symbol);
 	}
 
+	*instances{
+
+		^moverInstances;
+
+	}
 
 }

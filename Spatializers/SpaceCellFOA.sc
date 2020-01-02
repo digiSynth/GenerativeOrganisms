@@ -1,12 +1,12 @@
 SpaceCellFOA : SpaceCell{
-	classvar <classSymbol, instances;
+	classvar <classSymbol, foaInstances;
 	classvar encoder, decoder;
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all instances of active particles
-		instances = instances ? List.new;
-		instances.add(return);
+		//adds a copy to manage all foaInstances of active particles
+		foaInstances = foaInstances ? List.new;
+		foaInstances.add(return);
 
 		^return;
 	}
@@ -32,14 +32,14 @@ SpaceCellFOA : SpaceCell{
 
 	free{
 		super.free;
-		instances.remove(this);
+		foaInstances.remove(this);
 	}
 
 	*freeAll{
-		instances !? {
+		foaInstances !? {
 
-			if(instances.size > 0){
-				instances.copy.do{
+			if(foaInstances.size > 0){
+				foaInstances.copy.do{
 					|item|
 					item.free;
 				}
@@ -110,6 +110,12 @@ SpaceCellFOA : SpaceCell{
 		//remove the synthdefs from the super class's dictionary
 		//so that it reloads them with the new decoder when the next object is called
 		super.synthDefDictionary.removeAt(classSymbol);
+	}
+
+	*instances{
+
+		^foaInstances;
+
 	}
 
 }

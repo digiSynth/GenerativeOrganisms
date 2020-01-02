@@ -7,19 +7,21 @@ GOAgent : GenerativeOrganism{
 	var startTime, currentTime, previousTime, lastCheckedTime;
 	var <timeSinceEaten = 0, <timeSinceMated = 0;
 	var <age = 0.0, timeToMate = 100000, timeToEat = 100000, <>hitPoints = 100000;
-	var lifespan = 100000, <lifespanScalar;
+	var lifespan = 100000, <lifespanScalar = 1, startingHitPoints;
+
+	var lifespanCanSet = true, timeToMateCanSet = true, timeToEatCanSet = true;
 
 	*new{ |buffer, behavior, spatializer|
 		^super.new(buffer, behavior, spatializer).pr_InitGOAgent;
 	}
-
 
 	pr_InitGOAgent{
 
 		lifespan = exprand(lifespanLo, lifespanHi);
 		timeToMate = lifespan * exprand(timeToMateLo, timeToMateHi);
 		timeToEat = lifespan * exprand(timeToEatLo, timeToEatHi);
-		hitPoints = exprand(hitPointsLo, hitPointsHi).asInteger;
+		startingHitPoints = exprand(hitPointsLo, hitPointsHi).asInteger;
+		hitPoints = startingHitPoints;
 
 		previousTime = currentTime = startTime = Main.elapsedTime;
 		lastCheckedTime = timeSinceEaten = timeSinceMated = 0;
@@ -44,14 +46,85 @@ GOAgent : GenerativeOrganism{
 		^(lifespan * lifespanScalar);
 	}
 
+	pr_lifespan{
+
+		^lifespan;
+
+	}
+
+	pr_lifespan_{
+
+		|newVal|
+
+		if(lifespanCanSet){
+
+			lifespan = newVal;
+			lifespanCanSet = false;
+
+		};
+
+	}
+
+	pr_startingHitPoints{
+
+		^startingHitPoints;
+
+	}
+
+	pr_startingHitPoints_{|newVal|
+
+		if(newVal.class==Integer or: {newVal.class==Float}){
+
+			startingHitPoints = newVal;
+			hitPoints = startingHitPoints;
+
+		};
+
+	}
+
 	timeToMate{
 
 		^(timeToMate *lifespanScalar);
+
+	}
+
+	pr_timeToMate{
+
+		^timeToMate;
+
+	}
+
+	pr_timeToMate_{|newVal|
+
+		if(timeToMateCanSet){
+
+			timeToMate = newVal;
+			timeToMateCanSet = false;
+
+		}
+
 	}
 
 	timeToEat{
 
 		^(timeToEat * lifespanScalar);
+	}
+
+	pr_timeToEat{
+
+		^timeToEat;
+
+	}
+
+	pr_timeToEat_{|newVal|
+
+		if(timeToEatCanSet){
+
+			timeToEat = newVal;
+			timeToEatCanSet = false;
+
+		};
+
 	}
 
 	updateGOAgent{
@@ -96,12 +169,27 @@ GOAgent : GenerativeOrganism{
 
 					newBuffer = GenerativeMutator
 					.mateBuffers(this.buffer, organism.buffer, {
+						var organismToDeliver;
 
 						newSpatializer = spatializer.class.new;
 
-						newOrganism.value = GOAgent
+						organismToDeliver = GOAgent
 						.new(newBuffer, newBehavior, newSpatializer);
-						// "Organism delivered!".postln;
+
+						organismToDeliver.pr_lifespan =
+						(this.pr_lifespan + organism.pr_lifespan) / 2;
+
+						organismToDeliver.pr_timeToMate =
+						(this.pr_timeToMate + organism.pr_timeToMate) / 2;
+
+						organismToDeliver.pr_timeToEat =
+						(this.pr_timeToEat + organism.pr_timeToEat) / 2;
+
+						organism.pr_startingHitPoints =
+						((this.pr_startingHitPoints + organism.pr_startingHitPoints) / 2)
+						.ceil.asInteger;
+
+						newOrganism.value = organismToDeliver;
 
 					});
 

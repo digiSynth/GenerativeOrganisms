@@ -1,30 +1,37 @@
 GenerativeOrganism{
 	// classvar oscBufferInfo;
-	classvar <instances;
+	classvar goInstances;
 	classvar server;
 
 	var bufferReference, <behavior, <spatializer;
-	var freeFunc;
+	var freeFunc, shouldDeleteBuffer;
 	var <isInitialized = false;
 
 	*new{ |buffer, behavior, spatializer/*, playOnSpawn = false*/|
 		var return;
 		server = Server.default;
 
-		instances = instances ? List.new;
+		goInstances = goInstances ? List.new;
 
 		if(server.hasBooted==false){
 			Error("Server is not booted!").throw;
 		};
 
-		return = super.new.pr_InitGenerativeOrganism(buffer, behavior,
-			spatializer/*, playOnSpawn*/);
-		instances.add(return);
+		return = super.new
+		.pr_InitGenerativeOrganism(
+			buffer, behavior,
+			spatializer/*, playOnSpawn*/
+		);
+
+		goInstances.add(return);
+
 		^return;
 	}
 
 	buffer{
+
 		^bufferReference.value;
+
 	}
 
 	pr_InitGenerativeOrganism{|bf, be, sp/*, bool*/|
@@ -80,18 +87,31 @@ GenerativeOrganism{
 
 						spatializer = SpaceCellMono.new;
 
+						server.sync;
+
 					}/*ELSE*/{
 						Error("Invalid spatializer input").throw;
 					};
 				};
 			};
 
-			behavior = be ?? {
-				var toReturn = GOBehavior.new;
-				toReturn;
-			};
+			behavior = be ? GOBehavior.new;
 
 			if(isInitialized==false){
+
+				freeFunc = `nil;
+				shouldDeleteBuffer = `false;
+
+				spatializer.onFree({
+
+					this.pr_FreeOrganism(shouldDeleteBuffer.value);
+
+					if(freeFunc.value.isNil.not){
+						freeFunc.value.value;
+					};
+
+				});
+
 				isInitialized = true;
 			};
 
@@ -101,20 +121,23 @@ GenerativeOrganism{
 		if(sp.isNil || be.isNil){
 			forkIfNeeded{
 
-				if(sp.isNil){
-					if(SpaceCell.spatializersInit==false){
-						SpaceCell.loadSpaceCellSynthDefs;
-						server.sync;
-					};
+				/*if(sp.isNil){
+				if(SpaceCell.spatializersInit==false){
+
+				SpaceCell.loadSpaceCellSynthDefs;
+				server.sync;
+
 				};
+				};*/
 
 				setResourcesFunc.value;
 
 			};
 		}/*ELSE*/{
-			setResourcesFunc.value;
-		};
 
+			setResourcesFunc.value;
+
+		};
 
 	}
 
@@ -152,8 +175,11 @@ GenerativeOrganism{
 
 					var newBehavior, newBuffer, newSpatializer;
 
-					newBehavior = GenerativeMutator.mateBehaviors(behavior, organism.behavior);
-					newBuffer = GenerativeMutator.mateBuffers(this.buffer, organism.buffer, {
+					newBehavior = GenerativeMutator
+					.mateBehaviors(behavior, organism.behavior);
+
+					newBuffer = GenerativeMutator
+					.mateBuffers(this.buffer, organism.buffer, {
 
 						newSpatializer = spatializer.class.new;
 
@@ -182,10 +208,8 @@ GenerativeOrganism{
 
 					if(organism.buffer.bufnum.isNil.not){
 
-						bufferReference = GenerativeMutator
-						.eatBuffers(this.buffer, organism.buffer, {
-							// "Buffer digested".postln;
-						});
+						bufferReference =  GenerativeMutator
+						.eatBuffers(this.buffer, organism.buffer);
 
 					};
 				};
@@ -195,38 +219,44 @@ GenerativeOrganism{
 	}
 
 	*freeAll{
-		if(this.instances.isNil.not and: {this.instances.size > 0}){
+		if(goInstances.isNil.not and: {goInstances.size > 0}){
 
-			this.instances.copy.do{|item|
+			goInstances.copy.do{|item|
+
 				item.free;
+
 			};
 
 		};
 	}
 
 	onFree{|function|
+
 		if(freeFunc.isNil){
-			freeFunc = function;
+
+			freeFunc = `function;
+
 		}/*ELSE*/{
-			freeFunc = freeFunc ++ function;
+
+			freeFunc.value = freeFunc.value ++ function;
+
 		};
 	}
 
 	free{|deleteBuffer = false|
 
-		if(spatializer.isFreed==false){
+		shouldDeleteBuffer.value = deleteBuffer;
 
-			spatializer.onFree({
-				freeFunc.value;
-				this.pr_FreeOrganism(deleteBuffer);
-			});
+		if(spatializer.isFreed==false){
 
 			spatializer.free;
 
 		}/*ELSE*/{
-			this.pr_FreeOrganism(deleteBuffer);
-		};
 
+			this.pr_FreeOrganism(shouldDeleteBuffer.value);
+			freeFunc.value;
+
+		};
 
 	}
 
@@ -234,19 +264,18 @@ GenerativeOrganism{
 
 		isInitialized = false;
 
+		behavior.free;
+
 		super.free;
 
-		instances !? {
-			instances.remove(this);
+		goInstances !? {
+			goInstances.remove(this);
 		};
-
-		behavior !? {behavior.free;};
-
-		// this.buffer.free;
 
 		if(deleteBuffer){
 			File.delete(bufferReference.value.path);
 		};
+
 	}
 
 	lag{
@@ -267,8 +296,20 @@ GenerativeOrganism{
 		^true;
 	}
 
-}
 
+	*deleteOrganismFiles{
+
+		GenerativeMutator.deleteOrganismFiles;
+
+	}
+
+	*instances{
+
+		^goInstances;
+
+	}
+
+}
 
 + Object{
 

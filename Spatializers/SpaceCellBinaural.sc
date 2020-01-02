@@ -1,14 +1,14 @@
 SpaceCellBinaural : SpaceCell{
 	classvar <order = 4, <headphoneCorrectionIndex = 22;
-	classvar <classSymbol, instances;
+	classvar <classSymbol, binauralInstances;
 	classvar headphonesLoaded = false;
 	classvar binauralIRsLoaded = false;
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all instances of active particles
-		instances = instances ? List.new;
-		instances.add(return);
+		//adds a copy to manage all binauralInstances of active particles
+		binauralInstances = binauralInstances ? List.new;
+		binauralInstances.add(return);
 
 		^return;
 	}
@@ -39,11 +39,11 @@ SpaceCellBinaural : SpaceCell{
 
 	free{
 		super.free;
-		instances.remove(this);
+		binauralInstances.remove(this);
 	}
 
 	*freeAll{
-		instances.do{
+		binauralInstances.do{
 			|item|
 			item.free;
 		}
@@ -103,5 +103,11 @@ SpaceCellBinaural : SpaceCell{
 		^headphones.collect({|item, index|
 			[index, item];
 		});
+	}
+
+	*instances{
+
+		^binauralInstances;
+
 	}
 }

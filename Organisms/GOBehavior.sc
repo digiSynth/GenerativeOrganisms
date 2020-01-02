@@ -1,6 +1,6 @@
 GOBehavior : LiveCodingEnvironment{
 	classvar classInitialized = false;
-	classvar <instanceCount, <instances;
+	classvar <instanceCount, <goBehaviorInstances;
 	classvar currentArrayBlock, <classSymbol;
 	classvar <classMatingBlock, <classEatingBlock,
 	<classSearchingBlock, <classPainBlock, <classContactBlock,
@@ -19,7 +19,7 @@ GOBehavior : LiveCodingEnvironment{
 		spawnBlock, deathBlock, options|
 		var return;
 
-		instances = instances ? List.new;
+		goBehaviorInstances = goBehaviorInstances ? List.new;
 
 		instanceCount = instanceCount ? 0;
 
@@ -37,7 +37,7 @@ GOBehavior : LiveCodingEnvironment{
 			this.prFormatClassSymbol(this, instanceCount))
 		.pr_InitGOBehavior(options);
 
-		instances.add(return);
+		goBehaviorInstances.add(return);
 
 		if(classInitialized==false){
 			ServerQuit.add({
@@ -344,8 +344,7 @@ GOBehavior : LiveCodingEnvironment{
 		var localSymb = this.localClassSymbol;
 
 		super.free;
-		instances.remove(this);
-
+		goBehaviorInstances.remove(this);
 
 		synthDefDictionary !? {
 
@@ -362,8 +361,8 @@ GOBehavior : LiveCodingEnvironment{
 	}
 
 	*freeAll{
-		if(instances.isNil.not){
-			instances.copy.do{|item|
+		if(goBehaviorInstances.isNil.not){
+			goBehaviorInstances.copy.do{|item|
 
 				item.free;
 

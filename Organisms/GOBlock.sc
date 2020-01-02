@@ -22,6 +22,16 @@ GOBlock[]{
 		block.do{|item, index| function.value(item, index)};
 	}
 
+	clear{
+
+		block.copy.size.do{|item|
+
+			block.removeAt(0);
+
+		};
+
+	}
+
 	pr_AddToBlock{|input|
 		if(block.size < this.class.maxSize){
 			block = block.add(input);
@@ -185,6 +195,124 @@ GOBlock[]{
 		if(block.size>=6){
 			^block[6];
 		}
+	}
+
+	printOn{|stream|
+
+		var string;
+
+		if(block.isNil or: {block.isEmpty}){
+			string = "";
+		}/*ELSE*/{
+
+			block.size.do{|index|
+
+				case{
+
+					index==0;
+
+				}{
+
+					string = string++"rateCurve";
+					if(block.size > 1){
+						string = string++", ";
+					};
+
+
+				}
+
+				{
+
+					index==1;
+
+				}{
+
+					string = string++"posCurve";
+					if(block.size > 2){
+						string = string++", ";
+					};
+
+
+				}
+
+				{
+
+					index==2;
+
+				}{
+
+					string = string++"ampCurve";
+					if(block.size > 3){
+						string = string++", ";
+					};
+
+				}
+
+
+				{
+
+					index==3;
+
+				}{
+
+					string = string++"ffreqCurve";
+					if(block.size > 4){
+						string = string++", ";
+					};
+
+				}
+
+				{
+
+					index==4;
+
+				}{
+
+					string = string++"impulseRateCurve";
+					if(block.size > 5){
+						string = string++", ";
+					};
+
+				}
+
+				{
+
+					index==5;
+
+				}{
+
+					string = string++"grainDurCurve";
+					if(block.size > 6){
+						string = string++", ";
+					};
+
+				}
+
+				{
+
+					index==6;
+
+				}{
+
+					string = string++"rqCurve";
+
+				};
+
+			};
+
+		};
+
+
+		stream
+
+		<<"GOBlock[ "
+
+		<<string
+
+		<<" ]";
+
+
+
 	}
 
 	isFull{

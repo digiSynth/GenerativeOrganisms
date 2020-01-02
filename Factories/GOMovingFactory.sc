@@ -1,6 +1,10 @@
 GOMovingFactory : GenerativeOrganismFactory{
 
-	var incubator, garbage;
+	var incubator, garbage, garbageCollectorRoutine;
+
+	var toSound, soundRoutine;
+
+	var toConnect, connectionRoutine;
 
 	spawn{|inputSymbol, bufferIndex, behaviorIndex|
 
@@ -19,18 +23,127 @@ GOMovingFactory : GenerativeOrganismFactory{
 
 	}
 
+	sound{|index, type|
+
+		toSound = toSound ? List.new;
+
+		this.pr_RunSoundRoutine([index, type]);
+
+	}
+
+	pr_RunSoundRoutine{|toAdd|
+
+		if(soundRoutine.isPlaying){
+
+			soundRoutine.stop;
+
+		};
+
+		toSound.add(toAdd);
+
+
+		soundRoutine = Routine({
+
+			if(toSound.isEmpty.not){
+
+				toSound.copy.size.do{
+
+					if(toSound.isEmpty.not){
+
+						var arr = toSound.removeAt(0);
+
+						super.sound(arr[0], arr[1]);
+
+						(1/100).wait;
+
+					};
+
+				};
+
+			};
+
+
+		});
+
+		soundRoutine.play;
+
+
+	}
+
 	pr_ConnectMover{ |organismReference|
 
-		fork{
+		toConnect = toConnect ? List.new;
 
-			var mover = SpaceCellMover.new(
-				azimuthRate: exprand(0.1, 2.0),
-				elevationRate: exprand(0.1, 2.0),
-				distanceRate: exprand(0.1, 2.0)
-			);
+		toConnect.add(organismReference);
 
-			server.sync;
-			mover.mapTo(organismReference.value.spatializer);
+		this.pr_RunConnectionRoutine;
+
+	}
+
+	pr_RunConnectionRoutine{
+
+		if(connectionRoutine.isPlaying){
+
+			connectionRoutine.stop;
+
+		};
+
+		if(toConnect.isEmpty.not){
+			connectionRoutine = Routine({
+
+				if(toConnect.isEmpty.not){
+
+					loop{
+
+						toConnect.copy.size.do{
+
+							var orgRef = toConnect.removeAt(0);
+
+							if(
+								orgRef.value.isGenerativeOrganism
+								and: {orgRef.value.spatializer.synth.isPlaying}
+							){
+
+								var mover;
+
+								server.sync;
+
+								mover = SpaceCellMover.new(
+									azimuthRate: exprand(0.1, 2.0),
+									elevationRate: exprand(0.1, 2.0),
+									distanceRate: exprand(0.1, 2.0)
+								);
+
+								server.sync;
+
+								mover.mapTo(orgRef.value.spatializer);
+
+							}/*ELSE*/{
+
+								toConnect.add(orgRef);
+
+							};
+
+
+						};
+
+						server.sync;
+						server.latency.wait;
+
+						if(toConnect.isEmpty){
+
+							thisThread.stop;
+							server.latency.wait;
+
+						};
+
+					};
+
+				};
+
+			});
+
+			connectionRoutine.play;
 
 		};
 
@@ -68,14 +181,17 @@ GOMovingFactory : GenerativeOrganismFactory{
 
 						if(incubated.isGenerativeOrganism){
 
-							var orgRef =incubator.removeAt(key);
+							var orgRef = incubator.removeAt(key);
 
 							this.pr_ConnectMover(orgRef);
 
 							this.pr_AddOrganism(key, orgRef);
+
+							this.sound(key, 5);
+
 							if(widgetToRegisterWith.isNil.not){
 								widgetToRegisterWith.registerOrganism(key);
-							}
+							};
 
 						}
 					}
@@ -94,29 +210,55 @@ GOMovingFactory : GenerativeOrganismFactory{
 		};
 
 		organisms[inputSymbol].value !? {
-			var organism = organisms.removeAt(inputSymbol);
+			var orgReference = organisms.removeAt(inputSymbol);
 
-			garbage = garbage ? Dictionary.new;
-			garbage.add(inputSymbol -> organism);
+			this.pr_RunGarbageCollectionRoutine(orgReference);
 		};
 
 	}
 
-	killGarbage{
+	pr_RunGarbageCollectionRoutine{|orgReference|
 
-		if(garbage.isNil.not){
-			if(garbage.size > 0){
+		if(garbageCollectorRoutine.isPlaying){
 
-				garbage.copy.keys.do{|key|
-					garbage.removeAt(key).value.free(deleteFiles);
-				}
+			garbageCollectorRoutine.pause;
 
-			}
 		};
 
+		garbage = garbage ? List.new;
+		garbage.add(orgReference);
+
+		if(garbageCollectorRoutine.isPlaying){
+
+			garbageCollectorRoutine.stop;
+
+		};
+
+		garbageCollectorRoutine = Routine({
+
+			if(garbage.isEmpty.not){
+
+				garbage.copy.size.do{
+
+					if(garbage.isEmpty.not){
+
+						garbage.removeAt(0).value.free;
+
+						(1/100).wait;
+
+					};
+
+				};
+			};
+
+		});
+
+
+		garbageCollectorRoutine.play;
 	}
 
 	pr_MakeOrganism{|bufferIndex, behaviorIndex|
+
 		var organism;
 		var spatializer = spatializerClass.new;
 		var buffer, behavior;
@@ -149,31 +291,46 @@ GOMovingFactory : GenerativeOrganismFactory{
 	}
 
 	free{
+
+		if(connectionRoutine.isPlaying){
+
+			connectionRoutine.stop;
+
+		};
+
+		toConnect.clear;
+		// toConnect.clear;
+		// connectionRoutine = nil;
+
+		if(soundRoutine.isPlaying){
+
+			soundRoutine.stop;
+
+		};
+
+		// toSound.clear;
+		// soundRoutine = nil;
+
 		super.free;
 
-		if(garbage.isNil.not){
-			garbage.do{|reference|
-				reference.value.free;
-			}
-		};
-
-		garbage.clear;
-		garbage = nil;
-
 		if(incubator.isNil.not){
-			incubator.do{|reference|
-				var item = reference.value;
-				if(item.isNil.not){
 
-					if(item.isGenerativeOrganism){
-						item.value.free;
-					};
+			incubator.copy.size.do{
+
+				var item = incubator.removeAt(0).value;
+
+				if(item.isGenerativeOrganism){
+
+					item.free;
+
 				};
-			}
+			};
+
 		};
 
-		incubator.clear;
-		incubator = nil;
+		// incubator = nil;
+
 	}
+
 
 }

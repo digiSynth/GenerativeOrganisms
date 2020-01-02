@@ -35,52 +35,73 @@ GenerativeOrganismFactory{
 		var shouldErr = false;
 
 		if(input.isCollection.not){
+
 			shouldErr = true;
+
 		}/*ELSE*/{
+
 			block{ |break|
+
 				input.do{|item|
+
 					if(item.class!=class){
+
 						shouldErr = true;
 						break.value(999);
+
 					}
 				}
 			}
 		};
 
 		if(shouldErr){
+
 			Error(
 				format("Input collection must be a collection of % objects.",
-					class.asString)).throw;
+					class.asString)
+			).throw;
+
 		};
 
 	}
 
 	pr_SetupGenerativeOrganismFactory{|bufferArray, behaviorArray|
+
 		organisms = Dictionary.new;
 		buffers = bufferArray;
 		behaviors = behaviorArray;
+
 	}
 
 	pr_MakeOrganism{|bufferIndex, behaviorIndex|
-		var organism;
+
 		var spatializer = spatializerClass.new;
-		var buffer, behavior;
+		var organism, buffer, behavior;
 
 		bufferIndex = bufferIndex !? {bufferIndex.asInteger} ? {(buffers.size - 1).rand;};
 
 		if(behaviorIndex.isNil.not and: {behaviors.isNil.not}){
+
 			if(behaviorIndex >= behaviors.size){
+
 				behavior = nil;
+
 			}/*ELSE*/{
+
 				behavior = behaviors.removeAt(behaviorIndex.asInteger);
+
 			};
 		}/*ELSE*/{
+
 			behavior = nil;
+
 		};
 
 
 		if(bufferIndex >= buffers.size){
+
 			bufferIndex = (buffers.size - 1).rand;
+
 		};
 
 		buffer = buffers[bufferIndex];
@@ -94,21 +115,31 @@ GenerativeOrganismFactory{
 	}
 
 	spawn{|inputSymbol, bufferIndex, behaviorIndex|
+
 		organisms[inputSymbol.asSymbol] ?? {
+
 			organisms.add(inputSymbol.asSymbol ->
+
 				this.pr_MakeOrganism(bufferIndex, behaviorIndex));
+
 		};
+
 	}
 
 	kill{|inputSymbol|
 
 		if(inputSymbol.class!=Symbol){
+
 			try{inputSymbol = inputSymbol.asSymbol};
+
 		};
 
 		organisms[inputSymbol].value !? {
+
 			var organism = organisms.removeAt(inputSymbol).value;
+
 			organism.free(deleteFiles);
+
 		};
 
 	}
@@ -117,19 +148,24 @@ GenerativeOrganismFactory{
 		var organism;
 
 		if(inputSymbol.class!=Symbol){
+
 			try{inputSymbol = inputSymbol.asSymbol};
+
 		};
 
 		organism = organisms[inputSymbol].value;
 
 		organism !? {
+
 			organism
 			.position(
 				azimuth: azimuth,
 				elevation: elevation,
 				distance: distance
 			);
+
 		};
+
 	}
 
 	mateOrganisms{
@@ -174,12 +210,15 @@ GenerativeOrganismFactory{
 		prey = organisms[preyIndex].value;
 
 		if(predator.isNil.not and: {prey.isNil.not}){
-			if(predator.isGenerativeOrganism and: {
-				prey.isGenerativeOrganism
-			}){
+
+			if(predator.isGenerativeOrganism and:
+				{prey.isGenerativeOrganism})
+
+			{
 				predator.eat(prey);
 				this.kill(preyIndex);
 			};
+
 		};
 	}
 
@@ -200,29 +239,22 @@ GenerativeOrganismFactory{
 			try{inputSymbol = inputSymbol.asSymbol};
 		};
 
-		// fork{
-
 		organism = organisms[inputSymbol].value ;
 		organism !? {
-			/*var ampOffset = organism.behavior.options.ampHi.
-			explin(
-				organism.behavior.options.class.ampHiMin,
-				organism.behavior.options.class.ampHiMax,
-				4, 1.0
-			) - 1;*/
 
 			//Make the noise
-			organism.playGenerativeOrganism(type, db /*+ ampOffset*/);
+			organism.playGenerativeOrganism(type, db);
 
 		};
-		// };
 
 	}
 
 	sound{
 		|index, type|
+
 		this.playGenerativeOrganismFromFactory
 		(index.asSymbol, type, 0);
+
 	}
 
 	addOrganism{|inputSymbol, organism|
@@ -235,13 +267,20 @@ GenerativeOrganismFactory{
 	}
 
 	free{
+
 		if(organisms.isNil.not){
+
 			organisms.copy.keys.do{|key|
-				organisms[key].value.free;
+
+				organisms.removeAt(key).value.free;
+
 			};
+
+			GenerativeOrganism.freeAll;
+			// GOBehavior.freeAll;
+
 		};
 
-		organisms = nil;
 	}
 
 	*spatializerClass_{
@@ -250,7 +289,6 @@ GenerativeOrganismFactory{
 		if(newClass.isSpaceCell.not){
 			Error("Can only supply a class of type SpaceCell to this field").throw;
 		};
-
 
 		spatializerClass = newClass;
 	}

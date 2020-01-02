@@ -3,13 +3,14 @@ GOMovingSystem{
 	classvar server;
 	classvar <deleteFiles = false;
 
+	var <durLo, <durHi, <durStep;
+	var waitingRoutine;
 	var <factory, <isRunning = false;
 	var quitRegistered = false;
 	var isDead = false;
 
 	var updateTask;
-	var waitTimeReference, chanceToChangeWaitRef = 0.2;
-	var widget, populatingRoutine;
+	var <widget, populatingRoutine;
 
 	*new{|bufferArray, behaviorArray|
 
@@ -31,6 +32,7 @@ GOMovingSystem{
 	}
 
 	pr_InitGOMovingSystem{|ba, bea|
+
 		if(quitRegistered==false){
 			ServerQuit.add({
 				try{this.free;};
@@ -40,7 +42,16 @@ GOMovingSystem{
 
 		factory = GOMovingFactory.new(ba, bea);
 
-		waitTimeReference = waitTimeReference ? `(1);
+		durLo = durLo ? server.latency;
+		durHi = durHi ? (server.latency * 8);
+		durStep = durStep ? (durLo * 0.25);
+
+		waitingRoutine = waitingRoutine ? `(Pbrown(
+			durLo,
+			durHi,
+			durStep,
+			inf
+		).asStream);
 
 		widget = GOMovingSystemWidget.new(this);
 
@@ -54,17 +65,19 @@ GOMovingSystem{
 	pr_PopulateFactory{
 
 		if(populatingRoutine.isNil.not){
+
 			if(populatingRoutine.isPlaying){
+
 				populatingRoutine.stop;
+
 			}
 		};
 
-		populatingRoutine = fork{
+		populatingRoutine = Task({
 
 			block{|break|
 
-
-				factory.buffers.size.do{|index|
+				factory.buffers.copy.size.do{|index|
 
 					if(isDead==false){
 
@@ -73,9 +86,19 @@ GOMovingSystem{
 						widget.registerOrganism(index.asSymbol);
 						widget.log(format("Organism % is born", index));
 
-						exprand(0.05, 8.0).wait;
+						server.sync;
 
 						factory.sound(index.asSymbol, 5);
+
+						if(index > 4){
+
+							exprand(0.05, 8.0).wait;
+
+						}/*ELSE*/{
+
+							exprand(0.05, 2.5).wait;
+
+						};
 
 					}/*ELSE*/{
 
@@ -87,7 +110,9 @@ GOMovingSystem{
 
 			};
 
-		};
+		});
+
+		populatingRoutine.play;
 
 		this.pr_StartSimulation;
 	}
@@ -95,7 +120,24 @@ GOMovingSystem{
 	pause{
 
 		if(updateTask.isNil.not){
-			updateTask.pause;
+
+			if(updateTask.isPlaying){
+
+				updateTask.pause;
+
+			};
+
+		};
+
+
+		if(populatingRoutine.isNil.not){
+
+			if(populatingRoutine.isPlaying){
+
+				populatingRoutine.pause;
+
+			}
+
 		};
 
 	}
@@ -103,13 +145,32 @@ GOMovingSystem{
 	resume{
 
 		if(updateTask.isNil.not){
-			updateTask.resume;
+
+			if(updateTask.isPlaying.not){
+
+				updateTask.play;
+
+			};
+
+		};
+
+
+		if(populatingRoutine.isNil.not){
+
+			if(populatingRoutine.isPlaying.not){
+
+				populatingRoutine.play;
+
+			}
+
 		};
 
 	}
 
 	play{
+
 		this.resume;
+
 	}
 
 	pr_StartSimulation{
@@ -120,18 +181,27 @@ GOMovingSystem{
 
 		updateTask = Task({
 
+			var checkForDead = 8;
+			var timeToCheckForDead = 0;
+
+			1.0.wait;
 			server.sync;
 
 			loop{
-				// var chanceToChangeWaitRef = 0.1;
+				var timeToWait = waitingRoutine.value.next;
 				var organismCount = 0;
 				var organisms = factory.organisms;
 
 				if(organisms.size==0){
+
 					this.pr_EverythingIsDead;
+
 				}/*ELSE*/{
 
-					organisms.keys.asArray.scramble.do{|key|
+					var osize = organisms.size;
+
+					organisms.keys.copy.do{|key|
+
 						var orgRef = organisms[key];
 						var organism = orgRef.value;
 
@@ -139,10 +209,10 @@ GOMovingSystem{
 						{
 							organism.updateGOAgent;
 
-							organism.lifespanScalar = waitTimeReference.value;
+							organism.lifespanScalar = timeToWait;
 
 							organism.behavior.options.timescaleScalar =
-							waitTimeReference.value;
+							timeToWait;
 
 							if((organism.age >= organism.lifespan) or:
 								{organism.hitPoints<=0}){
@@ -157,10 +227,10 @@ GOMovingSystem{
 
 							}/*ELSE*/{
 
-								var isStarving = false, isLookingToMate = false;
+								var isStarving = false, isLookingToMate = false, hadChild = false;
 
 								if(organism.timeSinceEaten > organism.timeToEat){
-									var chanceToEat = rrand(1/4, 3.5/4);
+									var chanceToEat = rrand(0.3, 0.8);
 
 									if(chanceToEat.coin){
 
@@ -168,10 +238,10 @@ GOMovingSystem{
 
 										if(key!=organismKeyToEat){
 
+
 											fork{
 
 												factory.sound(key, 4);
-
 
 												widget.log(format("Predator % eats prey %",
 													key, organismKeyToEat
@@ -186,9 +256,6 @@ GOMovingSystem{
 										} /*ELSE*/{
 
 											organism.hitPoints = organism.hitPoints - 1;
-											/*widget.log(format("Organism % is starving", key));
-
-											factory.sound(key, 2);*/
 
 											isStarving = true;
 
@@ -197,10 +264,6 @@ GOMovingSystem{
 									}/*ELSE*/{
 
 										organism.hitPoints = organism.hitPoints - 1;
-
-										/*widget.log(format("Organism % is starving", key));
-
-										factory.sound(key, 2);*/
 
 										isStarving = true;
 
@@ -219,81 +282,80 @@ GOMovingSystem{
 
 											var uniqueID = UniqueID.next.asSymbol;
 
+											hadChild = true;
+
 											factory.sound(key, 0);
 
-											widget.log(format("Organisms % mates with organism %. \n\tTheir child is %.",
+											widget.log(format("Organisms % mates with organism %. "
+												++"\n\tTheir child is %.",
 												key, organismToMateWith, uniqueID
 											));
 
 											factory.mateOrganisms(key, organismToMateWith, uniqueID);
 
+											0.05.wait;
 
 										}/*ELSE*/{
 
 											isLookingToMate = true;
-											/*
-											widget.log(format("Organism % is looking to mate", key));
 
-											factory.sound(key, 1);*/
-
-										}
+										};
 
 									}/*ELSE*/{
 
 										isLookingToMate = true;
 
-										/*widget.log(format("Organism % is looking to mate", key));
-
-										factory.sound(key, 1);
-										*/
 									};
 
 								};
 
-								case
-								{isStarving && isLookingToMate}{
-									var chosenFunction = [
-										{
-											widget.log(format("Organism % is looking to mate", key));
+								if(hadChild==false){
 
-											factory.sound(key, 1);
-										},
+									case
+									{isStarving && isLookingToMate}{
+										var chosenFunction = [
+											{
+												widget.log(format("Organism % is looking to mate", key));
 
-										{
-											widget.log(format("Organism % is starving", key));
+												factory.sound(key, 1);
+											},
 
-											factory.sound(key, 2);
-										}
+											{
+												widget.log(format("Organism % is starving", key));
 
-									].choose;
+												factory.sound(key, 2);
+											}
 
-									chosenFunction.value;
-								}
+										].choose;
 
-								{isStarving && isLookingToMate==false}{
+										chosenFunction.value;
+									}
 
-
-									widget.log(format("Organism % is starving", key));
-
-									factory.sound(key, 2);
+									{isStarving && isLookingToMate==false}{
 
 
-								}
+										widget.log(format("Organism % is starving", key));
+
+										factory.sound(key, 2);
+
+									}
 
 
-								{isLookingToMate && isStarving==false}{
+									{isLookingToMate && isStarving==false}{
 
-									widget.log(format("Organism % is looking to mate", key));
+										widget.log(format("Organism % is looking to mate", key));
 
-									factory.sound(key, 1);
-								}
+										factory.sound(key, 1);
+									}
 
-								{isLookingToMate==false && isStarving==false}{
+									{isLookingToMate==false && isStarving==false}{
 
-									if(rrand(0.1, 1.0).rand.coin){
-										widget.log(format("Organism % makes some noise", key));
+										if(rrand(0.1, 1.0).rand.coin){
+											widget.log(format("Organism % makes some noise", key));
 
-										factory.sound(key, 3);
+											factory.sound(key, 3);
+
+										};
 
 									};
 
@@ -303,11 +365,9 @@ GOMovingSystem{
 
 						};
 
-						waitTimeReference.value.wait;
-						this.pr_UpdateWaitReference;
+						timeToWait.wait;
 
 						factory.transferToOrganisms(widget);
-						factory.killGarbage;
 
 						block{|break|
 
@@ -324,61 +384,57 @@ GOMovingSystem{
 
 							};
 
-
 							if(organismCount == 0){
+
 								this.pr_EverythingIsDead;
+
 							};
 
 						}/*ELSE*/{
+
 							this.pr_EverythingIsDead;
+
 						};
 
+					};
 
+					timeToCheckForDead = timeToCheckForDead + 1;
+
+					if(timeToCheckForDead==checkForDead){
+
+						widget.log("\nChecking for dead organisms");
+
+						organisms.keys.copy.do{|orgRefKey|
+
+							var organism =  organisms[orgRefKey].value;
+
+							if(organism.age >= organism.lifespan){
+
+								factory.sound(orgRefKey, 6);
+
+								widget.log(
+									format("\t\tOrganism % is found dead", orgRefKey)
+								);
+
+								factory.kill(orgRefKey);
+
+								widget.removeAt(orgRefKey);
+
+							};
+
+						};
+
+						widget.log("");
+						timeToCheckForDead = 0;
 
 					}
+
 				};
 
-			}/*ELSE*/{
-
-				this.pr_EverythingIsDead;
 
 			};
 
 		}).play;
-	}
-
-
-	pr_UpdateWaitReference{
-		var val = waitTimeReference.value;
-
-		if(chanceToChangeWaitRef.coin){
-
-			val ?? {
-				waitTimeReference.value = 1.0;
-			};
-
-			case
-			{val < (1/5)}{
-
-				waitTimeReference.value = val * rrand(0.95, 1.5);
-				chanceToChangeWaitRef = rrand(0.75, 1.0);
-
-			}
-
-			{val > 4.5}{
-
-				waitTimeReference.value = val * rrand(0.25, 1.05);
-				chanceToChangeWaitRef = rrand(0.75, 1.0);
-			}
-
-			{(val > (1/5) and: {val < 4.5})}{
-
-				waitTimeReference.value = val * rrand(0.5, 1.5);
-				chanceToChangeWaitRef = exprand(0.1, 0.75);
-
-			};
-
-		};
 
 	}
 
@@ -397,40 +453,105 @@ GOMovingSystem{
 		};
 
 		if(factory.organisms.isEmpty.not){
+
 			factory.organisms.keys.do{|key|
 				widget.removeAt(key);
-			}
+			};
+
 		};
 
 		factory.organisms.clear;
 		GOAgent.freeAll;
 		updateTask.stop;
-	}
-
-	updateDur{
-
-		^waitTimeReference.value;
 
 	}
 
-	updateDur_{|newValue|
 
-		if(waitTimeReference.value.isNil.not){
+	durLo_{|newDur = 0.1|
 
-			waitTimeReference.value = newValue;
+		if(newDur <= durHi){
+
+			durLo = newDur;
 
 		}/*ELSE*/{
 
-			waitTimeReference = `newValue;
+			durLo = durHi;
 
 		};
+
+		if(durStep > durLo){
+
+			durStep = durLo;
+
+		};
+
+		waitingRoutine.value = Pbrown(
+			durLo,
+			durHi,
+			durStep,
+			inf
+		).asStream;
+
+	}
+
+	durHi_{|newDur = 4.0|
+
+		if(newDur >= durLo){
+
+			durHi = newDur;
+
+		}/*ELSE*/{
+
+			durHi = durLo;
+
+		};
+
+		waitingRoutine.value = Pbrown(
+			durLo,
+			durHi,
+			durStep,
+			inf
+		).asStream;
+
+	}
+
+	durStep_{|newStep = 0.1|
+
+		if(newStep <= durLo){
+
+			durStep = newStep;
+
+		}/*ELSE*/{
+
+			durStep = durLo;
+
+		};
+
+		waitingRoutine.value = Pbrown(
+			durLo,
+			durHi,
+			durStep,
+			inf
+		).asStream;
 
 	}
 
 	free{
 
+		if(populatingRoutine.isNil.not){
+
+			if(populatingRoutine.isPlaying){
+				populatingRoutine.stop;
+				populatingRoutine = nil;
+			}
+
+		};
+
 		if(updateTask.isNil.not){
-			updateTask.stop;
+			if(updateTask.isPlaying){
+				updateTask.stop;
+			};
+			updateTask = nil;
 		};
 
 		factory.free;

@@ -2,6 +2,7 @@ GenerativeMutator{
 	classvar isInitialized = false;
 	classvar server;
 	classvar condition;
+	classvar <>folderPath;
 
 	*pr_GOMutatorInit{
 
@@ -11,6 +12,8 @@ GenerativeMutator{
 			if(server.hasBooted==false){
 				Error("Server has not been booted!").throw;
 			};
+
+			folderPath = folderPath ? (PathName.tmp +/+ "SC_GOrganisms");
 
 			this.pr_CheckDirectory;
 
@@ -24,9 +27,23 @@ GenerativeMutator{
 		^matedBehavior;
 	}
 
+	*deleteOrganismFiles{
+
+		if(isInitialized==false){
+
+			this.pr_GOMutatorInit;
+
+		};
+
+		PathName(folderPath).files.do{|file|
+			File.delete(file.fullPath);
+		};
+
+	}
+
 	*pr_CheckDirectory{
-		if(File.exists(PathName.tmp +/+ "SC_GOrganisms")==false){
-			File.mkdir(PathName.tmp +/+ "SC_GOrganisms");
+		if(File.exists(folderPath)==false){
+			File.mkdir(folderPath);
 		};
 	}
 
@@ -48,9 +65,24 @@ GenerativeMutator{
 			var outpath = PathName.tmp +/+ "SC_GOrganisms"
 			+/+ UniqueID.next ++ ".wav";
 
+			var buf0FileStartFrame = 0, buf1FileStartFrame = 0;
+
+			if((buffer0.numFrames / server.sampleRate) > 1.0){
+
+				buf0FileStartFrame = (buffer0.numFrames - server.sampleRate).rand;
+
+			};
+
+
+			if((buffer1.numFrames / server.sampleRate) > 1.0){
+
+				buf1FileStartFrame = (buffer1.numFrames - server.sampleRate).rand;
+
+			};
+
 			score.add([
 				0, buffer0Copy.allocMsg,
-				buffer0Copy.readMsg(buffer0.path);
+				buffer0Copy.readMsg(buffer0.path, buf0FileStartFrame);
 			]);
 
 			score.add([
@@ -134,6 +166,7 @@ GenerativeMutator{
 					var arrayToChoose = [IFFT(chain), sig0, sig1];
 
 					var choiceRateRate = \choiceRateRate.kr(0.5);
+
 					var choiceRate = LFNoise1.kr(choiceRateRate).exprange(
 						choiceRateRate * 2 + \choiceRateLo.kr(0.1),
 						choiceRateRate * 2 + \choiceRateHi.kr(2.0)
@@ -141,12 +174,16 @@ GenerativeMutator{
 
 					var which = LFNoise1.kr(choiceRate).unipolar(3.0).floor;
 
-					var out = Select.ar(which, arrayToChoose) * \ampDB.kr(-3).dbamp;
+					var out = SelectXFocus.ar(which, arrayToChoose,
+						LFNoise1.kr(timescale * Rand(1.0, 4.0)).unipolar,
+						true
+					) * \ampDB.kr(-3).dbamp;
+
 					out = LeakDC.ar(out);
 					out = LPF.ar(out, 16000);
 					out = HPF.ar(out, 20);
 					Out.ar(\out.kr(0), out * EnvGen.ar(
-						Env([0, 1, 1, 1, 0], [0.025, 1, 1, 0.025]
+						Env([0, 1, 1, 1, 0], [0.1, 1, 1, 0.1]
 							.normalizeSum, \lin),
 						timeScale: timescale,
 						doneAction: Done.freeSelf
@@ -173,7 +210,7 @@ GenerativeMutator{
 					\choiceRateRate, timescale * exprand(1.5, 2.0),
 					\choiceRateHi, exprand(1.0, 3.0),
 
-					\ampDB, 18
+					\ampDB, 12 + (exprand(1.0, 5.0) - 2.0)
 				]);
 			]);
 
@@ -196,6 +233,7 @@ GenerativeMutator{
 				.numWireBufs_(2.pow(13))
 				.verbosity_(-2),
 				action: {
+
 					fork{
 						var localCondition = Condition.new;
 						var toReturn;
@@ -222,8 +260,10 @@ GenerativeMutator{
 
 			^return;
 		}/*ELSE*/{
+
 			this.pr_GOMutatorInit;
 			this.mateBuffers(buffer0, buffer1, action);
+
 		};
 	}
 
@@ -245,14 +285,28 @@ GenerativeMutator{
 			var outpath = PathName.tmp +/+ "SC_GOrganisms"
 			+/+ UniqueID.next ++ ".wav";
 
+			var buf0FileStartFrame = 0, buf1FileStartFrame = 0;
+
+			if((buffer0.numFrames / server.sampleRate) > 1.0){
+
+				buf0FileStartFrame = (buffer0.numFrames - server.sampleRate).rand.floor;
+
+			};
+
+			if((buffer1.numFrames / server.sampleRate) > 1.0){
+
+				buf1FileStartFrame = (buffer1.numFrames - server.sampleRate).rand.floor;
+
+			};
+
 			score.add([
 				0, buffer0Copy.allocMsg,
-				buffer0Copy.readMsg(buffer0.path);
+				buffer0Copy.readMsg(buffer0.path, buf0FileStartFrame);
 			]);
 
 			score.add([
 				0, buffer1Copy.allocMsg,
-				buffer1Copy.readMsg(buffer1.path);
+				buffer1Copy.readMsg(buffer1.path, buf1FileStartFrame);
 			]);
 
 			score.add([
@@ -274,48 +328,97 @@ GenerativeMutator{
 					);
 
 					var fftsize = 2.pow(9);
+
 					var chain0 = FFT(LocalBuf(fftsize), sig0);
+
 					var chain1 = FFT(LocalBuf(fftsize), sig1);
 
 					var morphRateRate = \morphRateRate.kr(0.125);
 
-					var randSig = LFNoise2.ar(LFNoise1.kr(morphRateRate)
-						.range(morphRateRate * 2,
-							morphRateRate * 2 * \morphRateHi.kr(10.5))
+					var morphRateHi = \morphRateHi.kr(10.5);
+
+					var wipeMax = \wipeMax.kr(0.1);
+
+					/*				var randSig = LFNoise2.ar(
+
+					LFNoise1.kr(morphRateRate)
+					.range(morphRateRate * 2,
+					morphRateRate * 2 + morphRateHi)
+
 					).unipolar(1);
 
 					var wipeMax = \wipeMax.kr(0.1);
 
 					var choiceArray = [
 
-						PV_BinWipe(chain0, chain1, randSig * 2 - 1 * wipeMax),
-						PV_Morph(chain0, chain1,
-							LFNoise2.ar(LFNoise1.kr(morphRateRate)
-								.range(morphRateRate * 2,
-									morphRateRate * 2
-									* \morphRateHi.kr(10.5))).unipolar(wipeMax);
-						)
+					PV_BinWipe(
+					chain0,
+					chain1,
+					randSig.bipolar(1.0) * wipeMax
+					),
+
+					PV_Morph(
+					chain0,
+					chain1,
+					LFNoise2.ar(
+
+					LFNoise1.kr(morphRateRate)
+					.range(
+					morphRateRate * 2,
+					morphRateRate * 2 + morphRateHi
+					)
+
+					).unipolar(wipeMax);
+					);
+
 					];
 
 					var choiceRateRate = \choiceRateRate.kr(0.5);
 
-					var which = LFNoise2.kr(LFNoise1.kr(choiceRateRate)
-						.range(choiceRateRate * 2,
-							choiceRateRate * 2 * \choiceRateHi.kr(10.5))
+					var which = LFNoise2.kr(
+
+					LFNoise1.kr(choiceRateRate)
+					.range(
+					choiceRateRate * 2,
+					choiceRateRate * 2 + \choiceRateHi.kr(10.5)
+					)
+
 					).unipolar(1) * (choiceArray.size - 1);
 
-					var chain = Select.kr(which, choiceArray);
+					var chain = Select.kr(which, choiceArray);*/
+
+					var chain = PV_Morph(
+						chain0,
+						chain1,
+						LFNoise2.ar(
+
+							LFNoise1.kr(morphRateRate)
+							.range(
+								morphRateRate * 2,
+								morphRateRate * 2 + morphRateHi
+							)
+
+						).unipolar(wipeMax);
+					);
 
 					var out = IFFT(chain) * \ampDB.kr(-3).dbamp;
+
 					out = LeakDC.ar(out);
+
 					out = LPF.ar(out, 16000);
+
 					out = HPF.ar(out, 20);
-					Out.ar(\out.kr(0), out * EnvGen.ar(
-						Env([0, 1, 1, 1, 0], [0.025, 1, 1, 0.025]
-							.normalizeSum, \lin),
-						timeScale: timescale,
-						doneAction: Done.freeSelf
-					));
+
+					Out.ar(\out.kr(0), out
+
+						* EnvGen.ar(
+							Env([0, 1, 1, 1, 0], [0.1, 1, 1, 0.1]
+								.normalizeSum, \lin),
+							timeScale: timescale,
+							doneAction: Done.freeSelf
+						)
+
+					);
 				}).asBytes]
 			]);
 
@@ -335,9 +438,9 @@ GenerativeMutator{
 					\choiceRateRate, timescale * exprand(1.5, 3.0),
 					\choiceRateHi, exprand(2.0, 6.0),
 
-					\ampDB, 6,
+					\ampDB, exprand(1.0, 4.0) - 1,
 
-					\wipeMax, exprand(0.1, 0.5)
+					\wipeMax, exprand(0.1, 0.9)
 				]);
 			]);
 

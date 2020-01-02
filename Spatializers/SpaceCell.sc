@@ -1,14 +1,14 @@
 SpaceCell : LiveCodingEnvironment{
-	classvar <classSymbol, <instances;
+	classvar <classSymbol, spaceCellInstances;
 	classvar <spatializersInit = false;
 	// classvar encoder, decoder;
 
 	var freeFunc;
-	var <group, <inputBus, <outputBus, <synth, <event = nil, <function = nil;
+	var <group, <inputBus, <outputBus, <synth;
+	var <event = nil, <function = nil;
 	var canPlay = false, <isFreed = false;
-	var <isRunning = true;
 	var pausingRoutine = nil;
-	var <>distanceMaxFreq = 16000;
+	var <>distanceMaxFreq = 16000, doneActionValue = 1;
 	var <lag, <azimuth, <elevation, <distance;
 
 	var <mover;
@@ -16,49 +16,59 @@ SpaceCell : LiveCodingEnvironment{
 	*new{|symbol|
 		var return;
 
-		instances = instances ? List.new;
 		//call an instance of this class
 		return = super.new(symbol).pr_SetupSpaceCell;
 
-		//add that instance to the class's list of instances
+		//add that instance to the class's list of spaceCellInstances
 		this.pr_InitializeSpaceCell(return);
-		instances.add(return);
 
 		//return it
 		^return;
 	}
 
 	*initNew{ |symbol|
+
 		var toremove;
+
 		this.pr_InitializeSpaceCell;
+
 		toremove = super.new(symbol);
+
 		super.pr_RemoveInstance(toremove);
+
 	}
 
 	reInitialize{
+
 		if(isFreed==false){
-			if(isRunning==false){
+
+			if(this.isPlaying==false){
+
 				this.pr_SetupSpaceCell;
+
 			}/*ELSE*/{
+
 				("Warning: Spatializer is already running"
 					++" and so cannot be reinitialized.").postln;
+
 			};
 		};
 	}
 
 	*pr_InitializeSpaceCell{|toAdd|
-		//adds a copy to manage all instances of active particles
-		instances = instances ? List.new;
+		//adds a copy to manage all spaceCellInstances of active particles
+		spaceCellInstances = spaceCellInstances ? List.new;
 
 		//set up the class symbol:
 		//this will be used to format synth names as well as to
 		//manage loading synthdefs onto the server by the super
 		//class so that every calling of the class does
 		//not also accompany the reloading of redundant synthdefs
-		instances.add(toAdd);
+		spaceCellInstances.add(toAdd);
 	}
 
 	pr_SetupSpaceCell{
+
 		var returnFunction = {
 
 			//load and process the event and function
@@ -68,33 +78,32 @@ SpaceCell : LiveCodingEnvironment{
 			this.pr_MakeBusses;
 			this.pr_MakeNodes;
 
-			CmdPeriod.doOnce({
-				if(isRunning){
-					isRunning = false;
-				};
-			});
-
 		};
 
 		if(spatializersInit==false){
+
 			forkIfNeeded{
-				SpaceCell.loadSpaceCellSynthDefs;
+
 				server.sync;
+
 				returnFunction.value;
+
 			};
+
 		}/*ELSE*/{
+
 			returnFunction.value;
+
 		};
 	}
 
 	pr_MakeNodes{
-		isRunning = false;
+
 		canPlay = false;
 
 		// server.bind({
 		this.pr_MakeGroups;
 		this.pr_MakeSynth;
-		isRunning = true;
 		// });
 
 	}
@@ -123,10 +132,8 @@ SpaceCell : LiveCodingEnvironment{
 	pr_MakeGroups{|condition|
 		//load a dictionary of groups
 
-		if(isRunning==false){
-			group = Group.new;
-			group.register;
-		};
+		group = Group.new;
+		group.register;
 
 	}
 
@@ -147,7 +154,34 @@ SpaceCell : LiveCodingEnvironment{
 
 		], group).register;
 
+		freeFunc = freeFunc ? `nil;
+		synth.onFree({
+
+			this.pr_FreeResources;
+
+		});
+
 		canPlay = true;
+	}
+
+	isRunning{
+
+		if(synth.isNil.not){
+
+			^synth.isRunning;
+
+		}/*ELSE*/{
+
+			^false;
+
+		};
+
+	}
+
+	isPlaying{
+
+		^synth.isPlaying;
+
 	}
 
 	lag_{|newLag = 0.01|
@@ -179,6 +213,7 @@ SpaceCell : LiveCodingEnvironment{
 		synthdef = SynthDef(\Synth, {
 
 			var timer = \timer.kr(8);
+
 			var env = EnvGen.kr(Env.asr(0.0, 1, \release.kr(1.0)),
 				\gate.kr(1),
 				doneAction: Done.freeSelf
@@ -194,6 +229,7 @@ SpaceCell : LiveCodingEnvironment{
 
 			DetectSilence.ar(in+wakeUpSignal, time: timer/2,
 				doneAction: \doneAction.kr(1));
+
 			Out.ar(\out.kr(0), sig * env);
 		});
 
@@ -203,94 +239,104 @@ SpaceCell : LiveCodingEnvironment{
 	pr_FreeGroupAndBus{
 
 		if(group.isNil.not){
+
 			if(group.isPlaying){
 				group.free;
 			};
+
 			group = nil;
 		};
 
 		if(inputBus.isNil.not){
-			if(inputBus.index.isNil.not){
-				inputBus.free;
+
+			if(inputBus.class==Bus){
+				if(inputBus.index.isNil.not){
+					inputBus.free;
+				};
 			};
+
 			inputBus=nil;
 		};
 
-		if(outputBus.class==Bus){
-			if(outputBus.isNil.not){
-				outputBus.free;
-				outputBus = nil;
-			};
-		};
-	}
+		if(outputBus.isNil.not){
 
-	pr_FreeResources{
-		super.free;
-		instances.remove(this);
-		this.pr_FreeGroupAndBus;
-		isRunning = false;
-		synth = nil;
+			if(outputBus.class==Bus){
+				if(outputBus.index.isNil.not){
+					outputBus.free;
+				};
+			};
+
+			outputBus = nil;
+		};
+
 		isFreed = true;
 	}
 
+	pr_FreeResources{
+
+		super.free;
+		spaceCellInstances.remove(this);
+
+		if(freeFunc.value.isNil.not){
+			freeFunc.value.value;
+		};
+
+		this.pr_FreeGroupAndBus;
+
+	}
+
 	onFree{|function|
+
 		if(freeFunc.isNil){
-			freeFunc = function;
+
+			freeFunc = `function;
 		}/*ELSE*/{
-			freeFunc = freeFunc ++ function;
+
+			freeFunc.value = freeFunc.value ++ function;
+
 		};
 	}
 
 	free{
 
-		synth.onFree({
-
-			freeFunc !? {
-				freeFunc.value
-			};
-
-			this.pr_FreeResources;
-		});
-
-
 		if(synth.isPlaying){
 
 			if(synth.isRunning){
-				//set a random release time
-				var release = lag * 1.05;
 
-				//release the synth at that time
-				synth.set(\release, release, \doneAction, 2);
+
+				doneActionValue = 2;
+				this.pr_WakeUpSynthAndPlay;
+
 
 			}/*ELSE*/{
 
 				//if it is not running, then just free everything all at once
 				synth.free;
+
 			};
 
 		}/*ELSE*/{
 
-			if(group.isPlaying){
-				this.pr_FreeResources;
-			};
-
-			freeFunc.value;
+			this.pr_FreeResources;
 
 		};
 	}
 
 	*freeAll{
-		if(instances!=nil){
 
-			if(instances.size > 0){
-				//free all instances of this class
-				instances.copy.do{|instance|
+		if(spaceCellInstances!=nil){
+
+			if(spaceCellInstances.size > 0){
+				//free all spaceCellInstances of this class
+				spaceCellInstances.copy.do{|instance|
+
 					instance.free;
+
 				};
 
 			};
 
-		}
+		};
 
 	}
 
@@ -355,29 +401,21 @@ SpaceCell : LiveCodingEnvironment{
 		//this method makes sure that the synth both will play when called but also
 		//limits its overall impact on the server resources when not in use
 
-
 		//if the synth exists
 		synth !? {
 
 			//if it is running on the server
-			if(synth.isRunning){
+			if(synth.isRunning.not){
 
-				//then play the event through it
-				// event.play;
-			}/*ELSE*/{
 
-				//see if it is in the process of being paused
-				pausingRoutine !? {
-					//if it is being paused, stop that routine
-					if(pausingRoutine.isPlaying){
-						pausingRoutine.stop;
-						pausingRoutine = nil;
-					};
-					//and then...
+				if(pausingRoutine.isPlaying){
+
+					pausingRoutine.stop;
+
 				};
 
 				//wake up the synth:
-				pausingRoutine = fork{
+				pausingRoutine = Routine({
 
 					//this routine wakes up the synth by setting its doneAction to "none"
 					//and routing pink noise through the DetectSilence UGen.
@@ -388,13 +426,16 @@ SpaceCell : LiveCodingEnvironment{
 					//after one period of server latency, the doneAction is set to "pauseSelf"
 					//and, after another period of server latency, the synth pauses itself freeing up resources
 					(server.latency * 2).wait;
-					synth.set(\doneAction, 1);
+					synth.set(\doneAction, doneActionValue);
 
-					//once the routine is finished, the variable in which it was stored is set to nil again
-					pausingRoutine = nil;
-				};
+				});
+
+				pausingRoutine.play;
+
 			};
+
 		};
+
 	}
 
 	playSpaceCell{
@@ -485,6 +526,12 @@ SpaceCell : LiveCodingEnvironment{
 		};
 
 		mover = nil;
+	}
+
+	*instances{
+
+		^spaceCellInstances;
+
 	}
 
 }

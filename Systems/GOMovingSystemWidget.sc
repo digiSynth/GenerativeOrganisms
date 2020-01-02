@@ -7,6 +7,10 @@ GOMovingSystemWidget{
 	var <window, compositeView, staticText;
 	var <system;
 
+	var toLog, logRoutine;
+
+	var toRemove, removalRoutine;
+
 	var dictionary;
 
 	*new{ |organismSystem|
@@ -26,6 +30,9 @@ GOMovingSystemWidget{
 
 		system = input;
 
+		toLog = toLog ? List.new;
+		toRemove = toRemove ? List.new;
+
 		dictionary = dictionary ? IdentityDictionary.new;
 
 		window = Window.new("GOMovingSystem Widget",
@@ -33,7 +40,8 @@ GOMovingSystemWidget{
 				750, 750
 			),
 			scroll: true
-		).background_(Color.white).front;
+		).background_(Color.white).front
+		.alwaysOnTop_(true);
 
 		startButton = Button(window, window.view.bounds)
 		.states_([
@@ -85,7 +93,6 @@ GOMovingSystemWidget{
 			.font_(Font("Monaco", 14))
 			.string_("");
 
-			// window.layout_(HLayout(compositeView, staticText));
 
 			compositeView.decorator =
 			FlowLayout(compositeView.bounds, 5@5, 5@5);
@@ -94,11 +101,11 @@ GOMovingSystemWidget{
 
 		});
 
-		window.onClose_{
-			if(system.isNil.not){
-				system.free;
-			}
-		}
+		window.onClose = {
+
+			system.free;
+
+		};
 
 	}
 
@@ -112,25 +119,84 @@ GOMovingSystemWidget{
 
 	removeAt{|key|
 
-		defer{
-			dictionary.removeAt(key).value.remove
-		};
+		this.pr_RunRemovalTask(key);
 
 	}
 
-	log{|message|
+	pr_RunRemovalTask{|key|
 
-		defer{
+		if(removalRoutine.isPlaying){
 
-			messagesCount = messagesCount + 1 % 24;
+			removalRoutine.stop;
 
-			if(messagesCount==0){
-				staticText.string = "";
+		};
+
+		toRemove.add(key);
+
+		removalRoutine = Routine({
+
+			if(toRemove.isEmpty.not){
+
+				toRemove.copy.size.do{
+
+					var key = toRemove.removeAt(0);
+
+					dictionary.removeAt(key).value.remove;
+
+					(1/24).wait;
+				};
+
 			};
 
-			staticText.string = staticText.string++"\n"++message;
-		}
+		});
 
+		removalRoutine.play(AppClock);
+	}
+
+
+	log{|message|
+
+		toLog = toLog ? List.new;
+
+		this.pr_RunLogTask(message);
+
+	}
+
+	pr_RunLogTask{|message|
+
+		if(logRoutine.isPlaying){
+
+			logRoutine.stop;
+
+		};
+
+		toLog.add(message);
+
+		logRoutine = Routine({
+
+			if(toLog.isEmpty.not){
+
+				toLog.copy.size.do{
+
+					if(messagesCount==0){
+
+						staticText.string = "";
+
+					};
+
+					staticText.string = staticText.string
+					++"\n"++(toLog.removeAt(0));
+
+					messagesCount = messagesCount + 1 % 24;
+
+					(1/48).wait;
+				};
+
+			};
+
+		});
+
+		logRoutine.play(AppClock);
 	}
 
 	pr_MakeButton{ |key|

@@ -1,11 +1,12 @@
 SpaceCellQuad : SpaceCell{
 	classvar <orientation = 0.5;
+	classvar quadInstances;
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all instances of active particles
-		instances = instances ? List.new;
-		instances.add(return);
+		//adds a copy to manage all quadInstances of active particles
+		quadInstances = quadInstances ? List.new;
+		quadInstances.add(return);
 
 		^return;
 	}
@@ -26,11 +27,11 @@ SpaceCellQuad : SpaceCell{
 
 	free{
 		super.free;
-		instances.remove(this);
+		quadInstances.remove(this);
 	}
 
 	*freeAll{
-		instances.do{
+		quadInstances.do{
 			|item|
 			item.free;
 		}
@@ -71,6 +72,12 @@ SpaceCellQuad : SpaceCell{
 				this.class.synthDefDictionary.removeAt(classSymbol);
 			};
 		}
+	}
+
+	*instances{
+
+		^quadInstances;
+
 	}
 
 }

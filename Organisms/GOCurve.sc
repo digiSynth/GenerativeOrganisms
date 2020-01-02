@@ -240,4 +240,12 @@ GOCurve{
 		^env.plot;
 	}
 
+
+	printOn{|stream|
+
+		stream<<"a GOCurve( "<<env.asString
+		<<", min: "<<min<<", max: "<<max<<" )";
+
+	}
+
 }
