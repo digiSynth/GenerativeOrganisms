@@ -1,4 +1,4 @@
-GOBehaviorOptions{
+GenOrg_BehaviorOptions{
 
 	classvar <>rateLoMin = 0.095, <>rateLoMax = 0.5;
 	classvar <>rateHiMin = 0.501, <>rateHiMax = 16.0;
@@ -101,7 +101,7 @@ GOBehaviorOptions{
 
 /*	printOn{|stream|
 
-		stream<<"a GOBehaviorOptions\n"
+		stream<<"a GenOrg_BehaviorOptions\n"
 		<<"\t>> rateLo: "<<rateLo//<<"\n"
 		<<"\t\t>> rateHi: "<<rateHi<<"\n"
 
@@ -258,12 +258,12 @@ GOBehaviorOptions{
 	averageOptions{|targetOptions|
 		var return;
 
-		if(targetOptions.class!=GOBehaviorOptions){
-			Error("Can only average a GOBehaviorOptions"
+		if(targetOptions.class!=GenOrg_BehaviorOptions){
+			Error("Can only average a GenOrg_BehaviorOptions"
 				++" instance with another one.").throw;
 		};
 
-		return = GOBehaviorOptions.new;
+		return = GenOrg_BehaviorOptions.new;
 
 		return.rateLo = rateLo + targetOptions.rateLo * 0.5;
 		return.rateHi = rateHi + targetOptions.rateHi * 0.5;

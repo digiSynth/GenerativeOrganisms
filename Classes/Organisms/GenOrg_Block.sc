@@ -1,4 +1,4 @@
-GOBlock[]{
+GenOrg_Block[]{
 	classvar <>maxSize = 7;
 	var <block;
 
@@ -39,33 +39,26 @@ GOBlock[]{
 	}
 
 	*newRand{
-		var return;
-		var block = GOBlock.new;
+		var randBlock = GenOrg_Block.new;
 
 		maxSize.do{|item|
 
-			var segs = rrand(4, 24);
-			var env = Env(
-				levels: ({1.0.rand}!segs),
-				times: ({exprand(1e-3, 1.0)}!(segs-1)).normalizeSum,
-				curve: ({12.0.bilinrand}!(segs-1))
-			);
+			randBlock.add(GenOrg_Curve.newRand);
 
-			block = block.add(GOCurve(env));
 		};
-		return = block;
-		^return;
+
+		^randBlock;
 	}
 
 	*newClear{ |n = 1|
-		var return = GOBlock.new;
+		var return = GenOrg_Block.new;
 		n.do{|item|
-			return = return.add(GOCurve.new);
+			return = return.add(GenOrg_Curve.new);
 		}
 	}
 
 	*fill{|n, function|
-		var return = GOBlock.new;
+		var return = GenOrg_Block.new;
 		var size = this.maxSize;
 
 		if(n > size){
@@ -84,7 +77,7 @@ GOBlock[]{
 	add{ |input|
 		var ogcurve;
 
-		if(input.class == GOCurve){
+		if(input.class == GenOrg_Curve){
 			ogcurve = input;
 		}/*ELSE*/{
 
@@ -94,7 +87,7 @@ GOBlock[]{
 				case
 				{input.size==1}{
 					if(input[0].class==Env){
-						ogcurve = GOCurve(input[0]);
+						ogcurve = GenOrg_Curve(input[0]);
 					}/*ELSE*/{
 						this.pr_ThrowArrayMsg;
 					}
@@ -102,7 +95,7 @@ GOBlock[]{
 
 				{input.size==2}{
 					if(input[0].class==Env){
-						ogcurve = GOCurve(input[0], input[1]);
+						ogcurve = GenOrg_Curve(input[0], input[1]);
 					}/*ELSE*/{
 						this.pr_ThrowArrayMsg;
 					}
@@ -110,7 +103,7 @@ GOBlock[]{
 
 				{input.size==3}{
 					if(input[0].class==Env){
-						ogcurve = GOCurve(input[0], input[1], input[2]);
+						ogcurve = GenOrg_Curve(input[0], input[1], input[2]);
 					}/*ELSE*/{
 						this.pr_ThrowArrayMsg;
 					}
@@ -118,7 +111,7 @@ GOBlock[]{
 
 				{input.size > 3}{
 					if(input[0].class==Env){
-						ogcurve = GOCurve(input[0], input[1], input[2]);
+						ogcurve = GenOrg_Curve(input[0], input[1], input[2]);
 					}/*ELSE*/{
 						this.pr_ThrowArrayMsg;
 					}
@@ -126,7 +119,7 @@ GOBlock[]{
 			}
 
 			{input.class==Env}{
-				ogcurve = GOCurve(input);
+				ogcurve = GenOrg_Curve(input);
 			}
 
 			{(input.class!=Env) and: {input.isCollection.not}}{
@@ -137,7 +130,7 @@ GOBlock[]{
 
 		};
 
-		if(ogcurve.class==GOCurve){
+		if(ogcurve.class==GenOrg_Curve){
 			this.pr_AddToBlock(ogcurve);
 		}/*ELSE*/{
 			Error("Failed to instantiate GOrganismCurve").throw;
@@ -155,6 +148,45 @@ GOBlock[]{
 		}
 	}
 
+	pr_TestInput{|input|
+
+
+		if(input.class!=GenOrg_Curve){
+
+			if(input.clas==Env){
+
+				^GenOrg_Curve(input);
+
+			}/*ELSE*/{
+
+				this.pr_ThrowArrayMsg;
+
+			};
+
+		}/*ELSE*/{
+
+			^input
+
+		};
+
+	}
+
+	rateCurve_{|toAdd|
+
+		toAdd = this.pr_TestInput(toAdd);
+
+		if(block.isEmpty){
+
+			this.add(toAdd);
+
+		}/*ELSE*/{
+
+			block[0] = toAdd;
+
+		};
+
+	}
+
 	//pos
 	posCurve{
 		if(block.size>=2){
@@ -162,11 +194,71 @@ GOBlock[]{
 		}
 	}
 
+	posCurve_{|toAdd|
+
+		toAdd = this.pr_TestInput(toAdd);
+
+		//if a second curve has not been added yet, add it
+		if(block.size==1){
+
+			this.add(toAdd);
+
+		};
+
+		//if the block is empty, add a random first index before adding this one
+		if(block.size < 1){
+
+			this.add(GenOrg_Curve.newRand);
+			this.add(toAdd);
+
+		};
+
+		//If the array is bigger than size 2, replace index 1 with the target
+		if(block.size >=2){
+
+			block[1] = toAdd;
+
+		};
+
+	}
+
 	//amp
 	ampCurve{
 		if(block.size>=3){
 			^block[2];
 		}
+	}
+
+	ampCurve_{|toAdd|
+
+		toAdd = this.pr_TestInput(toAdd);
+
+
+		case
+		//if a third curve has not been added yet
+		{block.size==2}{
+
+			this.add(toAdd);
+
+		}
+
+		//has fewer than 2 blocks, add the difference
+		{block.size < 2}{
+
+			var offset = block.size;
+			(2 - offset).do{
+
+				|i|
+
+				 this.add(GenOrg_Curve.rand);
+
+			};
+
+			this.add(toAdd);
+
+		}
+
+
 	}
 
 	//filter
@@ -305,7 +397,7 @@ GOBlock[]{
 
 		stream
 
-		<<"GOBlock[ "
+		<<"GenOrg_Block[ "
 
 		<<string
 
@@ -320,10 +412,10 @@ GOBlock[]{
 	}
 
 	averageBlocks{|otherBlock|
-		var returnBlock = GOBlock.new;
+		var returnBlock = GenOrg_Block.new;
 
-		if(otherBlock.class!=GOBlock){
-			Error("Can only average a GOBlock with other GOBlocks.").throw;
+		if(otherBlock.class!=GenOrg_Block){
+			Error("Can only average a GenOrg_Block with other GenOrg_Blocks.").throw;
 		};
 
 		if(this.size >= otherBlock.size){

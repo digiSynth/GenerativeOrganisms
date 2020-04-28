@@ -1,4 +1,4 @@
-SpaceCellMono : SpaceCell{
+SpatialCellMono : SpatialCell{
 	classvar <orientation = 0.5;
 	classvar <spatializerInit = false;
 	classvar monoInstances;
@@ -20,7 +20,7 @@ SpaceCellMono : SpaceCell{
 
 	}
 
-	*pr_InitializeSpaceCell{
+	*pr_InitializeSpatialCell{
 		//set up the class symbol:
 		//this will be used to format synth names as well as to
 		//manage loading synthdefs onto the server by the super

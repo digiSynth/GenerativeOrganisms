@@ -1,4 +1,5 @@
-GOBehavior : LiveCodingEnvironment{
+//This class is too slow. I should probably just rewrite it. Or really remove the different synths. Just one at a time.
+GenOrg_Behavior : SynthDef_Processor{
 	classvar classInitialized = false;
 	classvar <instanceCount, <goBehaviorInstances;
 	classvar currentArrayBlock, <classSymbol;
@@ -24,7 +25,14 @@ GOBehavior : LiveCodingEnvironment{
 		instanceCount = instanceCount ? 0;
 		copyCount = instanceCount;
 
-		this.pr_CheckGOBlocks(
+/*		matingBlock = matingBlock ? GenOrg_Block.newRand;
+		searchingBlock = searchingBlock ? GenOrg_Block.newRand;
+		painBlock = painBlock ? GenOrg_Block.newRand;
+		contactBlock = contactBlock ? GenOrg_Block.newRand;
+		eatingBlock = eatingBlock ? GenOrg_Block.newRand;
+		spawnBlock = spawnBlock ? GenOrg_Block.newRand;
+		deathBlock = deathBlock ? GenOrg_Block.newRand;*/
+		this.pr_CheckGenOrg_Blocks(
 			matingBlock,
 			searchingBlock,
 			painBlock,
@@ -37,7 +45,7 @@ GOBehavior : LiveCodingEnvironment{
 		return = super.new(classSymbol:
 			this.prFormatClassSymbol(this, instanceCount)
 		)
-		.pr_InitGOBehavior(options, copyCount);
+		.pr_InitGenOrg_Behavior(options, copyCount);
 
 		goBehaviorInstances.add(return);
 
@@ -47,17 +55,11 @@ GOBehavior : LiveCodingEnvironment{
 			});
 
 			ServerTree.add({
-
 				if(goBehaviorInstances.isEmpty.not){
-
 					goBehaviorInstances.copy.do{|instance|
-
 						goBehaviorInstances.removeAt(0).free;
-
 					};
-
 				};
-
 			});
 
 			classInitialized = true;
@@ -66,7 +68,7 @@ GOBehavior : LiveCodingEnvironment{
 		^return;
 	}
 
-	pr_InitGOBehavior{|boptions, num|
+	pr_InitGenOrg_Behavior{|boptions, num|
 
 		matingBlock = classMatingBlock;
 		searchingBlock = classSearchingBlock;
@@ -78,10 +80,10 @@ GOBehavior : LiveCodingEnvironment{
 
 		instanceNumber = num;
 
-		options = boptions ? GOBehaviorOptions.new;
+		options = boptions ? GenOrg_BehaviorOptions.new;
 	}
 
-	*pr_CheckGOBlocks{|m, se, pn, c, e, sp, d|
+	*pr_CheckGenOrg_Blocks{|m, se, pn, c, e, sp, d|
 
 		classMatingBlock = this.pr_CheckBlock(m);
 		classSearchingBlock = this.pr_CheckBlock(se);
@@ -96,8 +98,8 @@ GOBehavior : LiveCodingEnvironment{
 	*pr_CheckBlock{|input|
 		var return;
 
-		if(input.class!=GOBlock){
-			return = GOBlock.newRand;
+		if(input.class!=GenOrg_Block){
+			return = GenOrg_Block.newRand;
 		}/*ELSE*/{
 			return = input;
 		};
@@ -109,8 +111,8 @@ GOBehavior : LiveCodingEnvironment{
 	checkBlock{|input|
 		var return;
 
-		if(input.class!=GOBlock){
-			return = GOBlock.newRand;
+		if(input.class!=GenOrg_Block){
+			return = GenOrg_Block.newRand;
 		}/*ELSE*/{
 			return = input;
 		};
@@ -217,7 +219,7 @@ GOBehavior : LiveCodingEnvironment{
 		^symb;
 	}
 
-	pr_GOBehaviorCheckType{|type|
+	pr_GenOrg_BehaviorCheckType{|type|
 		var bool = false;
 		var types = this.types;
 		var size = types.size;
@@ -247,19 +249,17 @@ GOBehavior : LiveCodingEnvironment{
 		};
 	}
 
-	playGOBehavior{|type, buffer, db = -12, outBus = 0, target, action|
+	playGenOrg_Behavior{|type, buffer, db = -12, outBus = 0, target, action|
 
 		var localSymb = this.localClassSymbol;
-
 		var synthName = format("%_%", localSymb.asString, type.asString).asSymbol;
-
 		var timescale = options.timescale * rrand(0.95, 1.05);
 
 		type = type !? {
 			type.asString.toLower.asSymbol;
 		} ? 'contacting';
 
-		this.pr_GOBehaviorCheckType(type);
+		this.pr_GenOrg_BehaviorCheckType(type);
 
 		if(target.isNil){
 			target = server.defaultGroup;
@@ -350,38 +350,25 @@ GOBehavior : LiveCodingEnvironment{
 
 	free{
 		var localSymb = this.localClassSymbol;
+		var synthDefs = synthDefDictionary[localSymb].asArray;
 
+		this.class.pr_GarbageCollect(synthDefs);
 		super.free;
 		goBehaviorInstances.remove(this);
-
-		synthDefDictionary !? {
-
-			synthDefDictionary[localSymb] !? {
-				synthDefDictionary[localSymb]
-				.keys.do{|synthDefName|
-					SynthDef.removeAt(synthDefName);
-				};
-
-				synthDefDictionary.removeAt(localSymb);
-			};
-
-		}
 	}
 
-	*freeAll{
+/*	*freeAll{
 		if(goBehaviorInstances.isNil.not){
 			goBehaviorInstances.copy.do{|item|
-
 				item.free;
-
 			};
 
+			instanceCount = 0;
+			goBehaviorInstances = nil;
 		};
-
-		this.resetInstanceCount;
-	}
+	}*/
 
 	*resetInstanceCount{
-		instanceCount = 0;
+		instanceCount = nil;
 	}
 }

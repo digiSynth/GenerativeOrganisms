@@ -1,4 +1,4 @@
-GenerativeOrganism{
+GenOrg{
 	// classvar oscBufferInfo;
 	classvar goInstances;
 	classvar server;
@@ -18,7 +18,7 @@ GenerativeOrganism{
 		};
 
 		return = super.new
-		.pr_InitGenerativeOrganism(
+		.pr_InitGenOrg(
 			buffer, behavior,
 			spatializer/*, playOnSpawn*/
 		);
@@ -34,7 +34,7 @@ GenerativeOrganism{
 
 	}
 
-	pr_InitGenerativeOrganism{|bf, be, sp/*, bool*/|
+	pr_InitGenOrg{|bf, be, sp/*, bool*/|
 		var setResourcesFunc;
 
 		if(bf.class!=Ref and: {bf.class!=Buffer}){
@@ -44,7 +44,7 @@ GenerativeOrganism{
 			};
 
 			if(bf.class!= Integer){
-				Error("GenerativeOrganism lacks a valid buffer input.").throw;
+				Error("GenOrg lacks a valid buffer input.").throw;
 			};
 
 		};
@@ -60,34 +60,33 @@ GenerativeOrganism{
 		};
 
 		bf.value.normalize;
-
 		bufferReference = bf;
 
 		setResourcesFunc = {
 
-			if(sp.isSpaceCell){
+			if(sp.isSpatialCell){
 				spatializer = sp;
 			}/*ELSE*/{
 
 				if(sp.class==Symbol or: {sp.class==String}){
 					case
 					{sp.asString.toLower=="Binaural".toLower}{
-						spatializer = SpaceCellBinaural.new;
+						spatializer = SpatialCellBinaural.new;
 					}
 
 					{sp.asString.toLower=="FOA".toLower}{
-						spatializer = SpaceCellFOA.new;
+						spatializer = SpatialCellFOA.new;
 					}
 
 					{sp.asString.toLower=="HOA".toLower}{
-						spatializer = SpaceCellHOA.new;
+						spatializer = SpatialCellHOA.new;
 					};
 
 				}/*ELSE*/{
 
 					if(sp.isNil){
 
-						spatializer = SpaceCellMono.new;
+						spatializer = SpatialCellMono.new;
 
 						server.sync;
 
@@ -97,7 +96,7 @@ GenerativeOrganism{
 				};
 			};
 
-			behavior = be ? GOBehavior.new;
+			behavior = be ? GenOrg_Behavior.new;
 
 			if(isInitialized==false){
 
@@ -124,9 +123,9 @@ GenerativeOrganism{
 			forkIfNeeded{
 
 				/*if(sp.isNil){
-				if(SpaceCell.spatializersInit==false){
+				if(SpatialCell.spatializersInit==false){
 
-				SpaceCell.loadSpaceCellSynthDefs;
+				SpatialCell.loadSpatialCellSynthDefs;
 				server.sync;
 
 				};
@@ -143,11 +142,11 @@ GenerativeOrganism{
 
 	}
 
-	playGenerativeOrganism{|type, db = -3|
+	playGenOrg{|type, db = -3|
 
 		if(isInitialized){
 
-			spatializer.playSpaceCell;
+			spatializer.playSpatialCell;
 
 			behavior.playGOBehavior(type ? 'spawn', this.buffer, db,
 				spatializer.inputBus, spatializer.group, 'addToHead');
@@ -158,7 +157,7 @@ GenerativeOrganism{
 
 	position{|azimuth = 0, elevation = 0, distance = 1.0|
 
-		spatializer.playSpaceCell;
+		spatializer.playSpatialCell;
 		spatializer.azimuth = azimuth;
 		spatializer.elevation = elevation;
 		spatializer.distance = distance;
@@ -170,22 +169,22 @@ GenerativeOrganism{
 
 		if(organism.isNil.not){
 
-			if(organism.isGenerativeOrganism){
+			if(organism.isGenOrg){
 
 				if(this.buffer.bufnum.isNil.not
 					&& organism.buffer.bufnum.isNil.not){
 
 					var newBehavior, newBuffer, newSpatializer;
 
-					newBehavior = GenerativeMutator
+					newBehavior = GenOrg_Mutator
 					.mateBehaviors(behavior, organism.behavior);
 
-					newBuffer = GenerativeMutator
+					newBuffer = GenOrg_Mutator
 					.mateBuffers(this.buffer, organism.buffer, {
 
 						newSpatializer = spatializer.class.new;
 
-						newOrganism.value = GenerativeOrganism
+						newOrganism.value = GenOrg
 						.new(newBuffer, newBehavior, newSpatializer);
 						// "Organism delivered!".postln;
 
@@ -204,13 +203,13 @@ GenerativeOrganism{
 
 		if(this.buffer.isNil.not){
 
-			if(organism.isGenerativeOrganism){
+			if(organism.isGenOrg){
 
 				if(organism.buffer.isNil.not){
 
 					if(organism.buffer.bufnum.isNil.not){
 
-						bufferReference =  GenerativeMutator
+						bufferReference =  GenOrg_Mutator
 						.eatBuffers(this.buffer, organism.buffer);
 
 					};
@@ -294,14 +293,14 @@ GenerativeOrganism{
 		};
 	}
 
-	isGenerativeOrganism{
+	isGenOrg{
 		^true;
 	}
 
 
 	*deleteOrganismFiles{
 
-		GenerativeMutator.deleteOrganismFiles;
+		GenOrg_Mutator.deleteOrganismFiles;
 
 	}
 
@@ -315,7 +314,7 @@ GenerativeOrganism{
 
 + Object{
 
-	isGenerativeOrganism{
+	isGenOrg{
 		^false;
 	}
 

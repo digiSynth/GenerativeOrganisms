@@ -1,9 +1,9 @@
-+ GOBehavior{
++ GenOrg_Behavior{
 	averageBehaviors{|behavior|
 		var check = {
 
-			if(behavior.class != GOBehavior){
-				Error("Can only average GOBehaviors!").throw;
+			if(behavior.class != GenOrg_Behavior){
+				Error("Can only average GenOrg_Behaviors!").throw;
 			};
 
 		}.value;
@@ -18,7 +18,7 @@
 
 		var newOptions = options.averageOptions(behavior.options);
 
-		averageBehavior = GOBehavior.new(
+		averageBehavior = GenOrg_Behavior.new(
 			matingBlock: newMatingBlock,
 			searchingBlock: newSearchingBlock,
 			painBlock: newPainBlock,

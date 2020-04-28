@@ -1,4 +1,4 @@
-+ GOBehavior{
++ GenOrg_Behavior{
 
 
 	getControlNames{|synthDefName = \sine|

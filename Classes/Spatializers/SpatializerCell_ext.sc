@@ -1,21 +1,21 @@
-+ SpaceCell {
++ SpatialCell {
 
 	*newHOA{
-		^SpaceCellHOA.new;
+		^SpatialCellHOA.new;
 	}
 
 	*newFOA{
-		^SpaceCellFOA.new;
+		^SpatialCellFOA.new;
 	}
 
 	*newBinaural{
-		^SpaceCellBinaural.new;
+		^SpatialCellBinaural.new;
 	}
 
-	// *isSpaceCell{^true}
-	isSpaceCell{^true}
+	// *isSpatialCell{^true}
+	isSpatialCell{^true}
 
-	*isSpaceCell{^true}
+	*isSpatialCell{^true}
 
 	//overriding methods: these are part of the interface associated with the synthDefManagementSystem superclass
 	//it's sort of bulky but like whatever
@@ -81,7 +81,7 @@
 }
 
 +Object{
-	isSpaceCell{^false}
+	isSpatialCell{^false}
 
-	*isSpaceCell{^false}
+	*isSpatialCell{^false}
 }

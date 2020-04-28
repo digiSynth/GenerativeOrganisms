@@ -1,4 +1,4 @@
-GOAgent : GenerativeOrganism{
+GenOrg_Agent : GenOrg{
 	classvar <>timeToMateLo = 0.0625, <>timeToMateHi = 0.35;
 	classvar <>timeToEatLo = 0.03125, <>timeToEatHi = 0.125;
 	classvar <>hitPointsLo = 2, <>hitPointsHi = 16;
@@ -12,10 +12,10 @@ GOAgent : GenerativeOrganism{
 	var lifespanCanSet = true, timeToMateCanSet = true, timeToEatCanSet = true;
 
 	*new{ |buffer, behavior, spatializer|
-		^super.new(buffer, behavior, spatializer).pr_InitGOAgent;
+		^super.new(buffer, behavior, spatializer).pr_InitGenOrg_Agent;
 	}
 
-	pr_InitGOAgent{
+	pr_InitGenOrg_Agent{
 
 		lifespan = exprand(lifespanLo, lifespanHi);
 		timeToMate = lifespan * exprand(timeToMateLo, timeToMateHi);
@@ -127,7 +127,7 @@ GOAgent : GenerativeOrganism{
 
 	}
 
-	updateGOAgent{
+	updateGenOrg_Agent{
 
 		if(isInitialized){
 			currentTime = Main.elapsedTime;
@@ -164,16 +164,16 @@ GOAgent : GenerativeOrganism{
 
 					var newBehavior, newBuffer, newSpatializer;
 
-					newBehavior = GenerativeMutator
+					newBehavior = GenOrg_Mutator
 					.mateBehaviors(behavior, organism.behavior);
 
-					newBuffer = GenerativeMutator
+					newBuffer = GenOrg_Mutator
 					.mateBuffers(this.buffer, organism.buffer, {
 						var organismToDeliver;
 
 						newSpatializer = spatializer.class.new;
 
-						organismToDeliver = GOAgent
+						organismToDeliver = GenOrg_Agent
 						.new(newBuffer, newBehavior, newSpatializer);
 
 						organismToDeliver.pr_lifespan =

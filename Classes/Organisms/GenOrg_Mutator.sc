@@ -1,10 +1,10 @@
-GenerativeMutator{
+GenOrg_Mutator{
 	classvar isInitialized = false;
 	classvar server;
 	classvar condition;
 	classvar <>folderPath;
 
-	*pr_GOMutatorInit{
+	*pr_GenOrg_MutatorInit{
 
 		if(isInitialized==false){
 			server = Server.default;
@@ -267,7 +267,7 @@ GenerativeMutator{
 			^return;
 		}/*ELSE*/{
 
-			this.pr_GOMutatorInit;
+			this.pr_GenOrg_MutatorInit;
 			this.mateBuffers(buffer0, buffer1, action);
 
 		};
@@ -275,7 +275,7 @@ GenerativeMutator{
 
 	*eatBuffers{|buffer0, buffer1, action|
 
-		this.pr_GOMutatorInit;
+		this.pr_GenOrg_MutatorInit;
 
 		if(isInitialized){
 			var return = Ref.new(nil);
@@ -448,7 +448,7 @@ GenerativeMutator{
 			^return;
 
 		}/*ELSE*/{
-			this.pr_GOMutatorInit;
+			this.pr_GenOrg_MutatorInit;
 			this.mateBuffers(buffer0, buffer1, action);
 		};
 

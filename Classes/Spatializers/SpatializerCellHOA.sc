@@ -1,4 +1,4 @@
-SpaceCellHOA : SpaceCell{
+SpatialCellHOA : SpatialCell{
 	classvar <classSymbol, hoaInstances;
 	// classvar encoder, decoder;
 	classvar <order = 2, orderChannels;
@@ -26,7 +26,7 @@ SpaceCellHOA : SpaceCell{
 		super.initNew(this.prFormatClassSymbol(this));
 	}
 
-	*pr_InitializeSpaceCell{
+	*pr_InitializeSpatialCell{
 		//set the FOA encoder to use
 		// encoder = nil;
 

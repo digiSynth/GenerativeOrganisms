@@ -1,4 +1,4 @@
-SpaceCellMover : LiveCodingEnvironment{
+SpatialCellMover : LiveCodingEnvironment{
 	classvar moverInstances, <isInitialized = false;
 
 	var <azimuthMin, <azimuthMax;
@@ -10,16 +10,16 @@ SpaceCellMover : LiveCodingEnvironment{
 
 	var <azimuthRate = 0.5, <elevationRate = 0.5, <distanceRate = 0.5;
 
-	var group, mappedSpaceCell;
+	var group, mappedSpatialCell;
 
 	var <lag = 0.1;
 
-	*new{|targetSpaceCell, azimuthRate = 0.5, elevationRate = 0.5, distanceRate = 0.5|
+	*new{|targetSpatialCell, azimuthRate = 0.5, elevationRate = 0.5, distanceRate = 0.5|
 		var return;
 
 		return = super.new
 		(this.prFormatClassSymbol(this))
-		.pr_InitSpaceCellMover(targetSpaceCell, azimuthRate, elevationRate, distanceRate);
+		.pr_InitSpatialCellMover(targetSpatialCell, azimuthRate, elevationRate, distanceRate);
 
 		moverInstances = moverInstances ? List.new;
 		moverInstances.add(return);
@@ -30,7 +30,7 @@ SpaceCellMover : LiveCodingEnvironment{
 	}
 
 
-	pr_InitSpaceCellMover{|targetSpaceCell, ar, er, dr|
+	pr_InitSpatialCellMover{|targetSpatialCell, ar, er, dr|
 
 		var returnFunction = {|target|
 
@@ -56,7 +56,7 @@ SpaceCellMover : LiveCodingEnvironment{
 
 				server.sync;
 
-				returnFunction.value(targetSpaceCell);
+				returnFunction.value(targetSpatialCell);
 
 				server.sync;
 
@@ -66,23 +66,23 @@ SpaceCellMover : LiveCodingEnvironment{
 
 		}/*ELSE*/{
 
-			returnFunction.value(targetSpaceCell);
+			returnFunction.value(targetSpatialCell);
 
 		}
 
 	}
 
-	mapTo{|inputSpaceCell|
+	mapTo{|inputSpatialCell|
 
-		if(inputSpaceCell.isNil.not){
+		if(inputSpatialCell.isNil.not){
 
-			if(inputSpaceCell.isSpaceCell.not){
+			if(inputSpatialCell.isSpatialCell.not){
 
-				Error("Can only map a SpaceCellMover to a SpaceCell.").throw;
+				Error("Can only map a SpatialCellMover to a SpatialCell.").throw;
 
 			};
 
-			if(mappedSpaceCell.isNil.not){
+			if(mappedSpatialCell.isNil.not){
 
 				this.unmap;
 
@@ -90,14 +90,14 @@ SpaceCellMover : LiveCodingEnvironment{
 
 			if(this.isPlaying){
 
-				this.group = inputSpaceCell.group;
+				this.group = inputSpatialCell.group;
 
-				inputSpaceCell.synth.map(\azimuth, azimuthBus);
-				inputSpaceCell.synth.map(\elevation, elevationBus);
-				inputSpaceCell.synth.map(\distance, distanceBus);
+				inputSpatialCell.synth.map(\azimuth, azimuthBus);
+				inputSpatialCell.synth.map(\elevation, elevationBus);
+				inputSpatialCell.synth.map(\distance, distanceBus);
 
-				inputSpaceCell.mover_(this);
-				mappedSpaceCell = inputSpaceCell;
+				inputSpatialCell.mover_(this);
+				mappedSpatialCell = inputSpatialCell;
 
 			};
 
@@ -107,13 +107,13 @@ SpaceCellMover : LiveCodingEnvironment{
 
 	unmap{
 
-		if(mappedSpaceCell.isNil.not){
-			mappedSpaceCell.set(\azimuth, pi.rand, \elevation, (pi/2).rand,
+		if(mappedSpatialCell.isNil.not){
+			mappedSpatialCell.set(\azimuth, pi.rand, \elevation, (pi/2).rand,
 				\distance, exprand(1.0, 3.0));
 
 
-			mappedSpaceCell.mover = nil;
-			mappedSpaceCell = nil;
+			mappedSpatialCell.mover = nil;
+			mappedSpatialCell = nil;
 
 			group = server.defaultGroup;
 		};
@@ -324,9 +324,9 @@ SpaceCellMover : LiveCodingEnvironment{
 		this.pr_FreeSynths;
 		this.pr_FreeBusses;
 
-		if(mappedSpaceCell.isNil.not){
-			if(mappedSpaceCell.mover==this){
-				mappedSpaceCell.mover = nil;
+		if(mappedSpatialCell.isNil.not){
+			if(mappedSpatialCell.mover==this){
+				mappedSpatialCell.mover = nil;
 			};
 		};
 

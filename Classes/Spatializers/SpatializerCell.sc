@@ -1,5 +1,5 @@
-SpaceCell : LiveCodingEnvironment{
-	classvar <classSymbol, spaceCellInstances;
+SpatialCell : SynthDef_Processor{
+	classvar <classSymbol, spatialCellInstances;
 	classvar <spatializersInit = false;
 	// classvar encoder, decoder;
 
@@ -17,10 +17,10 @@ SpaceCell : LiveCodingEnvironment{
 		var return;
 
 		//call an instance of this class
-		return = super.new(symbol).pr_SetupSpaceCell;
+		return = super.new(symbol).pr_SetupSpatialCell;
 
-		//add that instance to the class's list of spaceCellInstances
-		this.pr_InitializeSpaceCell(return);
+		//add that instance to the class's list of spatialCellInstances
+		this.pr_InitializeSpatialCell(return);
 
 		//return it
 		^return;
@@ -30,7 +30,7 @@ SpaceCell : LiveCodingEnvironment{
 
 		var toremove;
 
-		this.pr_InitializeSpaceCell;
+		this.pr_InitializeSpatialCell;
 
 		toremove = super.new(symbol);
 
@@ -44,7 +44,7 @@ SpaceCell : LiveCodingEnvironment{
 
 			if(this.isPlaying==false){
 
-				this.pr_SetupSpaceCell;
+				this.pr_SetupSpatialCell;
 
 			}/*ELSE*/{
 
@@ -55,19 +55,19 @@ SpaceCell : LiveCodingEnvironment{
 		};
 	}
 
-	*pr_InitializeSpaceCell{|toAdd|
-		//adds a copy to manage all spaceCellInstances of active particles
-		spaceCellInstances = spaceCellInstances ? List.new;
+	*pr_InitializeSpatialCell{|toAdd|
+		//adds a copy to manage all spatialCellInstances of active particles
+		spatialCellInstances = spatialCellInstances ? List.new;
 
 		//set up the class symbol:
 		//this will be used to format synth names as well as to
 		//manage loading synthdefs onto the server by the super
 		//class so that every calling of the class does
 		//not also accompany the reloading of redundant synthdefs
-		spaceCellInstances.add(toAdd);
+		spatialCellInstances.add(toAdd);
 	}
 
-	pr_SetupSpaceCell{
+	pr_SetupSpatialCell{
 
 		var returnFunction = {
 
@@ -187,7 +187,7 @@ SpaceCell : LiveCodingEnvironment{
 	lag_{|newLag = 0.01|
 		lag = newLag;
 
-		this.playSpaceCell;
+		this.playSpatialCell;
 
 		if(canPlay){
 
@@ -275,7 +275,7 @@ SpaceCell : LiveCodingEnvironment{
 	pr_FreeResources{
 
 		super.free;
-		spaceCellInstances.remove(this);
+		spatialCellInstances.remove(this);
 
 		if(freeFunc.value.isNil.not){
 			freeFunc.value.value;
@@ -324,11 +324,11 @@ SpaceCell : LiveCodingEnvironment{
 
 	*freeAll{
 
-		if(spaceCellInstances!=nil){
+		if(spatialCellInstances!=nil){
 
-			if(spaceCellInstances.size > 0){
-				//free all spaceCellInstances of this class
-				spaceCellInstances.copy.do{|instance|
+			if(spatialCellInstances.size > 0){
+				//free all spatialCellInstances of this class
+				spatialCellInstances.copy.do{|instance|
 
 					instance.free;
 
@@ -438,7 +438,7 @@ SpaceCell : LiveCodingEnvironment{
 
 	}
 
-	playSpaceCell{
+	playSpatialCell{
 
 		if(canPlay){
 
@@ -448,29 +448,23 @@ SpaceCell : LiveCodingEnvironment{
 
 	}
 
-	*loadSpaceCellSynthDefs{
+	*loadSpatialCellSynthDefs{
 
 		// Routine({
-		var synthArray = this.subclasses.do{|item|
+		var synthArray = this.subclasses.do{|subclass|
+			var synthDefs = [];
 
-			synthDefDictionary !? {
-				if(synthDefDictionary[item.asSymbol].isNil.not){
-					synthDefDictionary.removeAt(item.asSymbol);
-				};
+			synthDefDictionary[subclass.asSymbol].do{|synthDef|
+				synthDefs = synthDefs.add(synthDef);
 			};
 
-			item.initNew;
+			this.pr_GarbageCollect(synthDefs);
+
+			subclass.initNew;
 		};
-
-
-		ServerQuit.add({
-			spatializersInit = false;
-		});
-
-		spatializersInit = true;
 	}
 
-	*postSynthsAndControls{
+/*	*postSynthsAndControls{
 		var targetList = synthDefDictionary[classSymbol];
 
 		if(targetList.isNil.not){
@@ -494,27 +488,27 @@ SpaceCell : LiveCodingEnvironment{
 			"\n".post;
 		};
 		"];\n".postln;
-	}
+	}*/
 
-	mover_{|inputSpaceCellMover|
+	mover_{|inputSpatialCellMover|
 
-		if(inputSpaceCellMover.isNil.not){
-			if(inputSpaceCellMover.class!=SpaceCellMover){
-				Error("Can only supply a SpaceCellMover to this field").throw;
+		if(inputSpatialCellMover.isNil.not){
+			if(inputSpatialCellMover.class!=SpatialCellMover){
+				Error("Can only supply a SpatialCellMover to this field").throw;
 			};
 		};
 
-		mover = inputSpaceCellMover;
+		mover = inputSpatialCellMover;
 
 	}
 
-	map{|targetSpaceCellMover|
+	map{|targetSpatialCellMover|
 
-		if(targetSpaceCellMover.class!=SpaceCellMover){
-			Error("Can only map a SpaceCellMover to a SpaceCell").throw;
+		if(targetSpatialCellMover.class!=SpatialCellMover){
+			Error("Can only map a SpatialCellMover to a SpatialCell").throw;
 		};
 
-		targetSpaceCellMover.mapTo(this);
+		targetSpatialCellMover.mapTo(this);
 
 	}
 
@@ -530,7 +524,7 @@ SpaceCell : LiveCodingEnvironment{
 
 	*instances{
 
-		^spaceCellInstances;
+		^spatialCellInstances;
 
 	}
 

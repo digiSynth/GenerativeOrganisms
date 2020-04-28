@@ -1,4 +1,4 @@
-SpaceCellBinaural : SpaceCell{
+SpatialCellBinaural : SpatialCell{
 	classvar <order = 4, <headphoneCorrectionIndex = 22;
 	classvar <classSymbol, binauralInstances;
 	classvar headphonesLoaded = false;
@@ -17,7 +17,7 @@ SpaceCellBinaural : SpaceCell{
 		super.initNew(this.prFormatClassSymbol(this));
 	}
 
-	*pr_InitializeSpaceCell{
+	*pr_InitializeSpatialCell{
 		//set up the class symbol:
 		//this will be used to format synth names as well as to
 		//manage loading synthdefs onto the server by the super

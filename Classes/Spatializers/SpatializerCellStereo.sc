@@ -1,12 +1,12 @@
-SpaceCellQuad : SpaceCell{
+SpatialCellStereo : SpatialCell{
 	classvar <orientation = 0.5;
-	classvar quadInstances;
+	classvar stereoInstances;
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all quadInstances of active particles
-		quadInstances = quadInstances ? List.new;
-		quadInstances.add(return);
+		//adds a copy to manage all stereoInstances of active particles
+		stereoInstances = stereoInstances ? List.new;
+		stereoInstances.add(return);
 
 		^return;
 	}
@@ -15,7 +15,7 @@ SpaceCellQuad : SpaceCell{
 		super.initNew(this.prFormatClassSymbol(this));
 	}
 
-	*pr_InitializeSpaceCell{
+	*pr_InitializeSpatialCell{
 		//set up the class symbol:
 		//this will be used to format synth names as well as to
 		//manage loading synthdefs onto the server by the super
@@ -27,11 +27,11 @@ SpaceCellQuad : SpaceCell{
 
 	free{
 		super.free;
-		quadInstances.remove(this);
+		stereoInstances.remove(this);
 	}
 
 	*freeAll{
-		quadInstances.do{
+		stereoInstances.do{
 			|item|
 			item.free;
 		}
@@ -53,7 +53,7 @@ SpaceCellQuad : SpaceCell{
 
 				#w, x, y, z = PanB.ar(filteredSig, \azimuth.kr(0, lag), \elevation.kr(0, lag));
 
-				DecodeB2.ar(4, w, x, y, orientation);
+				DecodeB2.ar(2, w, x, y, orientation);
 
 			};
 		};
@@ -76,7 +76,7 @@ SpaceCellQuad : SpaceCell{
 
 	*instances{
 
-		^quadInstances;
+		^stereoInstances;
 
 	}
 

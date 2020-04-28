@@ -1,4 +1,4 @@
-GOCurve{
+GenOrg_Curve{
 	classvar shapeNames, isInit = false;
 	var <env, <min, <max;
 	var <isUnscaled = true;
@@ -7,13 +7,27 @@ GOCurve{
 
 		env = env ? Env();
 
-		this.pr_GOCurveInit;
+		this.pr_GenOrg_CurveInit;
 		this.prCheckEnv(env);
-		^super.new.pr_MakeGOrganismCurve(env, min, max);
+		^super.new.pr_MakeGenOrg_Curve(env, min, max);
 	}
 
-	*pr_GOCurveInit{
-		if(isInit==false){
+	*newRand{ |min, max|
+
+		var segs = rrand(4, 24);
+		var env = Env(
+			levels: ({1.0.rand}!segs),
+			times: ({exprand(1e-3, 1.0)}!(segs-1)).normalizeSum,
+			curve: ({12.0.bilinrand}!(segs-1))
+		);
+
+		this.pr_GenOrg_CurveInit;
+		^super.new.pr_MakeGenOrg_Curve(env, min, max);
+
+	}
+
+	*pr_GenOrg_CurveInit{
+		shapeNames ?? {
 			shapeNames = IdentityDictionary[
 				\step -> 0,
 				\lin -> 1,
@@ -31,10 +45,10 @@ GOCurve{
 				\hold -> 8,
 			];
 			shapeNames.freeze;
-		}
+		};
 	}
 
-	pr_MakeGOrganismCurve{ |inenv, inmin, inmax|
+	pr_MakeGenOrg_Curve{ |inenv, inmin, inmax|
 
 		env = inenv;
 
@@ -171,11 +185,11 @@ GOCurve{
 
 		var averageMin, averageMax;
 
-		var returnGOCurve;
+		var returnGenOrg_Curve;
 
 
-		if(curve.class!=GOCurve){
-			Error("Can only average GOCurves with other GOCurves.").throw;
+		if(curve.class!=GenOrg_Curve){
+			Error("Can only average GenOrg_Curves with other GenOrg_Curves.").throw;
 		};
 
 		//levels stuff
@@ -232,8 +246,8 @@ GOCurve{
 		averageMin = min + curve.min / 2;
 		averageMax = max + curve.max / 2;
 
-		returnGOCurve = GOCurve(returnEnv, averageMin, averageMax);
-		^returnGOCurve;
+		returnGenOrg_Curve = GenOrg_Curve(returnEnv, averageMin, averageMax);
+		^returnGenOrg_Curve;
 	}
 
 	plot{
@@ -243,7 +257,7 @@ GOCurve{
 
 	printOn{|stream|
 
-		stream<<"a GOCurve( "<<env.asString
+		stream<<"a GenOrg_Curve( "<<env.asString
 		<<", min: "<<min<<", max: "<<max<<" )";
 
 	}
