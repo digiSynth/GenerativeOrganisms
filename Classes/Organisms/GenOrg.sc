@@ -142,13 +142,13 @@ GenOrg{
 
 	}
 
-	playGenOrg{|type, db = -3|
+	playGenOrg{|db = -3|
 
 		if(isInitialized){
 
 			spatializer.playSpatialCell;
 
-			behavior.playGOBehavior(type ? 'spawn', this.buffer, db,
+			behavior.playBehavior(this.buffer, db,
 				spatializer.inputBus, spatializer.group, 'addToHead');
 
 		};

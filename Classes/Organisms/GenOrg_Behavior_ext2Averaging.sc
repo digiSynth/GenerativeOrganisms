@@ -1,5 +1,13 @@
 + GenOrg_Behavior{
 	averageBehaviors{|behavior|
+
+		var newBlock = genOrg_Block.averageBlocks(behavior.genOrg_Block);
+		var newOptions = options.averageOptions(behavior.options);
+		^GenOrg_Behavior(newBlock, newOptions);
+
+	}
+
+	/*averageBehaviors{|behavior|
 		var check = {
 
 			if(behavior.class != GenOrg_Behavior){
@@ -29,5 +37,5 @@
 
 		^averageBehavior;
 
-	}
+	}*/
 }

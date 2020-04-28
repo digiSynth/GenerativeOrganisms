@@ -31,7 +31,7 @@ GenOrg_Mutator{
 
 		if(isInitialized==false){
 
-			this.pr_GOMutatorInit;
+			this.pr_GenOrg_MutatorInit;
 
 		};
 
@@ -49,7 +49,7 @@ GenOrg_Mutator{
 
 	*mateBuffers{|buffer0, buffer1, action|
 
-		this.pr_GOMutatorInit;
+		this.pr_GenOrg_MutatorInit;
 
 		if(isInitialized){
 			var return = Ref.new(nil);
@@ -91,7 +91,7 @@ GenOrg_Mutator{
 			]);
 
 			score.add([
-				0, [\d_recv, SynthDef.new(\GOMutator_MatingSynth, {
+				0, [\d_recv, SynthDef.new(\GenOrg_Mutator_MatingSynth, {
 					var timescale = \timescale.kr(1);
 					var numSegs = exprand(2, 24).round(2).asInteger;
 					var impulserate = \impulserate.kr(40);
@@ -197,7 +197,7 @@ GenOrg_Mutator{
 			]);
 
 			score.add([
-				0, (synth = Synth.basicNew(\GOMutator_MatingSynth,
+				0, (synth = Synth.basicNew(\GenOrg_Mutator_MatingSynth,
 					server)).newMsg(args: [
 					\timescale, timescale,
 					\buf0, buffer0Copy,
@@ -316,7 +316,7 @@ GenOrg_Mutator{
 			]);
 
 			score.add([
-				0, [\d_recv, SynthDef.new(\GOMutator_EatingSynth, {
+				0, [\d_recv, SynthDef.new(\GenOrg_Mutator_EatingSynth, {
 					var timescale = \timescale.kr(1);
 					var buf0 = \buf0.kr(0);
 					var buf1 = \buf1.kr(1);
@@ -379,7 +379,7 @@ GenOrg_Mutator{
 			]);
 
 			score.add([
-				0, (synth = Synth.basicNew(\GOMutator_EatingSynth,
+				0, (synth = Synth.basicNew(\GenOrg_Mutator_EatingSynth,
 					server)).newMsg(args: [
 					\timescale, timescale,
 					\buf0, buffer0Copy,

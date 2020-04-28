@@ -3,21 +3,12 @@ GenOrg_Behavior : SynthDef_Processor{
 	classvar classInitialized = false;
 	classvar <instanceCount, <goBehaviorInstances;
 	classvar currentArrayBlock, <classSymbol;
-	classvar <classMatingBlock, <classEatingBlock,
-	<classSearchingBlock, <classPainBlock, <classContactBlock,
-	<classSpawnBlock, <classDeathBlock;
+	classvar <classGenOrg_Block;
 
-	var <matingBlock, <eatingBlock,
-	<searchingBlock, <painBlock, <contactBlock,
-	<spawnBlock, deathBlock;
-
-	var <blocks, <instanceNumber;
-
+	var <genOrg_Block, <instanceNumber;
 	var isPlaying, <options;
 
-	*new{ |matingBlock, searchingBlock,
-		painBlock, contactBlock, eatingBlock,
-		spawnBlock, deathBlock, options|
+	*new{ |block, options|
 		var return, copyCount;
 
 		goBehaviorInstances = goBehaviorInstances ? List.new;
@@ -25,22 +16,7 @@ GenOrg_Behavior : SynthDef_Processor{
 		instanceCount = instanceCount ? 0;
 		copyCount = instanceCount;
 
-/*		matingBlock = matingBlock ? GenOrg_Block.newRand;
-		searchingBlock = searchingBlock ? GenOrg_Block.newRand;
-		painBlock = painBlock ? GenOrg_Block.newRand;
-		contactBlock = contactBlock ? GenOrg_Block.newRand;
-		eatingBlock = eatingBlock ? GenOrg_Block.newRand;
-		spawnBlock = spawnBlock ? GenOrg_Block.newRand;
-		deathBlock = deathBlock ? GenOrg_Block.newRand;*/
-		this.pr_CheckGenOrg_Blocks(
-			matingBlock,
-			searchingBlock,
-			painBlock,
-			contactBlock,
-			eatingBlock,
-			spawnBlock,
-			deathBlock
-		);
+		classGenOrg_Block = this.pr_CheckBlock(block);
 
 		return = super.new(classSymbol:
 			this.prFormatClassSymbol(this, instanceCount)
@@ -70,30 +46,13 @@ GenOrg_Behavior : SynthDef_Processor{
 
 	pr_InitGenOrg_Behavior{|boptions, num|
 
-		matingBlock = classMatingBlock;
-		searchingBlock = classSearchingBlock;
-		painBlock = classPainBlock;
-		contactBlock = classContactBlock;
-		eatingBlock = classEatingBlock;
-		spawnBlock = classSpawnBlock;
-		deathBlock = classDeathBlock;
+		genOrg_Block = classGenOrg_Block;
 
 		instanceNumber = num;
 
 		options = boptions ? GenOrg_BehaviorOptions.new;
 	}
 
-	*pr_CheckGenOrg_Blocks{|m, se, pn, c, e, sp, d|
-
-		classMatingBlock = this.pr_CheckBlock(m);
-		classSearchingBlock = this.pr_CheckBlock(se);
-		classPainBlock = this.pr_CheckBlock(pn);
-		classContactBlock = this.pr_CheckBlock(c);
-		classEatingBlock = this.pr_CheckBlock(e);
-		classSpawnBlock = this.pr_CheckBlock(sp);
-		classDeathBlock = this.pr_CheckBlock(d);
-
-	}
 
 	*pr_CheckBlock{|input|
 		var return;
@@ -107,19 +66,7 @@ GenOrg_Behavior : SynthDef_Processor{
 		^return;
 
 	}
-
-	checkBlock{|input|
-		var return;
-
-		if(input.class!=GenOrg_Block){
-			return = GenOrg_Block.newRand;
-		}/*ELSE*/{
-			return = input;
-		};
-
-		^return;
-	}
-
+/*
 	*defineSynthDefs{
 		var symbol = this.prFormatClassSymbol(this, instanceCount);
 
@@ -204,7 +151,77 @@ GenOrg_Behavior : SynthDef_Processor{
 		};
 
 		instanceCount = instanceCount + 1;
+	}*/
+
+	*defineSynthDefs{
+		var symbol = this.prFormatClassSymbol(this, instanceCount);
+		var arguments = this.arguments;
+		var dictionary = Dictionary.new;
+		var synthdefname, synthdef;
+
+		arguments.do({|key, index|
+			dictionary[key] = { |timescale = 1|
+				SynthDef.wrap({
+					var lo = format("%Lo", key).asSymbol.kr(0);
+					var hi = format("%Hi", key).asSymbol.kr(1);
+
+					EnvGen.ar(classGenOrg_Block[index].env,
+						timeScale: timescale,
+						doneAction: Done.none
+					).range(lo, hi);
+				});
+			};
+		});
+
+		synthdef = SynthDef(\Synth, {
+			var buf = \buf.kr(0);
+			var timescale = \timescale.kr(1);
+
+			var rate = dictionary[\rate].value(timescale);
+			var pos = dictionary[\pos].value(timescale);
+			var amp = dictionary[\amp].value(timescale);
+			var ffreq = dictionary[\ffreq].value(timescale);
+			var impulseRate = dictionary[\impulseRate].value(timescale);
+			var grainDur = dictionary[\grainDur].value(timescale);
+			var rq = dictionary[\rq].value(timescale);
+
+			var bufdur = BufDur.kr(buf);
+
+			var phasor = pos * bufdur;
+
+			var impulse = Impulse.ar(impulseRate);
+
+			var sig = TGrains.ar(
+				1,
+				impulse,
+				buf,
+				rate,
+				phasor,
+				grainDur
+			) * 16;
+
+			var filteredSig = BPF.ar(
+				sig,
+				ffreq,
+				rq
+			);
+
+			var out = Normalizer.ar(filteredSig) * amp
+			* EnvGen.ar(
+				Env([0, 1, 1, 1, 0], [0.05, 1, 1, 0.05].normalizeSum,
+					curve: \welch), timeScale: timescale,
+				doneAction: Done.freeSelf
+			) * \ampDB.kr(-12).dbamp;
+
+			Out.ar(\out.kr(0), out);
+
+		});
+
+		this.registerSynthDef(synthdef, false, symbol);
+
+		instanceCount = instanceCount + 1;
 	}
+
 
 	*prSetClassSymbol{
 
@@ -249,17 +266,10 @@ GenOrg_Behavior : SynthDef_Processor{
 		};
 	}
 
-	playGenOrg_Behavior{|type, buffer, db = -12, outBus = 0, target, action|
+	playBehavior{|buffer, db = -12, outBus = 0, target, action|
 
 		var localSymb = this.localClassSymbol;
-		var synthName = format("%_%", localSymb.asString, type.asString).asSymbol;
 		var timescale = options.timescale * rrand(0.95, 1.05);
-
-		type = type !? {
-			type.asString.toLower.asSymbol;
-		} ? 'contacting';
-
-		this.pr_GenOrg_BehaviorCheckType(type);
 
 		if(target.isNil){
 			target = server.defaultGroup;
@@ -273,7 +283,7 @@ GenOrg_Behavior : SynthDef_Processor{
 			};
 		};
 
-		Synth(synthName, [
+		Synth(this.formatSynthName(\Synth, this.localClassSymbol), [
 			\buf, buffer,
 
 			\rateLo, options.rateLo * rrand(0.95, 1.05),
@@ -306,24 +316,24 @@ GenOrg_Behavior : SynthDef_Processor{
 
 	}
 
-	*types{
-		var return = #[
-			'mating',
-			'searching',
-			'pain',
-			'contacting',
-			'eating',
-			'spawn',
-			'death'
-		];
-		^return;
+	/*	*types{
+	var return = #[
+	'mating',
+	'searching',
+	'pain',
+	'contacting',
+	'eating',
+	'spawn',
+	'death'
+	];
+	^return;
 	}
 
 	types{
-		^this.class.types;
-	}
+	^this.class.types;
+	}*/
 
-	*roles{
+	*arguments{
 		var return = #[
 			'rate',
 			'pos',
@@ -337,8 +347,8 @@ GenOrg_Behavior : SynthDef_Processor{
 		^return
 	}
 
-	roles{
-		^this.class.roles;
+	arguments{
+		^this.class.arguments;
 	}
 
 
@@ -357,15 +367,15 @@ GenOrg_Behavior : SynthDef_Processor{
 		goBehaviorInstances.remove(this);
 	}
 
-/*	*freeAll{
-		if(goBehaviorInstances.isNil.not){
-			goBehaviorInstances.copy.do{|item|
-				item.free;
-			};
+	/*	*freeAll{
+	if(goBehaviorInstances.isNil.not){
+	goBehaviorInstances.copy.do{|item|
+	item.free;
+	};
 
-			instanceCount = 0;
-			goBehaviorInstances = nil;
-		};
+	instanceCount = 0;
+	goBehaviorInstances = nil;
+	};
 	}*/
 
 	*resetInstanceCount{
