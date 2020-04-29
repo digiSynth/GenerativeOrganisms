@@ -1,4 +1,4 @@
-GenerativeOrganismFactory{
+GenOrg_Factory{
 	classvar server;
 	classvar <>deleteFiles = false;
 	classvar <spatializerClass;
@@ -15,7 +15,7 @@ GenerativeOrganismFactory{
 
 		this.pr_CheckCollectionType(bufferArray, Buffer);
 
-		spatializerClass = spatializerClass ? SpaceCellFOA;
+		spatializerClass = spatializerClass ? SpatialCellFOA;
 
 		^super.new.pr_SetupGenerativeOrganismFactory
 		(bufferArray, behaviorArray);
@@ -27,7 +27,7 @@ GenerativeOrganismFactory{
 	}
 
 	behaviors_{|behaviorArray|
-		this.class.pr_CheckCollectionType(behaviorArray, GOBehavior);
+		this.class.pr_CheckCollectionType(behaviorArray, GenOrg_Behavior);
 		behaviors = behaviorArray;
 	}
 
@@ -225,7 +225,7 @@ GenerativeOrganismFactory{
 	//[0,       1,         2,    3,          4,      5,     6     ]
 	//[ mating, searching, pain, contacting, eating, spawn, death ]
 	playGenerativeOrganismFromFactory{|inputSymbol, typeIndex, db = 3|
-		var types = GOBehavior.types, type, organism;
+		var types = GenOrg_Behavior.types, type, organism;
 
 		typeIndex = typeIndex.asInteger;
 
@@ -277,7 +277,7 @@ GenerativeOrganismFactory{
 			};
 
 			GenerativeOrganism.freeAll;
-			// GOBehavior.freeAll;
+			// GenOrg_Behavior.freeAll;
 
 		};
 
@@ -286,8 +286,8 @@ GenerativeOrganismFactory{
 	*spatializerClass_{
 		|newClass|
 
-		if(newClass.isSpaceCell.not){
-			Error("Can only supply a class of type SpaceCell to this field").throw;
+		if(newClass.isKindOf(SpatialCell).not){
+			Error("Can only supply a class of type SpatialCell to this field").throw;
 		};
 
 		spatializerClass = newClass;

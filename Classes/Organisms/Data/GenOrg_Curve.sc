@@ -6,7 +6,6 @@ GenOrg_Curve{
 	*new{ |env, min, max|
 
 		env = env ? Env();
-
 		this.pr_GenOrg_CurveInit;
 		this.prCheckEnv(env);
 		^super.new.pr_MakeGenOrg_Curve(env, min, max);
@@ -51,7 +50,6 @@ GenOrg_Curve{
 	pr_MakeGenOrg_Curve{ |inenv, inmin, inmax|
 
 		env = inenv;
-
 		if(env.times.size != (env.levels.size - 1)){
 			env.times = env.times.resize(env.levels.size - 1);
 		};
@@ -98,19 +96,14 @@ GenOrg_Curve{
 
 	min_{|input|
 		min = input;
-
 		if(env.isNil.not){
 			var lminmax = env.levels.minMax;
 			if(max.isNil.not){
-
 				env.levels = env.levels
 				.linlin(lminmax.min, lminmax.max, min, max);
-
 			}/*ELSE*/{
-
 				env.levels = env.levels
 				.linlin(lminmax.min, lminmax.max, min, lminmax.max);
-
 			}
 		};
 
@@ -154,7 +147,6 @@ GenOrg_Curve{
 
 			isUnscaled = false;
 		}
-
 		{(min.isNil.not) and: {max.isNil}}{
 			var lminmax = env.levels.minMax;
 
@@ -163,7 +155,6 @@ GenOrg_Curve{
 
 			isUnscaled = false;
 		}
-
 		{(min.isNil) and: {max.isNil.not}}{
 			var lminmax = env.levels.minMax;
 
@@ -178,15 +169,10 @@ GenOrg_Curve{
 	averageCurves{ |curve|
 		var returnEnv;
 		var thisLevels, thatLevels, averageLevels;
-
 		var thisTimes, thatTimes, averageTimes;
-
 		var thisCurves, thatCurves, averageCurves;
-
 		var averageMin, averageMax;
-
 		var returnGenOrg_Curve;
-
 
 		if(curve.class!=GenOrg_Curve){
 			Error("Can only average GenOrg_Curves with other GenOrg_Curves.").throw;
@@ -208,7 +194,6 @@ GenOrg_Curve{
 		thisTimes = env.times;
 		thatTimes = curve.env.times;
 
-
 		if(thisTimes.size > thatTimes.size){
 			thatTimes = thatTimes.resize(thisTimes.size);
 		};
@@ -216,7 +201,6 @@ GenOrg_Curve{
 		if(thatTimes.size > thisTimes.size){
 			thisTimes = thisTimes.resize(thatTimes.size);
 		};
-
 
 		//curve stuff
 		thisCurves = env.curves;
@@ -254,12 +238,9 @@ GenOrg_Curve{
 		^env.plot;
 	}
 
-
 	printOn{|stream|
-
 		stream<<"a GenOrg_Curve( "<<env.asString
 		<<", min: "<<min<<", max: "<<max<<" )";
-
 	}
 
 }

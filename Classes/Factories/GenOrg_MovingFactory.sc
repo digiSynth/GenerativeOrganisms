@@ -1,4 +1,4 @@
-GOMovingFactory : GenerativeOrganismFactory{
+GenOrg_MovingFactory : GenOrg_Factory{
 
 	var incubator, garbage, garbageCollectorRoutine;
 

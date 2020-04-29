@@ -63,196 +63,113 @@ GenOrg_BehaviorOptions{
 
 	pr_CheckAndScaleMinMax{|item, min, max, how = 0|
 		var return;
-
 		if(item.isNil){
-
 			if(how==0){
-
 				item = rrand(min, max);
-
 			}/*ELSE*/{
-
 				if(how==1){
 					item = exprand(min, max);
 				};
-
 			};
-
 		}/*ELSE*/{
-
 			if(item < min){
-
 				item = min;
-
 			};
 
 			if(item > max){
-
 				item = max;
-
 			};
-
 		};
 
 		return = item;
-
 		^return;
 	}
 
-/*	printOn{|stream|
-
-		stream<<"a GenOrg_BehaviorOptions\n"
-		<<"\t>> rateLo: "<<rateLo//<<"\n"
-		<<"\t\t>> rateHi: "<<rateHi<<"\n"
-
-		<<"\t>> posLo: "<<posLo//<<"\n"
-		<<"\t\t>>posLo: "<<posHi<<"\n"
-
-		<<"\t>> ampLo: "<<ampLo//<<"\n"
-		<<"\t\t>>ampHi: "<<ampHi<<"\n"
-
-		<<"\t>> ffreqLo: "<<ffreqLo//<<"\n"
-		<<"\t\t>>ffreqHi: "<<ffreqHi<<"\n"
-
-		<<"\t>> impulseRateLo: "<<impulseRateLo//<<"\n"
-		<<"\t\t>>impulseRateHi: "<<impulseRateHi<<"\n"
-
-		<<"\t\t>> grainDurLo: "<<grainDurLo//<<"\n"
-		<<"\t\t>>grainDurHi: "<<grainDurHi<<"\n"
-
-		<<"\t\t>> rqLo: "<<rqLo//<<"\n"
-		<<"\trqHi: "<<rqHi<<"\n"
-
-		<<"\t>> timescale: "<<timescale;
-
-	}*/
-
 	rateLo_{|newVal|
-
 		rateLo = this.pr_CheckAndScaleMinMax(newVal, rateLoMin, rateLoMax, 0);
-
 	}
 
 	rateHi_{|newVal|
-
 		rateHi = this.pr_CheckAndScaleMinMax(newVal, rateHiMin, rateHiMax, 1);
-
 	}
 
 	posLo_{|newVal|
-
 		posLo = this.pr_CheckAndScaleMinMax(newVal, posLoMin, posLoMax, 0);
-
 	}
 
 	posHi_{|newVal|
-
 		posHi = this.pr_CheckAndScaleMinMax(newVal, posHiMin, posHiMax, 0);
-
 	}
 
 	ampLo_{|newVal|
-
 		ampLo = this.pr_CheckAndScaleMinMax(newVal, ampLoMin, ampLoMax, 0);
-
 	}
 
 	ampHi_{|newVal|
-
 		ampHi = this.pr_CheckAndScaleMinMax(newVal, ampHiMin, ampHiMax, 1);
-
 	}
 
 	ffreqLo_{|newVal|
-
 		ffreqLo = this.pr_CheckAndScaleMinMax(newVal, ffreqLoMin, ffreqLoMax, 1);
-
 	}
 
 	ffreqHi_{|newVal|
-
 		ffreqHi = this.pr_CheckAndScaleMinMax(newVal, ffreqHiMin, ffreqHiMax, 1);
-
 	}
 
 	impulseRateLo_{|newVal|
-
 		impulseRateLo = this.pr_CheckAndScaleMinMax(newVal,
 			impulseRateLoMin, impulseRateLoMax, 0
 		);
-
 	}
 
 	impulseRateHi_{|newVal|
-
 		impulseRateHi = this.pr_CheckAndScaleMinMax(newVal,
 			impulseRateHiMin, impulseRateHiMax, 1
 		);
-
 	}
 
 	grainDurLo_{|newVal|
-
 		grainDurLo = this.pr_CheckAndScaleMinMax(newVal,
 			grainDurLoMin, grainDurLoMax, 1
 		);
-
 	}
 
 	grainDurHi_{|newVal|
-
 		grainDurHi = this.pr_CheckAndScaleMinMax(newVal,
 			grainDurHiMin, grainDurHiMax, 1
 		);
-
 	}
 
 	rqLo_{|newVal|
-
 		rqLo = this.pr_CheckAndScaleMinMax(newVal,
 			rqLoMin, rqLoMax, 0
 		);
-
 	}
 
 	rqHi_{|newVal|
-
 		rqHi = this.pr_CheckAndScaleMinMax(newVal,
 			rqHiMin, rqHiMax, 0
 		);
-
 	}
 
 	timescale_{|newVal|
-
 		timescale = this.pr_CheckAndScaleMinMax(newVal,
 			timescaleMin, timescaleMax, 1
 		);
-
 	}
 
 	timescaleScalar_{|newVal|
-
 		if(newVal > 1.0){
-
 			timescaleScalar = newVal;
-
 		}/*ELSE*/{
-
 			var testingVal = newVal * 3;
-
 			if(testingVal < 1.0){
-
 				timescaleScalar = testingVal;
-
 			}/*ELSE*/{
-
 				timescaleScalar = 1.0;
-
 			};
-
 		};
-
 	}
 
 	averageOptions{|targetOptions|

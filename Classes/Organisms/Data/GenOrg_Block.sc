@@ -23,13 +23,9 @@ GenOrg_Block[]{
 	}
 
 	clear{
-
 		block.copy.size.do{|item|
-
 			block.removeAt(0);
-
 		};
-
 	}
 
 	pr_AddToBlock{|input|
@@ -40,11 +36,8 @@ GenOrg_Block[]{
 
 	*newRand{
 		var randBlock = GenOrg_Block.new;
-
 		maxSize.do{|item|
-
 			randBlock.add(GenOrg_Curve.newRand);
-
 		};
 
 		^randBlock;
@@ -83,7 +76,6 @@ GenOrg_Block[]{
 
 			case
 			{input.isCollection}{
-
 				case
 				{input.size==1}{
 					if(input[0].class==Env){
@@ -92,7 +84,6 @@ GenOrg_Block[]{
 						this.pr_ThrowArrayMsg;
 					}
 				}
-
 				{input.size==2}{
 					if(input[0].class==Env){
 						ogcurve = GenOrg_Curve(input[0], input[1]);
@@ -100,7 +91,6 @@ GenOrg_Block[]{
 						this.pr_ThrowArrayMsg;
 					}
 				}
-
 				{input.size==3}{
 					if(input[0].class==Env){
 						ogcurve = GenOrg_Curve(input[0], input[1], input[2]);
@@ -108,7 +98,6 @@ GenOrg_Block[]{
 						this.pr_ThrowArrayMsg;
 					}
 				}
-
 				{input.size > 3}{
 					if(input[0].class==Env){
 						ogcurve = GenOrg_Curve(input[0], input[1], input[2]);
@@ -117,7 +106,6 @@ GenOrg_Block[]{
 					}
 				};
 			}
-
 			{input.class==Env}{
 				ogcurve = GenOrg_Curve(input);
 			}
@@ -127,9 +115,7 @@ GenOrg_Block[]{
 					++"\n!a collection (Env, Float, Float), "
 					++"\n!or an Env")
 			}
-
 		};
-
 		if(ogcurve.class==GenOrg_Curve){
 			this.pr_AddToBlock(ogcurve);
 		}/*ELSE*/{
@@ -150,39 +136,24 @@ GenOrg_Block[]{
 
 	pr_TestInput{|input|
 
-
 		if(input.class!=GenOrg_Curve){
-
 			if(input.clas==Env){
-
 				^GenOrg_Curve(input);
-
 			}/*ELSE*/{
-
 				this.pr_ThrowArrayMsg;
-
 			};
-
 		}/*ELSE*/{
-
 			^input
-
 		};
-
 	}
 
 	rateCurve_{|toAdd|
-
 		toAdd = this.pr_TestInput(toAdd);
 
 		if(block.isEmpty){
-
 			this.add(toAdd);
-
 		}/*ELSE*/{
-
 			block[0] = toAdd;
-
 		};
 
 	}
@@ -195,29 +166,22 @@ GenOrg_Block[]{
 	}
 
 	posCurve_{|toAdd|
-
 		toAdd = this.pr_TestInput(toAdd);
 
 		//if a second curve has not been added yet, add it
 		if(block.size==1){
-
 			this.add(toAdd);
-
 		};
 
 		//if the block is empty, add a random first index before adding this one
 		if(block.size < 1){
-
 			this.add(GenOrg_Curve.newRand);
 			this.add(toAdd);
-
 		};
 
 		//If the array is bigger than size 2, replace index 1 with the target
 		if(block.size >=2){
-
 			block[1] = toAdd;
-
 		};
 
 	}
@@ -230,30 +194,21 @@ GenOrg_Block[]{
 	}
 
 	ampCurve_{|toAdd|
-
 		toAdd = this.pr_TestInput(toAdd);
-
 
 		case
 		//if a third curve has not been added yet
 		{block.size==2}{
-
 			this.add(toAdd);
-
 		}
 
 		//has fewer than 2 blocks, add the difference
 		{block.size < 2}{
 
 			var offset = block.size;
-			(2 - offset).do{
-
-				|i|
-
+			(2 - offset).do{|i|
 				 this.add(GenOrg_Curve.rand);
-
 			};
-
 			this.add(toAdd);
 
 		}
@@ -290,120 +245,59 @@ GenOrg_Block[]{
 	}
 
 	printOn{|stream|
-
 		var string;
 
 		if(block.isNil or: {block.isEmpty}){
 			string = "";
 		}/*ELSE*/{
-
 			block.size.do{|index|
-
-				case{
-
-					index==0;
-
-				}{
-
+				case
+				{index==0}{
 					string = string++"rateCurve";
 					if(block.size > 1){
 						string = string++", ";
 					};
-
-
 				}
-
-				{
-
-					index==1;
-
-				}{
-
+				{index==1}{
 					string = string++"posCurve";
 					if(block.size > 2){
 						string = string++", ";
 					};
-
-
 				}
-
-				{
-
-					index==2;
-
-				}{
-
+				{index==2}{
 					string = string++"ampCurve";
 					if(block.size > 3){
 						string = string++", ";
 					};
-
 				}
-
-
-				{
-
-					index==3;
-
-				}{
-
+				{index==3}{
 					string = string++"ffreqCurve";
 					if(block.size > 4){
 						string = string++", ";
 					};
-
 				}
-
-				{
-
-					index==4;
-
-				}{
-
+				{index==4}{
 					string = string++"impulseRateCurve";
 					if(block.size > 5){
 						string = string++", ";
 					};
-
 				}
-
-				{
-
-					index==5;
-
-				}{
-
+				{index==5}{
 					string = string++"grainDurCurve";
 					if(block.size > 6){
 						string = string++", ";
 					};
-
 				}
-
-				{
-
-					index==6;
-
-				}{
-
+				{index==6;}{
 					string = string++"rqCurve";
-
 				};
-
 			};
-
 		};
 
-
 		stream
-
 		<<"GenOrg_Block[ "
-
 		<<string
-
 		<<" ]";
-
-
 
 	}
 
