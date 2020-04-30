@@ -1,26 +1,33 @@
+//Ideally, I can remove the subclasses of this class and just make it so that this class is configureable easily. That way, I can load two of them into organism class for mating with and consuming others. I can configure them there and create interfaces for reconfiguring them through the language. That way, the way things are mutating can itself easily mutate.
+
 GenOrg_Mutator{
 	var server, incrementer;
 	var folderPath, <synthDef;
 	var isInitialized = false;
 
-	*new{|synthDef|
+	*new{
 		^super.new
-		.synthDef_(synthDef)
 		.pr_InitGenOrg_Mutator
 	}
 
 	synthDef_{|newSynthDef|
 
-		if(newSynthDef.isKindOf(SynthDef).not and: {newSynthDef.isNil.not}){
-			Error("Can only set object of kind SynthDef").throw;
+		if(newSynthDef.isNil){
+			newSynthDef = this.pr_DefaultSynthDef;
 		};
+
+		if(newSynthDef.isKindOf(SynthDef).not){
+			Error("Can only set to object of kind of SynthDef").throw;
+		};
+
+		newSynthDef.name = this.pr_DefaultSynthDefName;
 
 		synthDef = newSynthDef;
 
 	}
 
 	render{ |buffer0, buffer1, duration = 1, action|
-		var return = Ref.new(nil);
+		var reference = Ref.new(nil);
 
 		if(server.hasBooted.not){
 			isInitialized = false;
@@ -28,42 +35,30 @@ GenOrg_Mutator{
 		};
 
 		if(isInitialized){
-			this.pr_GenOrg_ProcessAudio(return, duration, buffer0, buffer1, action);
+			var condition;
+			this.pr_GenOrg_ProcessAudio(reference, duration, buffer0, buffer1, action);
 		}/*ELSE*/{
 			this.pr_GenOrg_MutatorInit;
-			this.render(buffer0, buffer1, duration, action);
+			^this.render(buffer0, buffer1, duration, action);
 		};
 
-		while({return.value.isNil}, {});
-		return = return.value;
-
-		^return;
+		^reference;
 	}
 
 	pr_InitGenOrg_Mutator{
 		server = server ? Server.default;
+
 		incrementer = incrementer ? FileIncrementer.new(
 			"organism-render.wav",
 			GenOrg_Mutator_AudioPath.path
 		);
+
 		if(File.exists(GenOrg_Mutator_AudioPath.path).not){
 			File.mkdir(GenOrg_Mutator_AudioPath.path);
 		};
 		isInitialized = true;
 	}
 
-	/*	pr_GenOrg_ProcessAudio{|reference, duration = 1, action|
-	this.subclassResponsibility(thisMethod);
-	}*/
-
-	/*
-	pr_GenOrg_ProcessAudio{|reference, duration = 1, buffer0, buffer1, action|
-	var timescale = duration ? 1.0;
-	var score = this.pr_InitScore;
-	score = this.pr_AddSynthToScore(score, timescale, buffer0, buffer1);
-	this.pr_RenderNRT(score, reference, timescale, buffer0, buffer1, action);
-	^reference;
-	}*/
 	pr_InitScore{|duration, buffer0, buffer1|
 		var timescale = duration;
 		var score = Score.new;
@@ -73,16 +68,28 @@ GenOrg_Mutator{
 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++".osc";
 		var outpath = incrementer.nextFileName;
+		var action = {
+
+			{
+				format("\n% rendered\n",
+					PathName(outpath)
+					.fileNameWithoutExtension
+				).postln;
+			};
+
+		};
 
 		var buf0FileStartFrame = 0, buf1FileStartFrame = 0;
 		var synthDefName = synthDef.name;
 
-		if((buffer0.numFrames / server.sampleRate) > 1.0){
-			buf0FileStartFrame = (buffer0.numFrames - server.sampleRate).rand.floor;
+		if((buffer0.numFrames / server.sampleRate) > duration){
+			buf0FileStartFrame =
+			(buffer0.numFrames - (server.sampleRate * duration)).rand.floor;
 		};
 
-		if((buffer1.numFrames / server.sampleRate) > 1.0){
-			buf1FileStartFrame = (buffer1.numFrames - server.sampleRate).rand.floor;
+		if((buffer1.numFrames / server.sampleRate) > duration){
+			buf1FileStartFrame =
+			(buffer1.numFrames - (server.sampleRate * duration)).rand.floor;
 		};
 
 		score.add([
@@ -96,11 +103,15 @@ GenOrg_Mutator{
 		]);
 
 		score.add([
+			0, [\d_recv, synthDef.asBytes]
+		]);
+
+		score.add([
 			timescale, [1];
 		]);
 
 		^(score:score, buffer0: buffer0Copy, buffer1: buffer1Copy,
-			oscpath: oscpath, outpath: outpath);
+			oscpath: oscpath, outpath: outpath, action: action);
 	}
 
 	//This is the method that subclasses will define
@@ -124,9 +135,20 @@ GenOrg_Mutator{
 		var buffer1Copy = scoreEvent.buffer1;
 		var outpath = scoreEvent.outpath;
 		var oscpath = scoreEvent.oscpath;
+		var scoreAction = scoreEvent.action;
+
+		var synthMsgEvent = this.pr_GetSynthMsg(buffer0Copy, buffer1Copy, duration);
+		var synthMsg = synthMsgEvent.synthMsg;
+		var synthDefToAdd = synthMsgEvent.synthDef;
+
+		action = scoreAction++action;
 
 		score.add([
-			0, this.pr_GetSynthMsg(buffer0, buffer1, duration);
+			0, [\d_recv, synthDefToAdd.asBytes]
+		]);
+
+		score.add([
+			0, synthMsg
 		]);
 
 		score.sort;
@@ -174,15 +196,13 @@ GenOrg_Mutator{
 
 					toReturn = Buffer.read(server, outpath, action: {
 						localCondition.unhang;
+						reference.value = toReturn;
+						action.value;
 					});
 
 					localCondition.hang;
-					reference.value = toReturn;
-
-					action.value;
-
-				}
-			}
+				};
+			};
 		);
 	}
 }
@@ -191,7 +211,7 @@ GenOrg_Mutator_AudioPath : FileConfigurer{
 	classvar internalPath;
 
 	*defaultPath{
-		^("organism-mutations".ianAudioPath)
+		^("~/Desktop/audio/organism-mutations".standardizePath);
 	}
 
 	*path{
@@ -213,7 +233,4 @@ GenOrg_Mutator_AudioPath : FileConfigurer{
 		^super.path_(newpath);
 
 	}
-
 }
-
-

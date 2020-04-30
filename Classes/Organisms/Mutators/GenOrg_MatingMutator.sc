@@ -1,19 +1,7 @@
 GenOrg_MatingMutator : GenOrg_Mutator{
 
 	*new{|synthDef|
-		^super.new(synthDef);
-	}
-
-	synhtDef_{|newSynthDef|
-
-		if(newSynthDef.isNil){
-			newSynthDef = this.pr_DefaultSynthDef;
-		};
-
-		newSynthDef.name = this.pr_DefaultSynthDefName;
-
-		super.synthDef_(newSynthDef);
-
+		^super.new.synthDef_(synthDef);
 	}
 
 	pr_DefaultSynthDefName{
@@ -21,29 +9,32 @@ GenOrg_MatingMutator : GenOrg_Mutator{
 	}
 
 	pr_GetSynthMsg{|buffer0, buffer1, timescale = 1|
-		^((Synth.basicNew(synthDef.name,
-			server)
-		).newMsg(args: [
-			\timescale, timescale,
-			\buf0, buffer0,
-			\buf1, buffer1,
+		^(
+			synthMsg: (Synth.basicNew(synthDef.name)
+			).newMsg(args: [
+				\timescale, timescale,
+				\buf0, buffer0,
+				\buf1, buffer1,
 
-			\rate0, 1,
-			\rate1, rrand(0.9, 1.1),
+				\rate0, 1,
+				\rate1, rrand(0.9, 1.1),
 
-			\morphRateRate, timescale * exprand(1.05, 6.0),
-			\morphRateHi, exprand(1.05, 6.0),
+				\morphRateRate, timescale * exprand(1.05, 6.0),
+				\morphRateHi, exprand(1.05, 6.0),
 
-			\choiceRateRate, timescale * exprand(1.5, 3.0),
-			\choiceRateHi, exprand(2.0, 6.0),
+				\choiceRateRate, timescale * exprand(1.5, 3.0),
+				\choiceRateHi, exprand(2.0, 6.0),
 
-			\ampDB, exprand(1.0, 4.0) - 1,
+				\ampDB, exprand(1.0, 4.0) - 1,
 
-			\wipeMax, exprand(0.1, 0.9)
-		]));
+				\wipeMax, exprand(0.1, 0.9)
+			]),
+
+			synthDef: synthDef
+		);
 	}
 
-	*pr_DefaultSynthDef{
+	pr_DefaultSynthDef{
 		^SynthDef.new(this.pr_DefaultSynthDefName, {
 			var timescale = \timescale.kr(1);
 			var numSegs = exprand(2, 24).round(2).asInteger;

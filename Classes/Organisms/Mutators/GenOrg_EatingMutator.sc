@@ -1,64 +1,62 @@
 GenOrg_EatingMutator : GenOrg_Mutator{
 
 	*new{|synthDef|
-		^super.new(synthDef);
+		^super.new.synthDef_(synthDef);
 	}
-
-	synhtDef_{|newSynthDef|
-
-		if(newSynthDef.isNil){
-			newSynthDef = this.pr_DefaultSynthDef;
-		};
-
-		newSynthDef.name = this.pr_DefaultSynthDefName;
-
-		super.synthDef_(newSynthDef);
-
-	}
-
 
 	pr_DefaultSynthDefName{
 		^(\GenOrg_Mutator_EatingSynth);
 	}
 
 	pr_GetSynthMsg{|buffer0, buffer1, timescale = 1|
-		^(Synth.basicNew(synthDef,
-			server)).newMsg(args: [
-			\timescale, timescale,
-			\buf0, buffer0,
-			\buf1, buffer1,
+		^(
+			synthMsg: (Synth.basicNew(this.pr_DefaultSynthDefName)
+			).newMsg(args: [
+				\timescale, timescale,
+				\buf0, buffer0,
+				\buf1, buffer1,
 
-			\rate0, 1,
-			\rate1, rrand(0.9, 1.1),
+				\rate0, rrand(0.5, 1.5),
+				\rate1, rrand(0.9, 1.1),
 
-			\morphRateRate, timescale * exprand(1.05, 6.0),
-			\morphRateHi, exprand(1.05, 6.0),
+				\morphRateRate, timescale * exprand(1.05, 6.0),
+				\morphRateHi, exprand(1.05, 6.0),
 
-			\choiceRateRate, timescale * exprand(1.5, 3.0),
-			\choiceRateHi, exprand(2.0, 6.0),
+				\choiceRateRate, timescale * exprand(1.5, 3.0),
+				\choiceRateHi, exprand(2.0, 6.0),
 
-			\ampDB, exprand(1.0, 4.0) - 1,
+				\ampDB, exprand(1.0, 4.0) - 1,
 
-			\wipeMax, exprand(0.1, 0.9)
-		]);
+				\wipeMax, exprand(0.1, 0.9)
+			]),
+			synthDef: synthDef
+		)
 	}
 
-	*pr_DefaultSynthDef{
+	pr_DefaultSynthDef{
 		^SynthDef.new(this.pr_DefaultSynthDefName, {
 			var timescale = \timescale.kr(1);
 			var buf0 = \buf0.kr(0);
 			var buf1 = \buf1.kr(1);
 
-			var sig0 = PlayBuf.ar(
-				1,
-				buf0,
-				BufRateScale.kr(buf0) * \rate0.kr(1.0)
+			var sig0 = Warp1.ar(
+				1, buf0,
+				Line.kr(dur: timescale),
+				\rate0.kr(0),
+				ExpRand(0.05, 0.2),
+				-1,
+				ExpRand(2, 16),
+				0
 			);
 
-			var sig1 = PlayBuf.ar(
-				1,
-				buf1,
-				BufRateScale.kr(buf1) * \rate0.kr(1.0)
+			var sig1 = Warp1.ar(
+				1, buf1,
+				Line.kr(dur: timescale),
+				\rate1.kr(0),
+				ExpRand(0.05, 0.2),
+				-1,
+				ExpRand(2, 16),
+				0
 			);
 
 			var fftsize = 2.pow(9);
