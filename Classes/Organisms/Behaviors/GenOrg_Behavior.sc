@@ -45,113 +45,20 @@ GenOrg_Behavior : SynthDef_Processor{
 	}
 
 	pr_InitGenOrg_Behavior{|boptions, num|
-
 		genOrg_Block = classGenOrg_Block;
-
 		instanceNumber = num;
-
 		options = boptions ? GenOrg_BehaviorOptions.new;
 	}
 
-
 	*pr_CheckBlock{|input|
 		var return;
-
 		if(input.class!=GenOrg_Block){
 			return = GenOrg_Block.newRand;
 		}/*ELSE*/{
 			return = input;
 		};
-
 		^return;
-
 	}
-/*
-	*defineSynthDefs{
-		var symbol = this.prFormatClassSymbol(this, instanceCount);
-
-		var types = this.types;
-		var roles = this.roles;
-
-		[
-			classMatingBlock, classSearchingBlock,
-			classPainBlock, classContactBlock,
-			classEatingBlock, classSpawnBlock,
-			classDeathBlock
-		].do{|block, i|
-
-			var dictionary = Dictionary.new;
-
-			var wrappers = block.do{|curve, x|
-
-				var type = types[i].asString;
-				var role = roles[x].asString, name;
-
-				dictionary[role.asSymbol] = { |timescale = 1|
-					SynthDef.wrap({
-						var lo = format("%Lo", role).asSymbol.kr(0);
-						var hi = format("%Hi", role).asSymbol.kr(0);
-
-						EnvGen.ar(curve.env,
-							timeScale: timescale,
-							doneAction: Done.none
-						).range(lo, hi);
-					});
-
-				};
-			};
-
-			var type = this.types[i];
-			var synthdefname =  type.asString;
-			var synthdef = SynthDef(type.asSymbol, {
-				var buf = \buf.kr(0);
-				var timescale = \timescale.kr(1);
-
-				var rate = dictionary[\rate].value(timescale);
-				var pos = dictionary[\pos].value(timescale);
-				var amp = dictionary[\amp].value(timescale);
-				var ffreq = dictionary[\ffreq].value(timescale);
-				var impulseRate = dictionary[\impulseRate].value(timescale);
-				var grainDur = dictionary[\grainDur].value(timescale);
-				var rq = dictionary[\rq].value(timescale);
-
-				var bufdur = BufDur.kr(buf);
-
-				var phasor = pos * bufdur;
-
-				var impulse = Impulse.ar(impulseRate);
-
-				var sig = TGrains.ar(
-					1,
-					impulse,
-					buf,
-					rate,
-					phasor,
-					grainDur
-				) * 16;
-
-				var filteredSig = BPF.ar(
-					sig,
-					ffreq,
-					rq
-				);
-
-				var out = Normalizer.ar(filteredSig) * amp
-				* EnvGen.ar(
-					Env([0, 1, 1, 1, 0], [0.05, 1, 1, 0.05].normalizeSum,
-						curve: \welch), timeScale: timescale,
-					doneAction: Done.freeSelf
-				) * \ampDB.kr(-12).dbamp;
-
-				Out.ar(\out.kr(0), out);
-
-			});
-
-			this.registerSynthDef(synthdef, false, symbol);
-		};
-
-		instanceCount = instanceCount + 1;
-	}*/
 
 	*defineSynthDefs{
 		var symbol = this.prFormatClassSymbol(this, instanceCount);
@@ -316,23 +223,6 @@ GenOrg_Behavior : SynthDef_Processor{
 
 	}
 
-	/*	*types{
-	var return = #[
-	'mating',
-	'searching',
-	'pain',
-	'contacting',
-	'eating',
-	'spawn',
-	'death'
-	];
-	^return;
-	}
-
-	types{
-	^this.class.types;
-	}*/
-
 	*arguments{
 		var return = #[
 			'rate',
@@ -351,7 +241,6 @@ GenOrg_Behavior : SynthDef_Processor{
 		^this.class.arguments;
 	}
 
-
 	localClassSymbol{
 		var return = this.class.superclass
 		.prFormatClassSymbol(this, instanceNumber);
@@ -366,17 +255,6 @@ GenOrg_Behavior : SynthDef_Processor{
 		super.free;
 		goBehaviorInstances.remove(this);
 	}
-
-	/*	*freeAll{
-	if(goBehaviorInstances.isNil.not){
-	goBehaviorInstances.copy.do{|item|
-	item.free;
-	};
-
-	instanceCount = 0;
-	goBehaviorInstances = nil;
-	};
-	}*/
 
 	*resetInstanceCount{
 		instanceCount = nil;

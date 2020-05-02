@@ -27,12 +27,25 @@ GenOrg_BehaviorOptions{
 	var <timescaleScalar = 1;
 
 	*new{
-
-		^super.new.pr_NewVROBehaviorOptions;
-
+		^super.new
+		.rateLo_(nil)
+		.rateHi_(nil)
+		.posLo_(nil)
+		.posHi_(nil)
+		.ampLo_(nil)
+		.ampHi_(nil)
+		.ffreqLo_(nil)
+		.ffreqHi_(nil)
+		.impulseRateLo_(nil)
+		.impulseRateHi_(nil)
+		.grainDurLo_(nil)
+		.grainDurHi_(nil)
+		.rqLo_(nil)
+		.rqHi_(nil)
+		.timescale_(nil);
 	}
 
-	pr_NewVROBehaviorOptions{
+	/*pr_NewVROBehaviorOptions{
 
 		rateLo = this.pr_CheckAndScaleMinMax(rateLo, rateLoMin, rateLoMax, 0);
 		rateHi = this.pr_CheckAndScaleMinMax(rateHi, rateHiMin, rateHiMax, 1);
@@ -59,7 +72,7 @@ GenOrg_BehaviorOptions{
 
 		timescale = this.pr_CheckAndScaleMinMax(timescale, timescaleMin, timescaleMax, 1);
 		// timescale = exprand(0.1, 1.5);
-	}
+	}*/
 
 	pr_CheckAndScaleMinMax{|item, min, max, how = 0|
 		var return;
