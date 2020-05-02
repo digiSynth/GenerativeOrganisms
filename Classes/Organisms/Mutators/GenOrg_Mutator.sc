@@ -5,9 +5,10 @@ GenOrg_Mutator{
 	var folderPath, <synthDef;
 	var isInitialized = false;
 
-	*new{
+	*new{|synthDef|
 		^super.new
 		.pr_InitGenOrg_Mutator
+		.synthDef_(synthDef);
 	}
 
 	synthDef_{|newSynthDef|
@@ -20,10 +21,8 @@ GenOrg_Mutator{
 			Error("Can only set to object of kind of SynthDef").throw;
 		};
 
-		newSynthDef.name = this.pr_DefaultSynthDefName;
-
 		synthDef = newSynthDef;
-
+		this.pr_ProcessSynthDefMetaData;
 	}
 
 	render{ |buffer0, buffer1, duration = 1, action|
@@ -38,7 +37,7 @@ GenOrg_Mutator{
 			var condition;
 			this.pr_GenOrg_ProcessAudio(reference, duration, buffer0, buffer1, action);
 		}/*ELSE*/{
-			this.pr_GenOrg_MutatorInit;
+			this.pr_InitGenOrg_Mutator;
 			^this.render(buffer0, buffer1, duration, action);
 		};
 
@@ -59,7 +58,7 @@ GenOrg_Mutator{
 		isInitialized = true;
 	}
 
-	pr_InitScore{|duration, buffer0, buffer1|
+	pr_GenOrg_ProcessAudio{|reference, duration, buffer0, buffer1, action|
 		var timescale = duration;
 		var score = Score.new;
 
@@ -68,19 +67,22 @@ GenOrg_Mutator{
 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++".osc";
 		var outpath = incrementer.nextFileName;
-		var action = {
+		var scoreAction = {
 
-			{
 				format("\n% rendered\n",
 					PathName(outpath)
 					.fileNameWithoutExtension
 				).postln;
-			};
 
 		};
 
 		var buf0FileStartFrame = 0, buf1FileStartFrame = 0;
+		var synthMsg = this.pr_GetSynthMsg
+		(buffer0Copy, buffer1Copy, duration);
 		var synthDefName = synthDef.name;
+		var timeoffset = 1e-5;
+
+		action = scoreAction++action;
 
 		if((buffer0.numFrames / server.sampleRate) > duration){
 			buf0FileStartFrame =
@@ -107,48 +109,11 @@ GenOrg_Mutator{
 		]);
 
 		score.add([
-			timescale, [1];
-		]);
-
-		^(score:score, buffer0: buffer0Copy, buffer1: buffer1Copy,
-			oscpath: oscpath, outpath: outpath, action: action);
-	}
-
-	//This is the method that subclasses will define
-	//(along with setting a default SynthDef and default SynthDef name)
-	pr_GetSynthMsg{|buffer0, buffer, timescale = 1|
-		this.subclassResponsibility(thisMethod);
-	}
-
-	pr_DefaultSynthDefName{
-		this.subclassResponsibility(thisMethod);
-	}
-
-	pr_DefaultSynthDef{
-		this.subclassResponsibility(thisMethod);
-	}
-
-	pr_GenOrg_ProcessAudio{|reference, duration = 1, buffer0, buffer1, action|
-		var scoreEvent = this.pr_InitScore(duration, buffer0, buffer1);
-		var score = scoreEvent.score;
-		var buffer0Copy = scoreEvent.buffer0;
-		var buffer1Copy = scoreEvent.buffer1;
-		var outpath = scoreEvent.outpath;
-		var oscpath = scoreEvent.oscpath;
-		var scoreAction = scoreEvent.action;
-
-		var synthMsgEvent = this.pr_GetSynthMsg(buffer0Copy, buffer1Copy, duration);
-		var synthMsg = synthMsgEvent.synthMsg;
-		var synthDefToAdd = synthMsgEvent.synthDef;
-
-		action = scoreAction++action;
-
-		score.add([
-			0, [\d_recv, synthDefToAdd.asBytes]
+			timeoffset, synthMsg
 		]);
 
 		score.add([
-			0, synthMsg
+			timescale+timeoffset, [1];
 		]);
 
 		score.sort;
@@ -158,7 +123,7 @@ GenOrg_Mutator{
 			reference,
 			buffer0Copy,
 			buffer1Copy,
-			duration,
+			timescale+timeoffset,
 			outpath,
 			oscpath,
 			action
@@ -205,9 +170,74 @@ GenOrg_Mutator{
 			};
 		);
 	}
+
+	pr_GetSynthMsg{|buffer0, buffer, timescale = 1|
+		var name, argumentArray;
+		if(synthDef.isNil){
+			synthDef = this.pr_DefaultSynthDef;
+		};
+
+		name = synthDef.name;
+
+		argumentArray = synthDef.metadata.copy;
+		argumentArray.keys.do{|key|
+			var item = argumentArray[key];
+			argumentArray[key] = item.map(1.0.rand);
+		};
+
+		argumentArray = argumentArray.asPairs;
+
+		^((Synth.basicNew(name)
+		).newMsg(args: argumentArray));
+
+	}
+
+	pr_DefaultSynthDef{
+		^SynthDef(
+			format("GenOrg_MutatorSynth%", UniqueID.next).asSymbol, {
+				var timescale = \timescale.kr(1);
+				var buf0 = \buf0.kr(0);
+				var buf1 = \buf1.kr(1);
+				var sig0 = PlayBuf.ar(1, buf0,
+					BufRateScale.kr(buf0) * \rate0.kr(1));
+				var sig1 = PlayBuf.ar(1, buf1,
+					BufRateScale.kr(buf1) * \rate1.kr(1));
+				var env = EnvGen.ar(Env([0, 1, 1, 0],
+					[0.05, 1, 0.05].normalizeSum),
+				timeScale: timescale,
+				doneAction: Done.freeSelf
+				);
+				var chain0 = FFT(LocalBuf(2.pow(10), 1), sig0);
+				var chain1 = FFT(LocalBuf(2.pow(10), 1), sig1);
+				var morph = PV_Morph(chain0, chain1,
+					LFNoise2.kr(timescale * \morphCycles.kr(8)).unipolar(1)
+				);
+				var out = IFFT(morph) * env * \ampDB.kr(0).dbamp;
+				out = Normalizer.ar(out, 1.0);
+				Out.ar(\out.kr(0), out);
+			},
+			metadata:
+			(
+				rate0: ControlSpec(0.05, 3.0, 'exp'),
+				rate1: ControlSpec(0.05, 3.0, 'exp'),
+				timescale: ControlSpec(1, 1),
+				morphCycles: ControlSpec(2.0, 32.0, 'exp'),
+				out: ControlSpec(0, 0),
+				ampDB: ControlSpec(0, 0)
+			)
+		)
+	}
+
+	pr_ProcessSynthDefMetaData{
+		var metadata = synthDef.metadata;
+		metadata[\buf0] = ControlSpec(0, 0, 'lin', default: 0);
+		metadata[\buf1] = ControlSpec(1, 1, 'lin', default: 1);
+		synthDef.metadata = metadata;
+	}
 }
 
 GenOrg_Mutator_AudioPath : FileConfigurer{
+	classvar id;
 	classvar internalPath;
 
 	*defaultPath{
@@ -216,12 +246,8 @@ GenOrg_Mutator_AudioPath : FileConfigurer{
 
 	*path{
 		if(internalPath.isNil){
-			internalPath = super.path;
-
-			if(internalPath.isNil){
-				while({internalPath.isNil}, {internalPath = super.path});
-			};
-
+			this.pr_SetID;
+			internalPath = super.path(id);
 		};
 
 		^internalPath;
@@ -230,7 +256,19 @@ GenOrg_Mutator_AudioPath : FileConfigurer{
 	*path_{|newpath|
 
 		internalPath = nil;
-		^super.path_(newpath);
+		this.pr_SetID;
+		^super.path_(newpath, id);
 
+	}
+
+	*pr_SetID{
+		if(id.isNil){
+			id = super.pr_SetID;
+		};
+	}
+
+	*id{
+		this.pr_SetID;
+		^id;
 	}
 }
