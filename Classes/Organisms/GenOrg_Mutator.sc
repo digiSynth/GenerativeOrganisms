@@ -174,9 +174,11 @@ GenOrg_Mutator{
 	pr_DefaultSynthDef{
 
 		var makeEnv = {|dur, da = 0|
-			EnvGen.ar(Env([0, 1, 1, 0],
-				[0.1, 1, 0.1].normalizeSum * dur),
-			doneAction: da);
+			SynthDef.wrap({
+				EnvGen.ar(Env([0, 1, 1, 0],
+					[0.1, 1, 0.1].normalizeSum * dur),
+				doneAction: da);
+			});
 		};
 
 		^SynthDef(
@@ -186,11 +188,11 @@ GenOrg_Mutator{
 				var buf1 = \buf1.kr(1);
 				var sig0 = PlayBuf.ar(1, buf0,
 					BufRateScale.kr(buf0) * \rate0.kr(1))
-				* makeEnv.value(BufDur.kr(buf0), 0);
+				* makeEnv.value(BufDur.kr(buf0) * 0.99, 0);
 
 				var sig1 = PlayBuf.ar(1, buf1,
 					BufRateScale.kr(buf1) * \rate1.kr(1))
-				* makeEnv.value(BufDur.kr(buf1), 0);
+				* makeEnv.value(BufDur.kr(buf1) * 0.99, 0);
 
 				var env = makeEnv.value(timescale, 2);
 				var chain0 = FFT(LocalBuf(2.pow(10), 1), sig0);

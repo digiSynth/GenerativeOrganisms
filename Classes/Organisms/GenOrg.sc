@@ -160,7 +160,7 @@ GenOrg{
 		};
 
 		if(this.buffer.isNil.not){
-			if(organism.isGenOrg){
+			if(organism.isKindOf(GenOrg)){
 				if(organism.buffer.isNil.not){
 
 					if(organism.buffer.bufnum.isNil.not){
