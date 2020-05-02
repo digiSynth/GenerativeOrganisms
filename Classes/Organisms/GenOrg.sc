@@ -7,6 +7,7 @@ GenOrg{
 	var freeFunc, shouldDeleteBuffer;
 	var <isInitialized = false;
 	var mater, eater;
+	var matingSynthDef, eatingSynthDef;
 
 	*new{ |buffer, behavior, spatializer/*, playOnSpawn = false*/|
 		var return;
@@ -19,84 +20,89 @@ GenOrg{
 		};
 
 		return = super.new
-		.pr_InitGenOrg(
-			buffer, behavior,
-			spatializer/*, playOnSpawn*/
-		);
+		.buffer_(buffer)
+		.behavior_(behavior)
+		.spatializer_(spatializer)
+		.pr_InitGenOrg;
 
 		goInstances.add(return);
 
 		^return;
 	}
 
+	//Get and set fields
 	buffer{
 		^bufferReference.value;
 	}
 
-	pr_InitGenOrg{|bf, be, sp/*, bool*/|
-		var setResourcesFunc;
-		if(bf.class!=Ref and: {bf.class!=Buffer}){
-			if(bf.class==Float){
-				bf = bf.asInteger;
+	buffer_{|newBuffer|
+
+		if(newBuffer.isKindOf(Ref).not and: {newBuffer.isKindOf(Buffer).not}){
+			if(newBuffer.isKindOf(Float)){
+				newBuffer = newBuffer.asInteger;
 			};
-			if(bf.class!= Integer){
+			if(newBuffer.isKindOf(Integer).not){
 				Error("GenOrg lacks a valid buffer input.").throw;
 			};
 		};
-		if(bf.class==Buffer){
-			if(bf.numChannels==2){
-				bf = Buffer.readChannel(server, bf.path, channels: 0);
-			};
-		};
-		if(bf.class!=Ref){
-			bf = `bf;
-		};
-		bf.value.normalize;
-		bufferReference = bf;
-		setResourcesFunc = {
-			if(sp.isSpatialCell){
-				spatializer = sp;
-			}/*ELSE*/{
-				if(sp.class==Symbol or: {sp.class==String}){
-					case
-					{sp.asString.toLower=="Binaural".toLower}{
-						spatializer = SpatialCellBinaural.new;
-					}
-					{sp.asString.toLower=="FOA".toLower}{
-						spatializer = SpatialCellFOA.new;
-					}
-					{sp.asString.toLower=="HOA".toLower}{
-						spatializer = SpatialCellHOA.new;
-					};
-				}/*ELSE*/{
-					if(sp.isNil){
-						spatializer = SpatialCellMono.new;
-						server.sync;
-					}/*ELSE*/{
-						Error("Invalid spatializer input").throw;
-					};
-				};
-			};
-			behavior = be ? GenOrg_Behavior.new;
-			if(isInitialized==false){
-				freeFunc = `nil;
-				shouldDeleteBuffer = `false;
-				spatializer.onFree({
-					this.pr_FreeOrganism(shouldDeleteBuffer.value);
-					if(freeFunc.value.isNil.not){
-						freeFunc.value.value;
-					};
-				});
-				isInitialized = true;
+
+		if(newBuffer.isKindOf(Buffer)){
+			if(newBuffer.numChannels==2){
+				newBuffer = Buffer.readChannel(server, newBuffer.path, channels: 0);
 			};
 		};
 
-		if(sp.isNil || be.isNil){
-			forkIfNeeded{
-				setResourcesFunc.value;
-			};
+		if(newBuffer.isKindOf(Ref).not){
+			newBuffer = `newBuffer;
 		}/*ELSE*/{
-			setResourcesFunc.value;
+			if(newBuffer.value.isKindOf(Buffer).not){
+				Error("GenOrg lacks a valid buffer input.").throw;
+			};
+		};
+
+		newBuffer.value.normalize(0.8);
+		bufferReference = newBuffer;
+
+	}
+
+	spatializer_{|newSpatializer|
+
+		if(newSpatializer.isSpatialCell){
+			spatializer = newSpatializer;
+		}/*ELSE*/{
+			if(newSpatializer.class==Symbol or: {newSpatializer.class==String}){
+				case
+				{newSpatializer.asString.toLower=="Binaural".toLower}{
+					spatializer = SpatialCellBinaural.new;
+				}
+				{newSpatializer.asString.toLower=="FOA".toLower}{
+					spatializer = SpatialCellFOA.new;
+				}
+				{newSpatializer.asString.toLower=="HOA".toLower}{
+					spatializer = SpatialCellHOA.new;
+				};
+			}/*ELSE*/{
+
+				if(newSpatializer.isNil){
+					spatializer = SpatialCellMono.new;
+				}/*ELSE*/{
+					Error("Invalid spatializer input").throw;
+				};
+			};
+		};
+	}
+
+	behavior_{|newBehavior|
+		if(newBehavior.isNil){
+			behavior = GenOrg_Behavior.new;
+		}/*ELSE*/{
+
+			if(newBehavior.isKindOf(GenOrg_Behavior)){
+				behavior = newBehavior;
+			}/*ELSE*/{
+				Error("GenOrg lacks a valid behavior input.").throw;
+			}
+
 		};
 
 	}
@@ -116,22 +122,31 @@ GenOrg{
 		spatializer.distance = distance;
 	}
 
+	//Mutation methods
 	mate{|organism|
 		var newOrganism = `(nil);
+		if(mater.isNil){
+			this.matingSynthDef_(matingSynthDef);
+		};
+
 		if(organism.isNil.not){
-			if(organism.isGenOrg){
+			if(organism.isKindOf(GenOrg)){
+
 				if(this.buffer.bufnum.isNil.not
 					&& organism.buffer.bufnum.isNil.not){
+
 					var newBehavior, newBuffer, newSpatializer;
-					newBehavior = GenOrg_Mutator
-					.mateBehaviors(behavior, organism.behavior);
-					newBuffer = GenOrg_Mutator
-					.mateBuffers(this.buffer, organism.buffer, {
-						newSpatializer = spatializer.class.new;
-						newOrganism.value = GenOrg
-						.new(newBuffer, newBehavior, newSpatializer);
-						// "Organism delivered!".postln;
+
+					newSpatializer = spatializer.class.new;
+					newBehavior = behavior.averageBehaviors(organism.behavior);
+					newBuffer = mater.mutate(this.buffer, organism.buffer, 1, {
+						newOrganism.value = GenOrg.new(
+							newBuffer,
+							newBehavior,
+							newSpatializer
+						);
 					});
+
 				};
 			};
 		};
@@ -140,15 +155,40 @@ GenOrg{
 	}
 
 	eat{|organism|
+		if(eater.isNil){
+			this.eatingSynthDef_(eatingSynthDef);
+		};
+
 		if(this.buffer.isNil.not){
 			if(organism.isGenOrg){
 				if(organism.buffer.isNil.not){
+
 					if(organism.buffer.bufnum.isNil.not){
-						bufferReference =  GenOrg_Mutator
-						.eatBuffers(this.buffer, organism.buffer);
+
+						bufferReference = eater.mutate(this.buffer, organism.buffer);
+
 					};
+
 				};
 			};
+		};
+	}
+
+	matingSynthDef_{|newSynthDef|
+		if(mater.isNil){
+			mater = GenOrg_Mutator.new(newSynthDef);
+		}/*ELSE*/{
+			matingSynthDef = newSynthDef;
+			mater.synthDef_(newSynthDef);
+		};
+	}
+
+	eatingSynthDef_{|newSynthDef|
+		if(eater.isNil){
+			eater = GenOrg_Mutator.new(newSynthDef);
+		}/*ELSE*/{
+			eatingSynthDef = newSynthDef;
+			eater.synthDef_(newSynthDef);
 		};
 	}
 
@@ -169,26 +209,13 @@ GenOrg{
 	}
 
 	free{|deleteBuffer = false|
-		shouldDeleteBuffer.value = deleteBuffer;
 		if(spatializer.isFreed==false){
 			spatializer.free;
 		}/*ELSE*/{
-			this.pr_FreeOrganism(shouldDeleteBuffer.value);
-			freeFunc.value;
-		};
-	}
-
-	pr_FreeOrganism{|deleteBuffer = false|
-		isInitialized = false;
-		behavior.free;
-		super.free;
-		goInstances !? {
-			goInstances.remove(this);
+			this.pr_FreeOrganism(deleteBuffer);
+			this.pr_EvaluateFreeFunc;
 		};
 
-		if(deleteBuffer){
-			File.delete(bufferReference.value.path);
-		};
 	}
 
 	lag{
@@ -205,24 +232,52 @@ GenOrg{
 		};
 	}
 
-	isGenOrg{
-		^true;
-	}
-
-	*deleteOrganismFiles{
-		GenOrg_Mutator.deleteOrganismFiles;
-	}
-
 	*instances{
 		^goInstances;
 	}
 
-}
+	//Private methods
+	pr_FreeOrganism{|deleteBuffer = false|
+		isInitialized = false;
+		behavior.free;
+		super.free;
+		goInstances !? {
+			goInstances.remove(this);
+		};
 
-+ Object{
-	isGenOrg{
-		^false;
+		if(deleteBuffer){
+			File.delete(bufferReference.value.path);
+		};
 	}
+
+	pr_InitGenOrg{
+
+		if(isInitialized==false){
+			// freeFunc = `nil;
+			shouldDeleteBuffer = false;
+			spatializer.onFree({
+				this.pr_FreeOrganism(shouldDeleteBuffer);
+				this.pr_EvaluateFreeFunc;
+			});
+
+			isInitialized = true;
+		};
+
+	}
+
+	pr_EvaluateFreeFunc{
+		if(freeFunc.isNil.not){
+			if(freeFunc.isFunction){
+				freeFunc.value;
+			}/*ELSE*/{
+				if(freeFunc.isKindOf(Ref)){
+					var value = freeFunc.value;
+					if(value.isFunction){
+						value.value;
+					};
+				};
+			};
+		};
+	}
+
 }
-
-

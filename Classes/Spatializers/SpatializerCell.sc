@@ -286,14 +286,10 @@ SpatialCell : SynthDef_Processor{
 	}
 
 	onFree{|function|
-
 		if(freeFunc.isNil){
-
 			freeFunc = `function;
 		}/*ELSE*/{
-
 			freeFunc.value = freeFunc.value ++ function;
-
 		};
 	}
 
