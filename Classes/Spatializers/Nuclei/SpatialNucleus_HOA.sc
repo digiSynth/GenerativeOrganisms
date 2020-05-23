@@ -1,4 +1,4 @@
-SpatialCellHOA : SpatialCell{
+SpatialNucleus_HOA : SpatialNucleus{
 	classvar <classSymbol, hoaInstances;
 	// classvar encoder, decoder;
 	classvar <order = 2, orderChannels;

@@ -1,6 +1,6 @@
-SpatialCellFOA : SpatialCell{
+SpatialNucleus_FOA : SpatialNucleus{
 	classvar <classSymbol, foaInstances;
-	classvar encoder, decoder;
+	classvar <encoder, <decoder;
 
 	*new{
 		var return = super.new(this.prFormatClassSymbol(this));
@@ -37,7 +37,6 @@ SpatialCellFOA : SpatialCell{
 
 	*freeAll{
 		foaInstances !? {
-
 			if(foaInstances.size > 0){
 				foaInstances.copy.do{
 					|item|
@@ -45,7 +44,6 @@ SpatialCellFOA : SpatialCell{
 				}
 
 			}
-
 		}
 	}
 
@@ -58,39 +56,28 @@ SpatialCellFOA : SpatialCell{
 				var distance = \distance.kr(1, lag).clip(1.0, 10000.0);
 				var denom = distance.squared;
 				var ffreq = 18000.0 / denom;
-
-
 				var filteredSig = LPF.ar(input, ffreq) * (denom * -1).dbamp;
-
 				var sig = FoaEncode.ar(filteredSig, encoder);
-
 				sig = FoaPush.ar(
 					sig,
 					pi/2,
 					\azimuth.kr(0, lag),
 					\elevation.kr(0, lag)
 				);
-
 				//this proximity class makes terrible clickings. Too bad...
 				// sig = FoaProximity.ar(sig, \distance.kr(0.1, lag).clip(1e-4, 20000));
-
 				FoaDecode.ar(sig, decoder);
 
 			};
 		};
-
 		synthdef = this.pr_DefineSynthDefShell(wrapperFunction);
-
 		this.registerSynthDef(synthdef, false, symbol);
 	}
 
-
 	*decoder_{|newDecoder|
-
 		if(newDecoder.class!=FoaDecoderMatrix or: {newDecoder.class!=FoaDecoderKernel}){
 			Error.throw("newDecoder must either be of type decoder or FoaDecoderKernel").throw;
 		};
-
 		//change the decoder
 		decoder = newDecoder;
 		//remove the synthdefs from the super class's dictionary
@@ -100,11 +87,9 @@ SpatialCellFOA : SpatialCell{
 
 
 	*encoder_{|newEncoder|
-
 		if(newEncoder.class!=FoaEncoderMatrix or: {newEncoder.class!=FoaEncoderKernel}){
 			Error.throw("newEncoder must either be of type FoaEncoderMatrix or FoaEncoderKernel").throw;
 		};
-
 		//change the decoder
 		encoder = newEncoder;
 		//remove the synthdefs from the super class's dictionary
@@ -113,9 +98,7 @@ SpatialCellFOA : SpatialCell{
 	}
 
 	*instances{
-
 		^foaInstances;
-
 	}
 
 }

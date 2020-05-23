@@ -1,4 +1,4 @@
-SpatialCellStereo : SpatialCell{
+SpatialNucleus_Stereo : SpatialNucleus{
 	classvar <orientation = 0.5;
 	classvar stereoInstances;
 
@@ -21,7 +21,6 @@ SpatialCellStereo : SpatialCell{
 		//manage loading synthdefs onto the server by the super
 		//class so that every calling of the class does
 		//not also accompany a reloading of redundant synthdefs
-
 		classSymbol = this.prFormatClassSymbol(this);
 	}
 
@@ -43,23 +42,16 @@ SpatialCellStereo : SpatialCell{
 		var synthdef;
 		var wrapperFunction = { |input, lag|
 			{
-
 				var w, x, y, z;
 				var distance = \distance.kr(1, lag).clip(1.0, 10000.0);
 				var denom = distance.squared;
 				var ffreq = 18000.0 / denom;
-
 				var filteredSig = LPF.ar(input, ffreq) * (denom * -1).dbamp;
-
 				#w, x, y, z = PanB.ar(filteredSig, \azimuth.kr(0, lag), \elevation.kr(0, lag));
-
 				DecodeB2.ar(2, w, x, y, orientation);
-
 			};
 		};
-
 		synthdef = this.pr_DefineSynthDefShell(wrapperFunction);
-
 		this.registerSynthDef(synthdef, false, symbol);
 	}
 
@@ -75,9 +67,7 @@ SpatialCellStereo : SpatialCell{
 	}
 
 	*instances{
-
 		^stereoInstances;
-
 	}
 
 }

@@ -1,4 +1,4 @@
-SpatialCellBinaural : SpatialCell{
+SpatialNucleus_Binaural : SpatialNucleus{
 	classvar <order = 4, <headphoneCorrectionIndex = 22;
 	classvar <classSymbol, binauralInstances;
 	classvar headphonesLoaded = false;

@@ -1,5 +1,4 @@
 GenOrg{
-	// classvar oscBufferInfo;
 	classvar goInstances;
 	classvar server;
 
@@ -9,7 +8,7 @@ GenOrg{
 	var mater, eater;
 	var matingSynthDef, eatingSynthDef;
 
-	*new{ |buffer, behavior, spatializer/*, playOnSpawn = false*/|
+	*new{ |buffer, behavior, spatializer|
 		var return;
 		server = Server.default;
 
@@ -60,7 +59,7 @@ GenOrg{
 			};
 		};
 
-		newBuffer.value.normalize(0.8);
+		newBuffer.value.normalize;
 		bufferReference = newBuffer;
 
 	}

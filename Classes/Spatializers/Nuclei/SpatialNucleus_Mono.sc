@@ -1,18 +1,23 @@
-SpatialCellQuad : SpatialCell{
+SpatialNucleus_Mono : SpatialNucleus{
 	classvar <orientation = 0.5;
-	classvar quadInstances;
+	classvar <spatializerInit = false;
+	classvar monoInstances;
 
 	*new{
+
 		var return = super.new(this.prFormatClassSymbol(this));
-		//adds a copy to manage all quadInstances of active particles
-		quadInstances = quadInstances ? List.new;
-		quadInstances.add(return);
+		//adds a copy to manage all monoInstances of active particles
+		monoInstances = monoInstances ? List.new;
+		monoInstances.add(return);
 
 		^return;
+
 	}
 
 	*initNew{
+
 		super.initNew(this.prFormatClassSymbol(this));
+
 	}
 
 	*pr_InitializeSpatialCell{
@@ -26,15 +31,21 @@ SpatialCellQuad : SpatialCell{
 	}
 
 	free{
+
 		super.free;
-		quadInstances.remove(this);
+		monoInstances.remove(this);
+
 	}
 
 	*freeAll{
-		quadInstances.do{
+
+		monoInstances.copy.do{
 			|item|
+
 			item.free;
-		}
+
+		};
+
 	}
 
 	*defineSynthDefs{
@@ -49,21 +60,26 @@ SpatialCellQuad : SpatialCell{
 				var denom = distance.squared;
 				var ffreq = 18000.0 / denom;
 
+
 				var filteredSig = LPF.ar(input, ffreq) * (denom * -1).dbamp;
 
 				#w, x, y, z = PanB.ar(filteredSig, \azimuth.kr(0, lag), \elevation.kr(0, lag));
 
-				DecodeB2.ar(4, w, x, y, orientation);
+				Mix.ar(DecodeB2.ar(2, w, x, y, orientation)) / 2;
 
 			};
+
 		};
 
 		synthdef = this.pr_DefineSynthDefShell(wrapperFunction);
 
 		this.registerSynthDef(synthdef, false, symbol);
+
+		spatializerInit = true;
 	}
 
 	*orientation_{
+
 		|newOrientation|
 		orientation = newOrientation;
 
@@ -71,12 +87,13 @@ SpatialCellQuad : SpatialCell{
 			this.class.synthDefDictionary !? {
 				this.class.synthDefDictionary.removeAt(classSymbol);
 			};
-		}
+		};
+
 	}
 
 	*instances{
 
-		^quadInstances;
+		^monoInstances;
 
 	}
 

@@ -120,8 +120,6 @@ GenOrg_Mutator{
 			0, synthMsg
 		]);
 
-		score.add([timescale, 0]);
-
 		score.sort;
 
 		score.recordNRT(
@@ -138,7 +136,9 @@ GenOrg_Mutator{
 			.memSize_(2.pow(10))
 			.numWireBufs_(2.pow(13))
 			.verbosity_(-2),
-			action: {
+			"",
+			duration,
+			{
 				fork{
 					var localCondition = Condition.new;
 					var toReturn;
@@ -155,10 +155,10 @@ GenOrg_Mutator{
 					localCondition.hang;
 					reference.value = toReturn;
 
-					format("\n% rendered\n",
+					/*format("\n% rendered\n",
 						PathName(outpath)
 						.fileNameWithoutExtension
-					).postln;
+					).postln;*/
 
 					action.value;
 
@@ -176,7 +176,8 @@ GenOrg_Mutator{
 		var makeEnv = {|dur, da = 0|
 			SynthDef.wrap({
 				EnvGen.ar(Env([0, 1, 1, 0],
-					[0.1, 1, 0.1].normalizeSum * dur),
+					[0.1, 1, 0.1].normalizeSum, \welch),
+				timeScale: dur,
 				doneAction: da);
 			});
 		};
@@ -188,13 +189,13 @@ GenOrg_Mutator{
 				var buf1 = \buf1.kr(1);
 				var sig0 = PlayBuf.ar(1, buf0,
 					BufRateScale.kr(buf0) * \rate0.kr(1))
-				* makeEnv.value(BufDur.kr(buf0) * 0.99, 0);
+				* makeEnv.value(BufDur.kr(buf0) * 0.98, 0);
 
 				var sig1 = PlayBuf.ar(1, buf1,
 					BufRateScale.kr(buf1) * \rate1.kr(1))
-				* makeEnv.value(BufDur.kr(buf1) * 0.99, 0);
+				* makeEnv.value(BufDur.kr(buf1) * 0.98, 0);
 
-				var env = makeEnv.value(timescale, 2);
+				var env = makeEnv.value(timescale * 0.999, 2);
 				var chain0 = FFT(LocalBuf(2.pow(10), 1), sig0);
 				var chain1 = FFT(LocalBuf(2.pow(10), 1), sig1);
 				var morph = PV_Morph(chain0, chain1,
