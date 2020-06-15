@@ -1,15 +1,8 @@
 SpatialNucleus : Hybrid{
-	classvar <spatializersInit = false;
-
-	var freeFunc;
+	var freeFunctions, canPlay = false;
 	var <group, <inputBus, <outputBus, <synth;
-	var <event = nil, <function = nil;
-	var canPlay = false, <isFreed = false;
-	var pausingRoutine = nil;
-	var <>distanceMaxFreq = 16000, doneAction = 1;
 	var <lag, <azimuth, <elevation, <distance;
-
-	var <mover;
+	var pausingRoutine, cilium;
 
 	initHybrid { 
 		this.makeBusses; 
@@ -26,7 +19,6 @@ SpatialNucleus : Hybrid{
 		this.initGroup;
 		this.initSynth;
 		canPlay = true;
-				
 	}
 
 	initGroup { group ?? {group = Group.new.register} }
@@ -41,8 +33,21 @@ SpatialNucleus : Hybrid{
 			\timer, server.latency, 
 			\doneAction, 0
 		], group).register;
-		freeFunc ?? {freeFunc = `nil};
-		synth.onFree({this.freeResources});
+		synth.onFree({this.freeList});
+	}
+
+	freeList { 
+		this.onFree;
+		freeFunctions.do(_.value);
+	}
+
+	onFree { | function |
+		freeFunctions ?? { 
+			var list = List.new; 
+			list.add({this.freeResources});
+			freeFunctions = list;
+		}; 
+		function !? {freeFunctions.add(function)};
 	}
 
 	outputBus_{|newBus|
@@ -54,19 +59,11 @@ SpatialNucleus : Hybrid{
 
 	isPlaying { ^synth.isPlaying }
 
-	lag_{|newLag = 0.01|
-		lag = newLag;
-		this.play;
-		if(canPlay){
-			synth !? {
-				if(synth.isPlaying){
-					synth.set(\lag, newLag);
-				};
-			};
-		};
+	makeTemplates { 
+		templater.nucleusShell( "nucleusShell" );
 	}
 
-	*pr_DefineSynthDefShell{ |toWrap|
+	/**pr_DefineSynthDefShell{ |toWrap|
 		var synthdef;
 		if(toWrap.class!=Function){
 			Error("Input must be a function that returns another function").throw;
@@ -88,121 +85,68 @@ SpatialNucleus : Hybrid{
 		});
 
 		^synthdef;
+	}*/
+
+	freeResources { 
+		group !? {group.free}; 
+		this.freeBus(inputBus); 
+		this.freeBus(outputBus);
+		inputBus = outputBus = nil;
 	}
 
-	pr_FreeGroupAndBus{
-		if(group.isNil.not){
-			if(group.isPlaying){
-				group.free;
-			};
-			group = nil;
-		};
-
-		if(inputBus.isNil.not){
-			if(inputBus.class==Bus){
-				if(inputBus.index.isNil.not){
-					inputBus.free;
-				};
-			};
-			inputBus=nil;
-		};
-
-		if(outputBus.isNil.not){
-			if(outputBus.class==Bus){
-				if(outputBus.index.isNil.not){
-					outputBus.free;
-				};
-			};
-			outputBus = nil;
-		};
-		isFreed = true;
+	freeBus { | bus |
+		if(bus.isKindOf(Bus) and: {bus.index.notNil}, { 
+			bus.free; 
+		});	
 	}
 
-	pr_FreeResources{
-		super.free;
-		spatialCellInstances.remove(this);
-		if(freeFunc.value.isNil.not){
-			freeFunc.value.value;
-		};
-		this.pr_FreeGroupAndBus;
+	free {
+		//I need to think about this more...
+		//Awaken only works if this.isRunning is false.
+		//However, here, we invoke awaken if the synth is playing and running. This makes no sense.
+		case
+		{this.isPlaying and: {this.isRunning}}{this.awaken(2)}
+		{this.isPlaying and: {this.isRunning.not}}{synth.free;}
+		{this.isPlaying.not}{this.freeList};
 	}
 
-	onFree{|function|
-		if(freeFunc.isNil){
-			freeFunc = `function;
-		}/*ELSE*/{
-			freeFunc.value = freeFunc.value ++ function;
-		};
+	setArg { | key, value |
+		if(canPlay and: {this.isPlaying}, { 
+			synth.set(key, newArg);
+		});
 	}
 
-	free{
-		if(synth.isPlaying){
-			if(synth.isRunning){
-				doneAction = 2;
-				this.awaken;
-			}/*ELSE*/{
-				//if it is not running, then just free everything all at once
-				synth.free;
-			};
-		}/*ELSE*/{
-			this.pr_FreeResources;
-		};
+	azimuth_{ | newAzimuth(pi) | 
+		azimuth = newAzimuth.wrap(pi.neg, pi); 
+		this.setArg(\azimuth, azimuth);
 	}
 
-	*freeAll{
-		if(spatialCellInstances!=nil){
-			if(spatialCellInstances.size > 0){
-				//free all spatialCellInstances of this class
-				spatialCellInstances.copy.do{|instance|
-					instance.free;
-				};
-			};
-		};
+	elevation_{ | newElevation(0) | 
+		elevation = newElevation.wrap(pi.neg, pi); 
+		this.setArg(\elevation, elevation);
 	}
 
-	azimuth_{|newAzimuth = pi|
-		azimuth = newAzimuth;
-		if(canPlay){
-			synth !? {
-				if(synth.isPlaying){
-					synth.set(\azimuth, azimuth.wrap(-pi, pi));
-				};
-			};
-		};
+	distance_{ | newDistance(2) | 
+		distance = newDistance.clip(1.0, 100.0);
+		this.setArg(\distance, distance);
 	}
 
-	elevation_{ |newElevation = 0|
-		elevation = newElevation;
-		if(canPlay){
-			synth !? {
-				if(synth.isPlaying){
-					synth.set(\elevation, elevation.wrap(-pi, pi));
-				};
-			};
-		};
+	lag_{ |newLag(server.latency)| 
+		lag = newLag;
+		this.setArg(\lag, lag);
 	}
 
-	distance_{ |newDistance|
-		distance = newDistance;
-		if(canPlay){
-			synth !? {
-				if(synth.isPlaying){
-					synth.set(\distance, distance.clip(1.0, 100.0));
-				};
-			}
-		}
-	}
-
-	awaken {
+	awaken { | doneAction(0) |
 		if(this.isRunning.not, {  
-			if(pausingRoutine.isPlaying){			
+			if(pausingRoutine.isPlaying, {			
 				pausingRoutine.stop;
-			};
+			});
 			pausingRoutine = Routine({
 				synth.set(\doneAction, 0, \wakeUp, 1);
 				synth.run(true);
 				(server.latency * 2).wait;
-				synth.set(\doneAction, doneAction);				});
+				synth.set(\doneAction, doneAction);
+			});
 			pausingRoutine.play;
 		});
 	}
@@ -219,9 +163,5 @@ SpatialNucleus : Hybrid{
 			this.pr_GarbageCollect(synthDefs);
 			subclass.initNew;
 		};
-	}
-
-	*instances{
-		^spatialCellInstances;
 	}
 }
