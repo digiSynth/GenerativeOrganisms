@@ -1,141 +1,62 @@
-SpatialNucleus : SynthDef_Processor{
-	classvar <classSymbol, spatialCellInstances;
+SpatialNucleus : Hybrid{
 	classvar <spatializersInit = false;
-	// classvar encoder, decoder;
 
 	var freeFunc;
 	var <group, <inputBus, <outputBus, <synth;
 	var <event = nil, <function = nil;
 	var canPlay = false, <isFreed = false;
 	var pausingRoutine = nil;
-	var <>distanceMaxFreq = 16000, doneActionValue = 1;
+	var <>distanceMaxFreq = 16000, doneAction = 1;
 	var <lag, <azimuth, <elevation, <distance;
 
 	var <mover;
 
-	*new{|symbol|
-		var return;
-		//call an instance of this class
-		return = super.new(symbol).pr_SetupSpatialCell;
-		//add that instance to the class's list of spatialCellInstances
-		this.pr_InitializeSpatialCell(return);
-		//return it
-		^return;
+	initHybrid { 
+		this.makeBusses; 
+		this.makeNodes;
 	}
 
-	*initNew{ |symbol|
-		var toremove;
-		this.pr_InitializeSpatialCell;
-		toremove = super.new(symbol);
-		super.pr_RemoveInstance(toremove);
+	makeBusses { 
+		inputBus ?? {Bus.audio(server, 1)};
+		outputBus ?? {outputBus  =  0};
 	}
 
-	reInitialize{
-		if(isFreed==false){
-			if(this.isPlaying==false){
-				this.pr_SetupSpatialCell;
-			}/*ELSE*/{
-				("Warning: Spatializer is already running"
-					++" and so cannot be reinitialized.").postln;
-			};
-		};
+	makeNodes { 
+		canPlay = false; 
+		this.initGroup;
+		this.initSynth;
+		canPlay = true;
+				
 	}
 
-	*pr_InitializeSpatialCell{|toAdd|
-		//adds a copy to manage all spatialCellInstances of active particles
-		spatialCellInstances = spatialCellInstances ? List.new;
-		//set up the class symbol:
-		//this will be used to format synth names as well as to
-		//manage loading synthdefs onto the server by the super
-		//class so that every calling of the class does
-		//not also accompany the reloading of redundant synthdefs
-		spatialCellInstances.add(toAdd);
-	}
+	initGroup { group ?? {group = Group.new.register} }
 
-	pr_SetupSpatialCell{
-		var returnFunction = {
-			//load and process the event and function
-			// this.prSetUpEventOrFunction(eventOrFunction);
-
-			//allocate server resources for the class
-			this.pr_MakeBusses;
-			this.pr_MakeNodes;
-		};
-		if(spatializersInit==false){
-			forkIfNeeded{
-				server.sync;
-				returnFunction.value;
-			};
-		}/*ELSE*/{
-			returnFunction.value;
-		};
-	}
-
-	pr_MakeNodes{
-		canPlay = false;
-		// server.bind({
-		this.pr_MakeGroups;
-		this.pr_MakeSynth;
-		// });
-	}
-
-	pr_MakeBusses{
-		if(inputBus.isNil){
-			inputBus = Bus.audio(server, 1);
-		};
-		if(inputBus.index.isNil){
-			inputBus = Bus.audio(server, 1);
-		};
-		outputBus = outputBus ? 0;
+	initSynth {
+		lag = lag ?? {server.latency  * 0.1};
+		synth = Synth(modules.synthDef.name, [ 
+			\in, inputBus, 
+			\out, outputBus, 
+			\angle, pi/2,
+			\lag, lag, 
+			\timer, server.latency, 
+			\doneAction, 0
+		], group).register;
+		freeFunc ?? {freeFunc = `nil};
+		synth.onFree({this.freeResources});
 	}
 
 	outputBus_{|newBus|
 		outputBus = newBus;
-		if(synth.isRunning){
-			synth.set(\out, outputBus);
-		};
+		if(this.isRunning, {synth.set(\out, outputBus)});
 	}
 
-	pr_MakeGroups{|condition|
-		//load a dictionary of groups
-		group = Group.new;
-		group.register;
-	}
+	isRunning { synth !? {^synth.isRunning} ?? {^false} }
 
-	pr_MakeSynth{
-		//load the synth.
-		lag = lag ? (server.latency * 0.1);
-		synth = Synth.newPaused(this.formatSynthName(\Synth), [
-			\in, inputBus,
-			\out, outputBus,
-			\angle, pi/2,
-			\lag, lag,
-			\timer, server.latency,
-			// \distance, 1e-3,
-			\doneAction, 0,
-		], group).register;
-		freeFunc = freeFunc ? `nil;
-		synth.onFree({
-			this.pr_FreeResources;
-		});
-		canPlay = true;
-	}
-
-	isRunning{
-		if(synth.isNil.not){
-			^synth.isRunning;
-		}/*ELSE*/{
-			^false;
-		};
-	}
-
-	isPlaying{
-		^synth.isPlaying;
-	}
+	isPlaying { ^synth.isPlaying }
 
 	lag_{|newLag = 0.01|
 		lag = newLag;
-		this.playSpatialCell;
+		this.play;
 		if(canPlay){
 			synth !? {
 				if(synth.isPlaying){
@@ -217,8 +138,8 @@ SpatialNucleus : SynthDef_Processor{
 	free{
 		if(synth.isPlaying){
 			if(synth.isRunning){
-				doneActionValue = 2;
-				this.pr_WakeUpSynthAndPlay;
+				doneAction = 2;
+				this.awaken;
 			}/*ELSE*/{
 				//if it is not running, then just free everything all at once
 				synth.free;
@@ -272,39 +193,21 @@ SpatialNucleus : SynthDef_Processor{
 		}
 	}
 
-	pr_WakeUpSynthAndPlay{
-		//this was a pain in the ass to figure out.
-		//this method makes sure that the synth both will play when called but also
-		//limits its overall impact on the server resources when not in use
-
-		//if the synth exists
-		synth !? {
-			//if it is running on the server
-			if(synth.isRunning.not){
-				if(pausingRoutine.isPlaying){
-					pausingRoutine.stop;
-				};
-				//wake up the synth:
-				pausingRoutine = Routine({
-					//this routine wakes up the synth by setting its doneAction to "none"
-					//and routing pink noise through the DetectSilence UGen.
-					synth.set(\doneAction, 0, \wakeUp, 1);
-					synth.run(true);
-					//after one period of server latency, the doneAction is set to "pauseSelf"
-					//and, after another period of server latency, the synth pauses itself freeing up resources
-					(server.latency * 2).wait;
-					synth.set(\doneAction, doneActionValue);
-				});
-				pausingRoutine.play;
+	awaken {
+		if(this.isRunning.not, {  
+			if(pausingRoutine.isPlaying){			
+				pausingRoutine.stop;
 			};
-		};
+			pausingRoutine = Routine({
+				synth.set(\doneAction, 0, \wakeUp, 1);
+				synth.run(true);
+				(server.latency * 2).wait;
+				synth.set(\doneAction, doneAction);				});
+			pausingRoutine.play;
+		});
 	}
 
-	playSpatialCell{
-		if(canPlay){
-			this.pr_WakeUpSynthAndPlay;
-		};
-	}
+	play{ if(canPlay, {this.awaken}) }
 
 	*loadSpatialCellSynthDefs{
 		// Routine({
