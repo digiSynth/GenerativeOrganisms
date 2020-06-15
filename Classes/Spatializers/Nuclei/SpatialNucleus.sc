@@ -1,10 +1,11 @@
-SpatialNucleus : Hybrid{
+SpatialNucleus : Hybrid {
 	var freeFunctions, canPlay = false;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pausingRoutine, cilium;
 
 	initHybrid { 
+		this.processNucleus;
 		this.makeBusses; 
 		this.makeNodes;
 	}
@@ -60,32 +61,17 @@ SpatialNucleus : Hybrid{
 	isPlaying { ^synth.isPlaying }
 
 	makeTemplates { 
-		templater.nucleusShell( "nucleusShell" );
+		templater.nucleusShell;
+		this.setNucleusFunction;
 	}
 
-	/**pr_DefineSynthDefShell{ |toWrap|
-		var synthdef;
-		if(toWrap.class!=Function){
-			Error("Input must be a function that returns another function").throw;
-		};
-		synthdef = SynthDef(\Synth, {
-			var timer = \timer.kr(8);
-			var env = EnvGen.kr(Env.asr(0.0, 1, \release.kr(1.0)),
-				\gate.kr(1),
-				doneAction: Done.freeSelf
-			);
-			var lag = \lag.kr(0.1);
-			var in = In.ar(\in.kr(0), 1) * \ampDB.kr(0).dbamp;
-			var sig = SynthDef.wrap(toWrap.value(in, lag));
-			var wakeUpSignal = EnvGen.kr(Env.perc(0.0, timer/2),
-				gate: \wakeUp.tr(1)) * PinkNoise.ar();
-			DetectSilence.ar(in+wakeUpSignal, time: timer/2,
-				doneAction: \doneAction.kr(1));
-			Out.ar(\out.kr(0), sig * env);
-		});
+	setNucleusFunction { this.subclassResponsibility(thisMethod) }
 
-		^synthdef;
-	}*/
+	processNucleus {
+		this.class.processSynthDefs(
+			modules.nucleusShell(modules[\nucleusFunction]);
+		);
+	}
 
 	freeResources { 
 		group !? {group.free}; 
@@ -152,16 +138,4 @@ SpatialNucleus : Hybrid{
 	}
 
 	play{ if(canPlay, {this.awaken}) }
-
-	*loadSpatialCellSynthDefs{
-		// Routine({
-		var synthArray = this.subclasses.do{|subclass|
-			var synthDefs = [];
-			synthDefDictionary[subclass.asSymbol].do{|synthDef|
-				synthDefs = synthDefs.add(synthDef);
-			};
-			this.pr_GarbageCollect(synthDefs);
-			subclass.initNew;
-		};
-	}
 }
