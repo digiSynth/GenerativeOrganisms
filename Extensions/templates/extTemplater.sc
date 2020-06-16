@@ -6,7 +6,7 @@
 		this.resetTemplateDir;
 	}
 
-	nucelusFunction { | templateName("nucleusFunction") | 
+	nucleusFunction { | templateName("nucleusFunction") | 
 		this.setTemplateDir(PathName(this.filenameString));
 		this.makeTemplate(templateName, "nucleusFunction");
 		this.resetTemplateDir;
