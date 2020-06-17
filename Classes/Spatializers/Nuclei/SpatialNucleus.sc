@@ -3,9 +3,27 @@ SpatialNucleus : Hybrid {
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pausingRoutine, cilium;
+	
+	makeTemplates { 
+		templater.nucleusShell;
+		this.setNucleusFunction;
+	}
+	
+	setNucleusFunction { this.subclassResponsibility(thisMethod); }
+
+	addSpatializer { 
+		var synthDef = this.checkModules( 
+			modules.nucleusShell(modules[\nucleusFunction]); 
+		).at(0); 
+		modules.add(\synthDef -> synthDef);
+	}
+
+	makeSynthDefs {
+		this.addSpatializer;
+		this.class.processSynthDefs(modules.synthDef);
+	}
 
 	initHybrid { 
-		this.processNucleus;
 		this.makeBusses; 
 		this.makeNodes;
 	}
@@ -59,19 +77,6 @@ SpatialNucleus : Hybrid {
 	isRunning { synth !? {^synth.isRunning} ?? {^false} }
 
 	isPlaying { ^synth.isPlaying }
-
-	makeTemplates { 
-		templater.nucleusShell;
-		this.setNucleusFunction;
-	}
-
-	setNucleusFunction { this.subclassResponsibility(thisMethod) }
-
-	processNucleus {
-		this.class.processSynthDefs(
-			modules.nucleusShell(modules[\nucleusFunction]);
-		);
-	}
 
 	freeResources { 
 		group !? {group.free}; 
@@ -139,3 +144,13 @@ SpatialNucleus : Hybrid {
 
 	play{ if(canPlay, {this.awaken}) }
 }
+
+MonoNucleus : SpatialNucleus { setNucleusFunction { templater.monoNucleus; } }
+
+StereoNucleus : SpatialNucleus { setNucleusFunction { templater.stereoNucleus; } }
+
+QuadNucleus : SpatialNucleus { setNucleusFunction { templater.quadNucleus; } }
+
+FOANucleus : SpatialNucleus { setNucleusFunction { templater.foaNucleus; } 
+
+HOANucleus : SpatialNucleus { setNucleusFunction { templater.hoaNucleus; } }
