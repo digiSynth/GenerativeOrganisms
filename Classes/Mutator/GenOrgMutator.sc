@@ -57,10 +57,10 @@ GenOrgMutator : Hybrid {
 		}, {argArray});
 	}
 
-	render { |reference, duration, buffer0, buffer1, action| 
+	render { | buffer0, buffer1, timescale, action| 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++ ".osc";
 		var outpath = incrementer.increment;
-		this.getScore(buffer, buffer1, duration).recordNRT(
+		this.getScore(buffer, buffer1, timescale).recordNRT(
 			oscpath, 
 			outpath, 
 			nil, 
@@ -70,8 +70,22 @@ GenOrgMutator : Hybrid {
 			options, 
 			"", 
 			duration, 
-			action: { cleanupList.do(_.value); cleanupList.clear;}
+			action: { 
+				fork {
+					var condition = Condition.new;
+					var buffer = Buffer.read(
+						server, 
+						outpath, 
+						action: { condition.unhang; }
+					);
+					condition.hang;
+					reference.value = buffer;
+					cleanupList.do(_.value); 
+					cleanupList.clear;
+				};
+			}
 		);
+		^reference;
 	}
 
 	getScore { | buffer0, buffer1, timescale | 

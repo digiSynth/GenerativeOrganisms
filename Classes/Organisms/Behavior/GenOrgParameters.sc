@@ -14,7 +14,17 @@ GenOrgParameters : Composite {
 		^args.asPairs;
 	}
 
-	mutateWith {  }
+	mutateWith { | target |  
+		var child = GenOrgParameters.new(\mutation);
+		var tmodules = target.modules;
+		modules.keysValuesDo({ | key, item | 
+			var tarItem = tmodules[key];
+			child[key] = [ 
+				item.minval + tarItem.minval / 2, 
+				item.maxval + tarItem.maxval / 2;
+				[item.warp + tarItem.warp].choose;
+			].asSpec;
+		});
+		^child;
+	}
 }
-
-GenOrgParMutant {  }
