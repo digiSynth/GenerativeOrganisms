@@ -60,8 +60,7 @@ GenOrgMutator : Hybrid {
 	render { |reference, duration, buffer0, buffer1, action| 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++ ".osc";
 		var outpath = incrementer.increment;
-		var score = this.getScore(buffer, buffer1, duration);
-		score.recordNRT(
+		this.getScore(buffer, buffer1, duration).recordNRT(
 			oscpath, 
 			outpath, 
 			nil, 

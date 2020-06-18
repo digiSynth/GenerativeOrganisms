@@ -92,11 +92,8 @@ SpatialNucleus : Hybrid {
 	}
 
 	free {
-		//I need to think about this more...
-		//Awaken only works if this.isRunning is false.
-		//However, here, we invoke awaken if the synth is playing and running. This makes no sense.
 		case
-		{this.isPlaying and: {this.isRunning}}{this.awaken(2)}
+		{this.isPlaying and: {this.isRunning}}{synth.set(\doneAction, 2, \gate, 0);}
 		{this.isPlaying and: {this.isRunning.not}}{synth.free;}
 		{this.isPlaying.not}{this.freeList};
 	}
