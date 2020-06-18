@@ -64,3 +64,8 @@ GenOrgBehavior : Hybrid {
 
 }
 
+GenOrgBehaviorMutant {
+
+	play {  }
+
+}
