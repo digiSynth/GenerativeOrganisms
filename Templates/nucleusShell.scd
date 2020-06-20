@@ -1,7 +1,7 @@
-{ | spatializerUgens | 
+{ | modules, spatializerUgens | 
 
 	SynthDef(\synth, { 
-		var time = \timer.kr(8); 
+		var timer = \timer.kr(8); 
 		var env = EnvGen.kr(
 			Env.asr(0.0, 1, \release.kr(1.0)), 
 			\gate.kr(1), 

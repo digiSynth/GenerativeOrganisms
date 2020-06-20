@@ -12,7 +12,7 @@ SpatialNucleus : Hybrid {
 	setNucleusFunction { this.subclassResponsibility(thisMethod); }
 
 	addSpatializer { 
-		var synthDef = this.checkModules( 
+		var synthDef = this.checkModule( 
 			modules.nucleusShell(modules[\nucleusFunction]); 
 		).at(0); 
 		modules.add(\synthDef -> synthDef);

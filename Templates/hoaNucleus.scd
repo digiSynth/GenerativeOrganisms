@@ -1,6 +1,6 @@
 var decodingOrder = 2; 
 var encodingOrder = 1;
-{ | in, distance, azimuth, elevation | 
+{ | modules, in, distance, azimuth, elevation | 
 	SynthDef.wrap({ 
 		var sig = HOAEncoder.ar(
 			encodingOrder, 
