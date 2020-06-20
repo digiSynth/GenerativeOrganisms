@@ -1,14 +1,21 @@
 + Templater { 
 
-	nucleusFunctionPath { 
+	nucleusPath { 
 		^(Main.packages.asDict.at('GenOrg')+/+"Templates");
 	}
 
-	genOrgTemplate { | object("nucleusFunction") | 
-		this.makeExtTemplate(this.nucleusFunctionPath, object, object);
+	genOrgTemplate { | object | 
+		this.makeExtTemplate(this.nucleusPath, 
+			"nucleusFunction", object);
 	}
 
-	nucleusShell { this.genOrgTemplate("nucleusShell"); }
+	nucleusShell { 
+		this.makeExtTemplate(
+			this.nucleusPath, 
+			"nucleusShell", 
+			"nucleusShell"
+		);
+	}
 
 	monoNucleus { this.genOrgTemplate("monoNucleus"); }
 

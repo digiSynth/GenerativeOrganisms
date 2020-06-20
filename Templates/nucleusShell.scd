@@ -1,5 +1,4 @@
 { | modules, spatializerUgens | 
-
 	SynthDef(\synth, { 
 		var timer = \timer.kr(8); 
 		var env = EnvGen.kr(
@@ -28,5 +27,4 @@
 		);
 		Out.ar(\out.kr(0), sig * env);
 	});
-
 }

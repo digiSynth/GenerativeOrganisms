@@ -1,5 +1,5 @@
 SpatialNucleus : Hybrid {
-	var freeFunctions, canPlay = false;
+	var freeFunctions;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pausingRoutine, cilium;
@@ -11,21 +11,18 @@ SpatialNucleus : Hybrid {
 	
 	setNucleusFunction { this.subclassResponsibility(thisMethod); }
 
-	addSpatializer { 
-		var synthDef = this.checkModule( 
-			modules.nucleusShell(modules[\nucleusFunction]); 
-		).at(0); 
-		modules.add(\synthDef -> synthDef);
-	}
-
-	makeSynthDefs {
-		this.addSpatializer;
-		this.class.processSynthDefs(modules.synthDef);
+	makeSynthDefs { 
+		var synthDef = modules.nucleusShell(modules[\nucleusFunction]);
+		synthDef.name = this.formatName(synthDef.name).asSymbol; 
+		if(this.checkDictionary(synthDef), { 
+			this.class.processSynthDefs(synthDef); 
+			modules.add(\synthDef -> synthDef);
+		});
 	}
 
 	initHybrid { 
 		this.makeBusses; 
-		this.makeNodes;
+		this.initGroup;
 	}
 
 	makeBusses { 
@@ -33,18 +30,11 @@ SpatialNucleus : Hybrid {
 		outputBus ?? {outputBus  =  0};
 	}
 
-	makeNodes { 
-		canPlay = false; 
-		this.initGroup;
-		this.initSynth;
-		canPlay = true;
-	}
-
 	initGroup { group ?? {group = Group.new.register} }
 
 	initSynth {
 		lag = lag ?? {server.latency  * 0.1};
-		synth = Synth(modules.synthDef.name, [ 
+		synth = Synth.newPaused(modules.synthDef.name, [ 
 			\in, inputBus, 
 			\out, outputBus, 
 			\angle, pi/2,
@@ -99,7 +89,7 @@ SpatialNucleus : Hybrid {
 	}
 
 	setArg { | key, value |
-		if(canPlay and: {this.isPlaying}, { 
+		if({this.isPlaying}, { 
 			synth.set(key, value);
 		});
 	}
@@ -139,7 +129,10 @@ SpatialNucleus : Hybrid {
 		});
 	}
 
-	play{ if(canPlay, {this.awaken}) }
+	play{  
+		if(synth.isNil, { this.initSynth });
+		this.awaken 
+	}
 }
 
 MonoNucleus : SpatialNucleus { setNucleusFunction { templater.monoNucleus; } }
