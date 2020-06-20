@@ -1,6 +1,6 @@
 GenOrgBehavior : Hybrid { 
 	classvar instanceCount;
-	var instanceNumber, <parameters, tag; 
+	var instanceNumber, <parameters, synthDefName; 
 
 	initComposite { 
 		instanceNumber  = this.incrementInstanceCount; 
@@ -17,14 +17,13 @@ GenOrgBehavior : Hybrid {
 	}
 
 	makeTemplates { 
-		templater.behaviorShell;
-		this.arguments.do{ | item | 
-			templater.behaviorEnv(item.asString);
-		};
+		templater.behaviorSynthDef;
+		templater.behaviorArgs;
+		templater.behaviorEnvs;
 	}
 
 	arguments { 
-		^[\rate, \pos, \amp, \ffreq, \impulseRate, \grainDur, \rq];
+		^modules.behaviorArgs;
 	}
 
 	makeSynthDefs { 
@@ -33,26 +32,22 @@ GenOrgBehavior : Hybrid {
 	}
 
 	generateSynthDef { 
-		var synthDef = this.checkModules(
-			modules.behaviorShell(this.getCurves(block))
-		); 
+		var synthDef = this.checkModules(module.behaviorSynthDef);
 		modules.add(\synthDef -> synthDef);
 	}
 
 	getCurves { 
 		^this.arguments.collect({|item, index| 
-			[item, modules[item].value(block[index])]
+			[item, modules[item]];
 		}).asPairs(Dictionary);
 	}
 
 	tag { | tag, name | 
-		tag = super.tag(tag, name)++instanceNumber.asString; 
-		^tag;
+		synthDefName = super.tag(tag, name)++instanceNumber.asString; 
+		^synthDefName;
 	}
 
-	getTag { ^this.tag.asSymbol; }
-
-	free { this.class.removeAt(this.getTag); }
+	free { this.class.removeAt(synthDefName); }
 
 	play { | buffer, db(-12), outBus(0), 
 		target(server.defaultGroup), addAction(\addToTail) | 
