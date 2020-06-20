@@ -32,7 +32,7 @@ GenOrgBehavior : Hybrid {
 	}
 
 	generateSynthDef { 
-		var synthDef = this.checkModules(module.behaviorSynthDef);
+		var synthDef = this.checkModules(modules.behaviorSynthDef);
 		modules.add(\synthDef -> synthDef);
 	}
 

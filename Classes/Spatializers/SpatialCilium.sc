@@ -1,5 +1,5 @@
-SpatialCilium : SynthDef_Processor{
-	classvar ciliumInstances, <isInitialized = false;
+SpatialCilium : Hybrid {
+/*	classvar ciliumInstances, <isInitialized = false;
 	var <azimuthMin, <azimuthMax;
 	var <elevationMin, <elevationMax;
 	var <distanceMin, <distanceMax;
@@ -305,5 +305,5 @@ SpatialCilium : SynthDef_Processor{
 	*instances{
 		^ciliumInstances;
 	}
-
+*/
 }

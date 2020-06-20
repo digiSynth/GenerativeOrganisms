@@ -17,7 +17,7 @@ GenOrg {
 
 	*basicNew { ^super.new; }
 
-	initGenOrg { | spatializerType | 
+	initGenOrg { | type | 
 		server ?? {server = Server.default }; 
 		mater = GenOrgMutator.new(moduleSet, from);
 		eater = GenOrgMutator.new(moduleSet, from);
@@ -41,8 +41,8 @@ GenOrg {
 		case
 		{newBuffer.isKindOf(Buffer)}{ buffer = `newBuffer; }
 		{newBuffer.isKindOf(Ref)}{ 
-			if(ref.value.isKindOf(Buffer), { 
-				buffer = ref;
+			if(newBuffer.value.isKindOf(Buffer), { 
+				buffer = newBuffer;
 			});
 		};
 	}
@@ -60,8 +60,8 @@ GenOrg {
 	} 
 
 	play { | db = -3 | 
-		modules.spatializer.play; 
-		modules.behavior.play(
+		spatializer.play; 
+		behavior.play(
 			this.buffer, 
 			db, 
 			spatializer.inputBus, 
@@ -74,6 +74,7 @@ GenOrg {
 		if(organism.isKindOf(GenOrg), { 
 			var newSpatializer = spatializer.class
 			.new(moduleSet, from);
+			var newBehavior = behavior.mutateWith(organism.behavior);
 			var newBuffer = mater.render(
 				this.buffer, 
 				organism.buffer, 

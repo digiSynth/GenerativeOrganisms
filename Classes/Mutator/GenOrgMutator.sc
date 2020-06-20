@@ -32,7 +32,7 @@ GenOrgMutator : Hybrid {
 		^this.enforceArgs(dict.asPairs, buffer0, buffer1, timescale);
 	}
 
-	enforceArgs { | argArray, buffer0, buffer1, timescale |
+	enforceArgs { | argArr, buffer0, buffer1, timescale |
 		^this.enforceTimescale( 
 			this.enforceBufs(argArr, buffer0, buffer1),
 			timescale
@@ -47,20 +47,21 @@ GenOrgMutator : Hybrid {
 		);
 	}
 
-	enforceTimescale { | argArray, timescale(1)|
+	enforceTimescale { | argArr, timescale(1)|
 		^this.addArg(argArr, \timescale, timescale);
 	}
 
-	addArg { |argArray, key, val| 
-		^if(argArray.containsIdentical(key).not, {
-			argArray++[key, val];		
-		}, {argArray});
+	addArg { |argArr, key, val| 
+		^if(argArr.containsIdentical(key).not, {
+			argArr++[key, val];		
+		}, {argArr});
 	}
 
 	render { | buffer0, buffer1, timescale, action| 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++ ".osc";
 		var outpath = incrementer.increment;
-		this.getScore(buffer, buffer1, timescale).recordNRT(
+		var reference = `nil;
+		this.getScore(buffer0, buffer1, timescale).recordNRT(
 			oscpath, 
 			outpath, 
 			nil, 
@@ -69,7 +70,7 @@ GenOrgMutator : Hybrid {
 			"int24", 
 			options, 
 			"", 
-			duration, 
+			timescale, 
 			action: { 
 				fork {
 					var condition = Condition.new;

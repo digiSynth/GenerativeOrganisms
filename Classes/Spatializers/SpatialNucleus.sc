@@ -100,7 +100,7 @@ SpatialNucleus : Hybrid {
 
 	setArg { | key, value |
 		if(canPlay and: {this.isPlaying}, { 
-			synth.set(key, newArg);
+			synth.set(key, value);
 		});
 	}
 
@@ -148,6 +148,6 @@ StereoNucleus : SpatialNucleus { setNucleusFunction { templater.stereoNucleus; }
 
 QuadNucleus : SpatialNucleus { setNucleusFunction { templater.quadNucleus; } }
 
-FOANucleus : SpatialNucleus { setNucleusFunction { templater.foaNucleus; } 
+FOANucleus : SpatialNucleus { setNucleusFunction { templater.foaNucleus; } }
 
 HOANucleus : SpatialNucleus { setNucleusFunction { templater.hoaNucleus; } }
