@@ -1,45 +1,34 @@
 GenOrgBehavior : Hybrid {
 	classvar instanceCount;
-	var instanceNumber, <parameters, synthDefName;
+	var instanceNumber, synthDefName;
 
 	initComposite {
 		instanceNumber  = this.incrementInstanceCount;
 		super.initComposite;
 	}
 
-	initHybrid {
-		parameters ?? {parameters = GenOrgParameters.new(moduleSet)};
-	}
+	initHybrid { }
 
 	incrementInstanceCount {
-		instanceCount = instanceCount ? 0 !? { instanceCount + 1 };
+		if(instanceCount.notNil, {instanceCount = instanceCount + 1}, {instanceCount = 0});
 		^instanceCount;
 	}
 
 	makeTemplates {
+		//loads to modules as synthDef, parameters, envs.
 		templater.behaviorSynthDef;
-		templater.behaviorArgs;
+		templater.behaviorParameters;
 		templater.behaviorEnvs;
 	}
 
-	arguments {
-		^modules.behaviorArgs;
+	parameters {
+		^modules.parameters;
 	}
 
 	makeSynthDefs {
-		this.generateSynthDef;
-		this.class.processSynthDefs(modules.synthDef);
-	}
-
-	generateSynthDef {
-		var synthDef = this.checkModules(modules.behaviorSynthDef);
-		modules.add(\synthDef -> synthDef);
-	}
-
-	getCurves {
-		^this.arguments.collect({|item, index|
-			[item, modules[item]];
-		}).asPairs(Dictionary);
+		//load the synthdef from the synthdef function defined by the module.
+		modules[\synthDef] = modules.synthDef;
+		super.makeSynthDefs;
 	}
 
 	tag { | tag, name |
@@ -53,43 +42,36 @@ GenOrgBehavior : Hybrid {
 		target(server.defaultGroup), addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
-			parameters.getSynthArgs(db, outBus),
+			this.getSynthArgs(db, outBus),
 			target,
 			addAction
 		);
 	}
 
-	parameters_{ | newParameters |
-		if(newParameters.isKindOf(GenOrgParameters), {
-			parameters = newParameters;
-		});
+	getSynthArgs { | db(-3), outBus(0) |
+		var pars = modules.parameters.copy;
+		pars[\ampDB] = db; pars[\out] = outBus;
+		^pars.asPairs;
 	}
 
 	mutateWith { | target |
-		var child = GenOrgBehavior.basicNew(\mutation);
-		this.mutateModules(target.modules).keysValuesDo({
-			| key, value |
-			child.modules[key] = value;
-		});
-		child.parameters = parameters.mutateWith(target.parameters);
-		^child.initComposite;
+		var child = GenOrgBehavior.new(\mutation);
+		var tmods = target.modules;
+		child.modules.envs = this.mutateEnvs(tmods.envs);
+		child.modules.parameters = this.mutateParameters(tmods.parameters);
+		^child;
 	}
 
-	mutateModules { | targetModules |
-		var newModules = ();
-		this.arguments.do{ | key |
-			newModules.add(key -> this.mutateEnv(
-				modules[key], targetModules[key]
-			));
+	mutateEnvs { | target |
+		var mutation = ();
+		modules.envs.keysValuesArrayDo { | key, value |
+			var tarItem = target[key];
+			var levels = this.averageArr(value.levels, tarItem.levels);
+			var times = this.averageArr(value.times, tarItem.times);
+			var curves = this.averageArr(value.curves, tarItem.curves);
+			mutation[key] = Env(levels, times, curves);
 		};
-		^newModules;
-	}
-
-	mutateEnv { | env0, env1 |
-		var levels = this.averageArr(env0.levels, env1.levels);
-		var times = this.averageArr(env0.times, env1.times);
-		var curves = this.averageArr(env0.curves, env1.curves);
-		^Env(levels, times, curves);
+		^mutation;
 	}
 
 	averageArr { | arr0, arr1 |
@@ -97,5 +79,18 @@ GenOrgBehavior : Hybrid {
 			arr1 = arr1.resize(arr0);
 		});
 		^(arr0 + arr1 / 2);
+	}
+
+	mutateParameters { | target |
+		var mutataion = ();
+		modules.parameters.keysValuesDo({ | key, item |
+			var tarItem = target[key];
+			mutataion[key] = [
+				item.minval + tarItem.minval / 2,
+				item.maxval + tarItem.maxval / 2;
+				[item.warp + tarItem.warp].choose;
+			].asSpec;
+		});
+		^mutataion;
 	}
 }

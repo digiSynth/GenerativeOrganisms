@@ -1,35 +1,57 @@
-+ Templater { 
++ Templater {
 
-	nucleusPath { 
+	genOrgPath {
 		^(Main.packages.asDict.at('GenOrg')+/+"Templates");
 	}
 
-	genOrgTemplate { | object | 
-		this.makeExtTemplate(this.nucleusPath, 
-			"nucleusFunction", object);
+	nucleusTemplate { | object |
+		this.makeExtTemplate(
+			this.genOrgPath,
+			"nucleusFunction",
+			object
+		);
 	}
 
-	nucleusShell { 
+	nucleusShell {
 		this.makeExtTemplate(
-			this.nucleusPath, 
-			"nucleusShell", 
+			this.genOrgPath,
+			"nucleusShell",
 			"nucleusShell"
 		);
 	}
 
-	monoNucleus { this.genOrgTemplate("monoNucleus"); }
+	behaviorParameters {
+		this.makeExtTemplate(
+			this.genOrgPath,
+			"parameters",
+			"behaviorParameters"
+		);
+	}
 
-	stereoNucleus { this.genOrgTemplate("stereoNucleus"); }
+	behaviorEnvs {
+		this.makeExtTemplate(
+			this.genOrgPath,
+			"envs",
+			"behaviorEnvs",
+		);
+	}
 
-	quadNucleus { this.genOrgTemplate("quadNucleus"); }
+	behaviorSynthDef {
+		this.makeExtTemplate(
+			this.genOrgPath,
+			"synthDef",
+			"behaviorSynthDef"
+		);
+	}
 
-	foaNucleus { this.genOrgTemplate("foaNucleus"); }
+	monoNucleus { this.nucleusTemplate("monoNucleus"); }
 
-	hoaNucleus { this.genOrgTemplate("hoaNucleus"); }
+	stereoNucleus { this.nucleusTemplate("stereoNucleus"); }
 
-	behaviorSynthDef { this.genOrgTemplate("behaviorSynthDef"); }
+	quadNucleus { this.nucleusTemplate("quadNucleus"); }
 
-	behaviorArgs { this.genOrgTemplate("behaviorArgs"); }
+	foaNucleus { this.nucleusTemplate("foaNucleus"); }
 
-	behaviorEnvs { this.genOrgTemplate("behaviorEnvs"); }
+	hoaNucleus { this.nucleusTemplate("hoaNucleus"); }
+
 }
