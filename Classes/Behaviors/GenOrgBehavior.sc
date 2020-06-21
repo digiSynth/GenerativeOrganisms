@@ -1,16 +1,14 @@
 GenOrgBehavior : Hybrid {
-	classvar instanceCount;
-	var instanceNumber, synthDefName;
+	classvar <instanceCount;
+	var <instanceNumber;
 
 	initComposite {
-		instanceNumber  = this.incrementInstanceCount;
+		instanceNumber = this.class.increment;
 		super.initComposite;
 	}
 
-	initHybrid { }
-
-	incrementInstanceCount {
-		if(instanceCount.notNil, {instanceCount = instanceCount + 1}, {instanceCount = 0});
+	*increment {
+		instanceCount = instanceCount !? { instanceCount + 1 } ?? { 0 };
 		^instanceCount;
 	}
 
@@ -21,22 +19,15 @@ GenOrgBehavior : Hybrid {
 		templater.behaviorEnvs;
 	}
 
-	parameters {
-		^modules.parameters;
-	}
-
 	makeSynthDefs {
 		//load the synthdef from the synthdef function defined by the module.
 		modules[\synthDef] = modules.synthDef;
 		super.makeSynthDefs;
 	}
 
-	tag { | tag, name |
-		synthDefName = super.tag(tag, name)++instanceNumber.asString;
-		^synthDefName;
-	}
+	formatName { | string | ^(super.formatName(string)++instanceNumber); }
 
-	free { this.class.removeAt(synthDefName); }
+	free { this.class.removeAt(modules.synthDef.name); }
 
 	play { | buffer, db(-12), outBus(0),
 		target(server.defaultGroup), addAction(\addToTail) |
@@ -49,9 +40,7 @@ GenOrgBehavior : Hybrid {
 	}
 
 	getSynthArgs { | db(-3), outBus(0) |
-		var pars = modules.parameters.copy;
-		pars[\ampDB] = db; pars[\out] = outBus;
-		^pars.asPairs;
+		/*TODO!!!!!!*/
 	}
 
 	mutateWith { | target |

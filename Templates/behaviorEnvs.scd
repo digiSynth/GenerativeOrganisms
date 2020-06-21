@@ -11,7 +11,7 @@
 				var hi = format("%hi", key).asSymbol.kr(1);
 				EnvGen.ar(
 					Env(levels, times.normalizeSum, curves),
-					timeScale: timescale
+					timeScale: timescale ?? { 1.0 };
 				).range(lo, hi);
 			});
 		});
