@@ -7,11 +7,11 @@
 		var curves = Array.fill(n - 1, { rrand(-12, 12) });
 		envs.add(key -> {  | event, timescale |
 			SynthDef.wrap({
-				var lo = format("%lo", key).asSymbol.kr(0);
-				var hi = format("%hi", key).asSymbol.kr(1);
+				var lo = format("%_lo", key).asSymbol.kr(0);
+				var hi = format("%_hi", key).asSymbol.kr(1);
 				EnvGen.ar(
 					Env(levels, times.normalizeSum, curves),
-					timeScale: timescale ?? { 1.0 };
+					timeScale: timescale
 				).range(lo, hi);
 			});
 		});

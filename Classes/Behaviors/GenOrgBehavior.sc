@@ -33,22 +33,40 @@ GenOrgBehavior : Hybrid {
 		target(server.defaultGroup), addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
-			this.getSynthArgs(db, outBus),
+			this.getSynthArgs(buffer, db, outBus),
 			target,
 			addAction
 		);
 	}
 
-	getSynthArgs { | db(-3), outBus(0) |
-		/*TODO!!!!!!*/
+	getSynthArgs { | buffer, db(-3), timescale(1.0), outBus(0) |
+		var pars = modules.parameters.copy;
+		var arr = pars.keys.asArray.collect({ | key |
+			var  item = pars[key];
+			var lo = this.tag(key, \lo);
+			var hi = this.tag(key, \hi);
+			[[lo.asSymbol, item.map(0.5.rand)],
+				[hi.asSymbol, item.map(0.5.rand+0.5.rand)]];
+		});
+		arr = arr.add([\buf, buffer, \ampDB, db,
+			\out, outBus, \timescale, timescale]);
+		^arr.flat;
 	}
 
 	mutateWith { | target |
-		var child = GenOrgBehavior.new(\mutation);
-		var tmods = target.modules;
-		child.modules.envs = this.mutateEnvs(tmods.envs);
-		child.modules.parameters = this.mutateParameters(tmods.parameters);
-		^child;
+		var tmods = target.modules, mutation = ();
+		mutation.envs = this.mutateEnvs(tmods.envs);
+		mutation.parameters = this.mutateParameters(tmods.parameters);
+		^GenOrgBehavior.basicNew
+		.getModules(input:mutation)
+		.initComposite;
+	}
+
+	getModules { | from, input |
+		super.getModules(from);
+		input !? {
+			input.keysDo({ | key | modules[key] = input[key] });
+		};
 	}
 
 	mutateEnvs { | target |

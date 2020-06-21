@@ -2,26 +2,26 @@
 	var envs = modules.envs;
 	SynthDef(\synth, {
 		var buf = \buf.kr(0);
-		var timescale = \timescale.kr(1);
 		var bufDur = BufDur.kr(buf);
-		var impulseRate = envs[\impulseRate].value(timescale);
+		var timescale = \timescale.kr(1);
+		var impulseRate = envs.impulseRate(timescale);
 		var impulse = Impulse.ar(impulseRate);
-		var pointer = envs[\pos].value(timescale * bufDur)
+		var pointer = envs.pos(timescale)
 		+ TRand.kr(0.005.neg, 0.005, impulse);
 		var sig = TGrains.ar(
 			1,
 			impulse,
 			buf,
-			envs[\rate].value(timescale),
+			envs.rate(timescale),
 			pointer.wrap(0, bufDur),
-			envs[\grainDur].value(timescale)
+			envs.grainDur(timescale)
 		) * 16;
 		sig = BPF.ar(
 			sig,
-			envs[\ffreq].value(timescale),
-			envs[\rq].value(timescale)
+			envs.ffreq(timescale),
+			envs.rq(timescale)
 		);
-		sig = sig * envs[\amp].value(timescale) * EnvGen.ar(
+		sig = Normalizer.ar(sig) * envs.amp(timescale) * EnvGen.ar(
 			Env([0, 1, 1, 0], [0.1, 1, 0.1].normalizeSum, \sine),
 			timeScale: timescale,
 			doneAction: Done.freeSelf
