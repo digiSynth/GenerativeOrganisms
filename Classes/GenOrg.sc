@@ -2,7 +2,7 @@ GenOrg {
 	var moduleSet, from, buffer, freeFunc; 
 	var server, <mater, <eater, <behavior, <spatializer; 
 
-	*new { | spatializerType, moduleSet(\default), from | 
+	*new { | spatializerType(\mono), moduleSet(\default), from | 
 		^super.newCopyArgs(moduleSet, from).initGenOrg(spatializerType);
 	}
 
@@ -75,7 +75,7 @@ GenOrg {
 			var newSpatializer = spatializer.class
 			.new(moduleSet, from);
 			var newBehavior = behavior.mutateWith(organism.behavior);
-			var newBuffer = mater.render(
+			var newBuffer = mater.mutate(
 				this.buffer, 
 				organism.buffer, 
 				1.0, 
@@ -89,12 +89,11 @@ GenOrg {
 
 	eat { | organism |
 		if(organism.isKindOf(GenOrg), {
-			this.buffer = eater.render(
+			this.buffer = eater.mutate(
 				this.buffer, 
 				organism.buffer, 
 				1.0
 			);
 		});
 	}
-
 }	
