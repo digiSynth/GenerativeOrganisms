@@ -26,19 +26,18 @@ SpatialNucleus : Hybrid {
 	}
 
 	makeBusses {
-		inputBus ?? {Bus.audio(server, 1)};
+		inputBus ?? {inputBus = Bus.audio(server, 1)};
 		outputBus ?? {outputBus  =  0};
 	}
 
-	initGroup { group ?? {group = Group.new.register} }
+	initGroup { group ?? {group = Group.new.register}; }
 
 	initSynth {
-		lag = lag ?? {server.latency  * 0.1};
 		synth = Synth.newPaused(modules.synthDef.name, [
 			\in, inputBus,
 			\out, outputBus,
 			\angle, pi/2,
-			\lag, lag,
+			\lag, lag ?? { lag = server.latency; lag; },
 			\timer, server.latency,
 			\doneAction, 0
 		], group).register;
@@ -64,9 +63,9 @@ SpatialNucleus : Hybrid {
 		if(this.isRunning, {synth.set(\out, outputBus)});
 	}
 
-	isRunning { synth !? {^synth.isRunning} ?? {^false} }
+	isRunning { synth !? {^synth.isRunning} ?? {^false}; }
 
-	isPlaying { ^synth.isPlaying }
+	isPlaying { ^synth.isPlaying; }
 
 	freeResources {
 		group !? {group.free};
@@ -130,7 +129,7 @@ SpatialNucleus : Hybrid {
 	}
 
 	play {
-		if(synth.isNil, { this.initSynth });
+		if(synth.isNil, { this.initSynth; });
 		this.awaken(1);
 	}
 }
