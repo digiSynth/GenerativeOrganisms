@@ -1,5 +1,5 @@
 { | modules |
-	var envs = modules.behaviorEnvs;
+	var envs = modules.behaviorEnvsWrappers(modules.behaviorEnvs);
 	SynthDef(\synth, { 
 		var buf = \buf.kr(0); 
 		var timescale = \timescale.kr(1); 

@@ -1,31 +1,33 @@
-SpatialNucleus : Hybrid {
+SpatialNucleus : CodexHybrid {
 	var freeFunctions;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pausingRoutine, cilium;
-	
-	makeTemplates { 
-		templater.nucleusShell;
-		this.setNucleusFunction;
-	}
-	
-	setNucleusFunction { this.subclassResponsibility(thisMethod); }
 
-	makeSynthDefs { 
+	*makeTemplates { | templater |
+		templater.nucleusShell;
+		this.setNucleusFunction(templater);
+	}
+
+	setNucleusFunction { | templater | 
+		this.subclassResponsibility(thisMethod); 
+	}
+
+	makeSynthDefs {
 		var synthDef = modules.nucleusShell(modules[\nucleusFunction]);
-		synthDef.name = this.formatName(synthDef.name).asSymbol; 
-		if(this.checkDictionary(synthDef), { 
-			this.class.processSynthDefs(synthDef); 
+		synthDef.name = this.formatName(synthDef.name).asSymbol;
+		if(this.checkDictionary(synthDef), {
+			this.class.processSynthDefs(synthDef);
 			modules.add(\synthDef -> synthDef);
 		});
 	}
 
-	initHybrid { 
-		this.makeBusses; 
+	initResources {
+		this.makeBusses;
 		this.initGroup;
 	}
 
-	makeBusses { 
+	makeBusses {
 		inputBus ?? {Bus.audio(server, 1)};
 		outputBus ?? {outputBus  =  0};
 	}
@@ -33,29 +35,30 @@ SpatialNucleus : Hybrid {
 	initGroup { group ?? {group = Group.new.register} }
 
 	initSynth {
+		this.initResources;
 		lag = lag ?? {server.latency  * 0.1};
-		synth = Synth.newPaused(modules.synthDef.name, [ 
-			\in, inputBus, 
-			\out, outputBus, 
+		synth = Synth.newPaused(modules.synthDef.name, [
+			\in, inputBus,
+			\out, outputBus,
 			\angle, pi/2,
-			\lag, lag, 
-			\timer, server.latency, 
+			\lag, lag,
+			\timer, server.latency,
 			\doneAction, 0
 		], group).register;
 		synth.onFree({this.freeList});
 	}
 
-	freeList { 
+	freeList {
 		this.onFree;
 		freeFunctions.do(_.value);
 	}
 
 	onFree { | function |
-		freeFunctions ?? { 
-			var list = List.new; 
+		freeFunctions ?? {
+			var list = List.new;
 			list.add({this.freeResources});
 			freeFunctions = list;
-		}; 
+		};
 		function !? {freeFunctions.add(function)};
 	}
 
@@ -68,17 +71,17 @@ SpatialNucleus : Hybrid {
 
 	isPlaying { ^synth.isPlaying }
 
-	freeResources { 
-		group !? {group.free}; 
-		this.freeBus(inputBus); 
+	freeResources {
+		group !? {group.free};
+		this.freeBus(inputBus);
 		this.freeBus(outputBus);
 		inputBus = outputBus = nil;
 	}
 
 	freeBus { | bus |
-		if(bus.isKindOf(Bus) and: {bus.index.notNil}, { 
-			bus.free; 
-		});	
+		if(bus.isKindOf(Bus) and: {bus.index.notNil}, {
+			bus.free;
+		});
 	}
 
 	free {
@@ -89,34 +92,34 @@ SpatialNucleus : Hybrid {
 	}
 
 	setArg { | key, value |
-		if({this.isPlaying}, { 
+		if({this.isPlaying}, {
 			synth.set(key, value);
 		});
 	}
 
-	azimuth_{ | newAzimuth(pi) | 
-		azimuth = newAzimuth.wrap(pi.neg, pi); 
+	azimuth_{ | newAzimuth(pi) |
+		azimuth = newAzimuth.wrap(pi.neg, pi);
 		this.setArg(\azimuth, azimuth);
 	}
 
-	elevation_{ | newElevation(0) | 
-		elevation = newElevation.wrap(pi.neg, pi); 
+	elevation_{ | newElevation(0) |
+		elevation = newElevation.wrap(pi.neg, pi);
 		this.setArg(\elevation, elevation);
 	}
 
-	distance_{ | newDistance(2) | 
+	distance_{ | newDistance(2) |
 		distance = newDistance.clip(1.0, 100.0);
 		this.setArg(\distance, distance);
 	}
 
-	lag_{ |newLag(server.latency)| 
+	lag_{ |newLag(server.latency)|
 		lag = newLag;
 		this.setArg(\lag, lag);
 	}
 
 	awaken { | doneAction(0) |
-		if(this.isRunning.not, {  
-			if(pausingRoutine.isPlaying, {			
+		if(this.isRunning.not, {
+			if(pausingRoutine.isPlaying, {
 				pausingRoutine.stop;
 			});
 			pausingRoutine = Routine({
@@ -129,18 +132,38 @@ SpatialNucleus : Hybrid {
 		});
 	}
 
-	play{  
+	play{
 		if(synth.isNil, { this.initSynth });
-		this.awaken 
+		this.awaken
 	}
 }
 
-MonoNucleus : SpatialNucleus { setNucleusFunction { templater.monoNucleus; } }
+MonoNucleus : SpatialNucleus {
+	setNucleusFunction { | templater | templater.monoNucleus }
+}
 
-StereoNucleus : SpatialNucleus { setNucleusFunction { templater.stereoNucleus; } }
+StereoNucleus : SpatialNucleus {
+	setNucleusFunction { | templater | templater.stereoNucleus }
+}
 
-QuadNucleus : SpatialNucleus { setNucleusFunction { templater.quadNucleus; } }
+QuadNucleus : SpatialNucleus {
+	setNucleusFunction { | templater | templater.quadNucleus }
+}
 
-FOANucleus : SpatialNucleus { setNucleusFunction { templater.foaNucleus; } }
+FOANucleus : SpatialNucleus {
+	*initDefault {
+		ServerBoot.add({
+			if(\Atk.asClass.notNil, {
+				try({this.new(\defalt)}, {
+					"Warning: Could not load Atk Matrices".postln;
+				});
+			});
+		});
+	}
 
-HOANucleus : SpatialNucleus { setNucleusFunction { templater.hoaNucleus; } }
+	setNucleusFunction { | templater | templater.foaNucleus }
+}
+
+HOANucleus : SpatialNucleus {
+	setNucleusFunction { | templater | templater.hoaNucleus }
+}

@@ -1,6 +1,6 @@
-GenOrgParameters : Composite { 
+GenOrgParameters : CodexComposite { 
 
-	templater { 
+	*makeTemplates { | templater |
 		GenOrgBehavior.arguments.do { | argument |
 			templater.parameterSpec(argument.asString);
 		}

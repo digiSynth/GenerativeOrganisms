@@ -1,9 +1,7 @@
-GenOrgMutator : Hybrid { 
+GenOrgMutator : CodexHybrid { 
 	var incrementer, <options, cleanupList; 
 
-	makeTemplates { 
-		templater.mutator;
-	}
+	*makeTemplates { | templater | templater.mutator }
 
 	initHybrid { 
 		cleanupList = List.new;
