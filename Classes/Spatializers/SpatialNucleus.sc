@@ -1,4 +1,4 @@
-SpatialNucleus : Hybrid {
+SpatialNucleus : CodexHybrid {
 	var freeFunctions;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
@@ -6,11 +6,9 @@ SpatialNucleus : Hybrid {
 
 	*makeTemplates { | templater |
 		templater.nucleusShell;
-		this.setNucleusFunction;
+		this.setNucleusFunction(templater);
 	}
 	
-	setNucleusFunction { this.subclassResponsibility(thisMethod); }
-
 	setNucleusFunction { | templater | 
 		this.subclassResponsibility(thisMethod); 
 	}
@@ -139,12 +137,12 @@ SpatialNucleus : Hybrid {
 	}
 }
 
-MonoNucleus : SpatialNucleus { setNucleusFunction { templater.monoNucleus; } }
+MonoNucleus : SpatialNucleus { setNucleusFunction { | templater | templater.monoNucleus } }
 
-StereoNucleus : SpatialNucleus { setNucleusFunction { templater.stereoNucleus; } }
+StereoNucleus : SpatialNucleus { setNucleusFunction { | templater | templater.stereoNucleus } }
 
-QuadNucleus : SpatialNucleus { setNucleusFunction { templater.quadNucleus; } }
+QuadNucleus : SpatialNucleus { setNucleusFunction { | templater |templater.quadNucleus } }
 
-FOANucleus : SpatialNucleus { setNucleusFunction { templater.foaNucleus; } }
+FOANucleus : SpatialNucleus { setNucleusFunction { | templater |templater.foaNucleus } }
 
-HOANucleus : SpatialNucleus { setNucleusFunction { templater.hoaNucleus; } }
+HOANucleus : SpatialNucleus { setNucleusFunction { | templater | templater.hoaNucleus } }
