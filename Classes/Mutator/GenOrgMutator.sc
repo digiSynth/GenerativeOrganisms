@@ -55,7 +55,7 @@ GenOrgMutator : CodexHybrid {
 		}, {argArr});
 	}
 
-	render { | buffer0, buffer1, timescale, action| 
+	mutate { | buffer0, buffer1, timescale, action| 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++ ".osc";
 		var outpath = incrementer.increment;
 		var reference = `nil;
