@@ -29,12 +29,4 @@
 	foaNucleus { this.genOrgTemplate("foaNucleus") }
 
 	hoaNucleus { this.genOrgTemplate("hoaNucleus") }
-
-	behaviorSynthDef { this.genOrgTemplate("behaviorSynthDef", "synthDef") }
-
-	behaviorArgs { this.genOrgTemplate("behaviorArgs") }
-
-	behaviorEnvs { this.genOrgTemplate("behaviorEnvs") }
-
-	behaviorEnvWrapper { this.genOrgTemplate("behaviorEnvWrapper") }
 }

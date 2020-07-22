@@ -1,8 +1,13 @@
 //Maybe don't edit this module...
-{ | modules, key, envs| 
-	var wrapperEnvs = ();  
-	envs.keysValuesDo({ | key, value |
-		wrapperEnvs.add(key -> {  | timescale(\timescale.kr(1)) |
+{ | modules | 
+	var envWrappers = ();
+	
+	if(modules[\envs].isFunction, { 
+		modules[\envs] = modules.envs;
+	});
+
+	modules.envs.keysValuesDo({ | key, env |
+		envWrappers.add(key -> {  | timescale(\timescale.kr(1)) |
 			SynthDef.wrap({ 
 				var lo = format("%lo", key).asSymbol.kr(0); 
 				var hi = format("%hi", key).asSymbol.kr(1); 
@@ -11,4 +16,5 @@
 			})
 		});
 	});
+	envWrappers;
 }

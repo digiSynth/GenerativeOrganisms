@@ -1,35 +1,34 @@
-+ CodexTemplater { 
-	behaviorPaths { ^(thisMethod.filenameString.dirname
-	+/+"BehaviorTemplates") }
++ CodexTemplater {
+	behaviorPath { ^PathName(thisMethod.filenameString).pathOnly }
 
-	behaviorArgs { 
+	behaviorArgs {
 		this.makeExtTemplate(
+			"args",
 			"behaviorArgs",
-			"behaviorArgs", 
 			this.behaviorPath
 		);
 	}
 
-	behaviorEnvs { 
+	behaviorEnvs {
 		this.makeExtTemplate(
-			"behaviorEnvs", 
-			"behaviorEnvs", 
+			"envs",
+			"behaviorEnvs",
 			this.behaviorPath
 		);
 	}
 
-	behaviorEnvsWrappers { 
+	behaviorEnvsWrappers {
 		this.makeExtTemplate(
+			"wrappers",
 			"behaviorEnvsWrappers",
-			"behaviorEnvsWrappers",
 			this.behaviorPath
 		);
 	}
 
-	behaviorSynthDef { 
+	behaviorSynthDef {
 		this.makeExtTemplate(
-			"synthDef", 
-			"behaviorSynthDef", 
+			"synthDef",
+			"behaviorSynthDef",
 			this.behaviorPath
 		);
 	}

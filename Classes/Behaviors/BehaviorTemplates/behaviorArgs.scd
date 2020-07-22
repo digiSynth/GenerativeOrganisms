@@ -7,6 +7,7 @@ dict.add(\ffreq -> ControlSpec(120.0, 16000.0, \exp));
 dict.add(\impulseRate -> ControlSpec(12.0, 256.0, \exp)); 
 dict.add(\grainDur -> ControlSpec(0.05, 8.0, \exp)); 
 dict.add(\rq -> ControlSpec(0.09, 0.8, \exp));
+dict.add(\timescale -> ControlSpec(0.05, 2.0, \exp));
 
 //return
 dict;

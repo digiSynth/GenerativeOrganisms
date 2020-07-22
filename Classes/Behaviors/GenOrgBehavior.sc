@@ -1,30 +1,44 @@
 GenOrgBehavior : CodexHybrid {
 	classvar instances;
-	var instance, <parameters, synthDefName;
+	var <>instance, <parameters, synthDefName;
 
 	*initClass { instances = 0 }
 
-	*newMutation { | moduleSet | ^super.newCopyArgs(moduleSet).loadModules }
+	*newMutation { | set(\default) |
+		^super.newCopyArgs(
+			format("%_mutation", set).asSymbol
+		).loadModules(set);
+	}
 
 	initComposite {
 		instance = this.increment;
-		modules[\behaviorEnvs] = modules.behaviorEnvs; 
-		modules[\synthDef] = modules.synthDef;
-		super.initComposite;
+		this.evaluateModules;
+		server = Server.default;
+		this.processSynthDefs;
+		this.initHybrid;
 	}
 
-	name { ^(super.name+/+instance) }
+	evaluateModules {
+		/*modules.keysValuesDo({ | key, module |
+			if(module.isFunction, {
+				modules[key] = module.value;
+			});
+		});*/
+		modules[\synthDef] = modules.synthDef;
+	}
 
-	increment { 
-		var tmp = instances; 
-		instances = instances + 1; 
-		^tmp;
+	name { ^(super.name.asString++instance).asSymbol }
+
+	increment {
+		instances = instances + 1;
+		^(instances - 1);
 	}
 
 	*makeTemplates { | templater |
 		templater.behaviorSynthDef;
 		templater.behaviorArgs;
 		templater.behaviorEnvs;
+		templater.behaviorEnvsWrappers;
 	}
 
 	arguments { ^modules.behaviorArgs }
@@ -37,11 +51,11 @@ GenOrgBehavior : CodexHybrid {
 
 	free { this.removeSynthDefs }
 
-	play { | buffer, db(-12), outBus(0),
+	playBehavior { | buffer, db(-12), outBus(0),
 		target(server.defaultGroup), addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
-			parameters.getSynthArgs(db, outBus),
+			this.getSynthArgs(db, outBus),
 			target,
 			addAction
 		);
@@ -55,7 +69,7 @@ GenOrgBehavior : CodexHybrid {
 
 	mutateWith { | target |
 		var child = GenOrgBehavior.newMutation(moduleSet);
-		var copyModules = this.mutateModules(target); 
+		var copyModules = this.mutateModules(target);
 		copyModules.keysValuesDo({ | key, value |
 			child[key] = value;
 		});
@@ -63,12 +77,12 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	mutateModules { | target |
-		var tmodules = target.modules, child = (); 
-		child.add(\behaviorArgs -> this.mutateSpecs(tmodules)); 
-		child.add(\behaviorEnvs -> this.mutateEnvs(tmodules)); 
-		child.add(\behaviorEnvsWrappers -> 
+		var tmodules = target.modules, child = ();
+		child.add(\behaviorArgs -> this.mutateSpecs(tmodules));
+		child.add(\behaviorEnvs -> this.mutateEnvs(tmodules));
+		child.add(\behaviorEnvsWrappers ->
 			modules.behaviorEnvWrappers.copy);
-		child.add(\synthDef -> modules.synthDef.copy); 
+		child.add(\synthDef -> modules.synthDef.copy);
 		^child;
 	}
 
@@ -80,22 +94,22 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	mutateEnvs { | target |
-		var tenvs = target.behaviorEnvs, child = (); 
-		modules.behaviorEnvs.keyValuesDo({ | key, value | 
+		var tenvs = target.behaviorEnvs, child = ();
+		modules.behaviorEnvs.keyValuesDo({ | key, value |
 			child.add(key -> this.mutateEnv(value, tenvs[key]));
 		});
 		^child;
 	}
 
-	mutateSpecs { | target | 
-		var targs = target.behaviorArgs; 
+	mutateSpecs { | target |
+		var targs = target.behaviorArgs;
 		var child = Dictionary.new;
-		modules.behaviorArgs.keyValuesDo({ | key, value | 
+		modules.behaviorArgs.keyValuesDo({ | key, value |
 			var tval = targs[key];
-			var minval = value.minval + tval.minval / 2; 
-			var maxval = value.maxval + tval.maxval / 2; 
+			var minval = value.minval + tval.minval / 2;
+			var maxval = value.maxval + tval.maxval / 2;
 			var warp = [value.warp, tval.warp].choose;
-			child.add(key -> ControlSpec(minval, maxval, warp)); 
+			child.add(key -> ControlSpec(minval, maxval, warp));
 		});
 	}
 
@@ -104,12 +118,12 @@ GenOrgBehavior : CodexHybrid {
 		^(arr0 + arr1 / 2);
 	}
 
-	getSynthArgs { 
-		var args = modules.behaviorArgs.copy; 
-		args.keysValuesDo({ | key, value | 
-			args[key] = value.map(1.0.rand); 
+	getSynthArgs { | db(0), outbus(0) |
+		var args = modules.args.copy;
+		args.keysValuesDo({ | key, value |
+			args[key] = value.map(1.0.rand);
 		});
-		^args.asPairs;
+		^([\ampDB, db, \out, outbus]++args.asPairs);
 	}
 
 }

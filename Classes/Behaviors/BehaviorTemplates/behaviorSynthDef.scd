@@ -1,18 +1,18 @@
 { | modules |
-	var envs = modules.behaviorEnvsWrappers(modules.behaviorEnvs);
+	var envs = modules.wrappers;
 	SynthDef(\synth, { 
 		var buf = \buf.kr(0); 
 		var timescale = \timescale.kr(1); 
 		var bufDur = BufDur.kr(buf); 
 		var impulseRate = envs[\impulseRate].value(timescale); 
 		var impulse = Impulse.ar(impulseRate);
-		var pointer = env[\pos].value(timescale * bufDur) 
+		var pointer = envs[\pos].value(timescale * bufDur) 
 		+ TRand.kr(0.005.neg, 0.005, impulse); 
 		var sig = TGrains.ar(
 			1, 
 			impulse, 
 			buf,
-			rate, 
+			envs[\rate].value(timescale), 
 			pointer.wrap(0, bufDur), 
 			envs[\grainDur].value(timescale)
 		) * 16;
@@ -26,6 +26,6 @@
 			timeScale: timescale, 
 			doneAction: Done.freeSelf
 		);
-		Out.ar(\out.kr(0), out);
+		Out.ar(\out.kr(0), sig);
 	});
 };
