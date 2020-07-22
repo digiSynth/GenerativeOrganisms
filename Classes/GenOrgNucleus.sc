@@ -1,4 +1,4 @@
-SpatialNucleus : CodexHybrid {
+GenOrgNucleus : CodexHybrid {
 	var freeFunctions;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
@@ -137,12 +137,12 @@ SpatialNucleus : CodexHybrid {
 	}
 }
 
-MonoNucleus : SpatialNucleus { setNucleusFunction { | templater | templater.monoNucleus } }
+MonoNucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.monoNucleus } }
 
-StereoNucleus : SpatialNucleus { setNucleusFunction { | templater | templater.stereoNucleus } }
+StereoNucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.stereoNucleus } }
 
-QuadNucleus : SpatialNucleus { setNucleusFunction { | templater |templater.quadNucleus } }
+QuadNucleus : GenOrgNucleus { setNucleusFunction { | templater |templater.quadNucleus } }
 
-FOANucleus : SpatialNucleus { setNucleusFunction { | templater |templater.foaNucleus } }
+FOANucleus : GenOrgNucleus { setNucleusFunction { | templater |templater.foaNucleus } }
 
-HOANucleus : SpatialNucleus { setNucleusFunction { | templater | templater.hoaNucleus } }
+HOANucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.hoaNucleus } }

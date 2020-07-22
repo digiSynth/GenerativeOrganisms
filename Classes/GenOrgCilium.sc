@@ -1,4 +1,4 @@
-SpatialCilium : CodexHybrid {
+GenOrgCilium : CodexHybrid {
 /*	classvar ciliumInstances, <isInitialized = false;
 	var <azimuthMin, <azimuthMax;
 	var <elevationMin, <elevationMax;
