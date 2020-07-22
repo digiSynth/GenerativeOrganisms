@@ -4,6 +4,8 @@ GenOrgBehavior : CodexHybrid {
 
 	*initClass { instances = 0 }
 
+	*notAt { | set | ^CodexComposite.notAt(set) }
+
 	*newMutation { | set(\default) |
 		^super.newCopyArgs(
 			format("%_mutation", set).asSymbol
@@ -20,9 +22,9 @@ GenOrgBehavior : CodexHybrid {
 
 	evaluateModules {
 		/*modules.keysValuesDo({ | key, module |
-			if(module.isFunction, {
-				modules[key] = module.value;
-			});
+		if(module.isFunction, {
+		modules[key] = module.value;
+		});
 		});*/
 		modules[\synthDef] = modules.synthDef;
 	}
@@ -119,11 +121,18 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	getSynthArgs { | db(0), outbus(0) |
-		var args = modules.args.copy;
-		args.keysValuesDo({ | key, value |
-			args[key] = value.map(1.0.rand);
+		var args = [];
+		modules.args.keysValuesDo({ | key, value |
+			 if(key==\timescale, {
+				args = args.add([\timescale, value.map(1.0.rand)]);
+			}, {
+				var lo = format("%lo", key).asSymbol;
+				var hi = format("%hi", key).asSymbol;
+				args = args.add([lo, value.map(0.5.rand),
+					hi, value.map(rrand(0.5, 1.0))]);
+			});
 		});
-		^([\ampDB, db, \out, outbus]++args.asPairs);
+		^([\ampDB, db, \out, outbus]++args.flat.asPairs);
 	}
 
 }

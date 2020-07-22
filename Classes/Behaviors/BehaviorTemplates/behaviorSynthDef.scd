@@ -26,6 +26,7 @@
 			timeScale: timescale, 
 			doneAction: Done.freeSelf
 		);
-		Out.ar(\out.kr(0), sig);
+		sig = sig * envs[\amp].value(timescale);
+		Out.ar(\out.kr(0), sig * \ampDB.kr(0).dbamp);
 	});
 };
