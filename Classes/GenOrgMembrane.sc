@@ -1,4 +1,4 @@
-GenOrgNucleus : CodexHybrid {
+GenOrgMembrane : CodexHybrid {
 	var freeFunctions;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
@@ -6,20 +6,16 @@ GenOrgNucleus : CodexHybrid {
 
 	*makeTemplates { | templater |
 		templater.nucleusShell;
-		this.setNucleusFunction(templater);
+		this.setMembrane(templater);
 	}
 	
-	setNucleusFunction { | templater | 
+	*setMembrane { | templater | 
 		this.subclassResponsibility(thisMethod); 
 	}
 
-	makeSynthDefs {
-		var synthDef = modules.nucleusShell(modules[\nucleusFunction]);
-		synthDef.name = this.formatName(synthDef.name).asSymbol; 
-		if(this.checkDictionary(synthDef), { 
-			this.class.processSynthDefs(synthDef); 
-			modules.add(\synthDef -> synthDef);
-		});
+	initComposite { 
+		modules[\synthDef] = modules.synthDef(modules[\signalFunction]);
+		super.initComposite;
 	}
 
 	initResources {
@@ -85,7 +81,9 @@ GenOrgNucleus : CodexHybrid {
 
 	free {
 		case
-		{this.isPlaying and: {this.isRunning}}{synth.set(\doneAction, 2, \gate, 0);}
+		{this.isPlaying and: {this.isRunning}}{
+			synth.set(\doneAction, 2, \gate, 0);
+		}
 		{this.isPlaying and: {this.isRunning.not}}{synth.free;}
 		{this.isPlaying.not}{this.freeList};
 	}
@@ -137,12 +135,22 @@ GenOrgNucleus : CodexHybrid {
 	}
 }
 
-MonoNucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.monoNucleus } }
+MonoMembrane : GenOrgMembrane { 
+	*setMembrane { | templater | templater.monoMembrane } 
+}
 
-StereoNucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.stereoNucleus } }
+StereoMembrane : GenOrgMembrane { 
+	*setMembrane { | templater | templater.stereoMembrane } 
+}
 
-QuadNucleus : GenOrgNucleus { setNucleusFunction { | templater |templater.quadNucleus } }
+QuadMembrane : GenOrgMembrane { 
+	*setMembrane { | templater | templater.quadMembrane } 
+}
 
-FOANucleus : GenOrgNucleus { setNucleusFunction { | templater |templater.foaNucleus } }
+FOAMembrane : GenOrgMembrane { 
+	*setMembrane { | templater | templater.foaMembrane } 
+}
 
-HOANucleus : GenOrgNucleus { setNucleusFunction { | templater | templater.hoaNucleus } }
+HOAMembrane : GenOrgMembrane {
+	*setMembrane { | templater | templater.hoaMembrane } 
+}

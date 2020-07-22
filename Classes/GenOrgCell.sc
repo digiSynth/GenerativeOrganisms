@@ -1,4 +1,4 @@
-GenOrgBehavior : CodexHybrid {
+GenOrgCell : CodexHybrid {
 	classvar instances;
 	var <>instance, <parameters, synthDefName;
 
@@ -26,7 +26,7 @@ GenOrgBehavior : CodexHybrid {
 		modules[key] = module.value;
 		});
 		});*/
-		modules[\synthDef] = modules.synthDef;
+		modules[\synthDef] = modules.function;
 	}
 
 	name { ^(super.name.asString++instance).asSymbol }
@@ -37,13 +37,13 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	*makeTemplates { | templater |
-		templater.behaviorSynthDef;
-		templater.behaviorArgs;
-		templater.behaviorEnvs;
-		templater.behaviorEnvsWrappers;
+		templater.cellularFunction;
+		templater.cellularArgs;
+		templater.cellularEnvs;
+		templater.cellularWrappers;
 	}
 
-	arguments { ^modules.behaviorArgs }
+	arguments { ^modules.cellularArgs }
 
 	getCurves {
 		^this.arguments.collect({|item, index|
@@ -53,7 +53,7 @@ GenOrgBehavior : CodexHybrid {
 
 	free { this.removeSynthDefs }
 
-	playBehavior { | buffer, db(-12), outBus(0),
+	playCell { | buffer, db(-12), outBus(0),
 		target(server.defaultGroup), addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
@@ -70,9 +70,9 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	mutateWith { | target |
-		var child = GenOrgBehavior.newMutation(moduleSet);
-		var copyModules = this.mutateModules(target);
-		copyModules.keysValuesDo({ | key, value |
+		var child = GenOrgCell.newMutation(moduleSet);
+		this.mutateModules(target)
+		.keysValuesDo({ | key, value |
 			child[key] = value;
 		});
 		^child.initComposite;
@@ -80,11 +80,10 @@ GenOrgBehavior : CodexHybrid {
 
 	mutateModules { | target |
 		var tmodules = target.modules, child = ();
-		child.add(\behaviorArgs -> this.mutateSpecs(tmodules));
-		child.add(\behaviorEnvs -> this.mutateEnvs(tmodules));
-		child.add(\behaviorEnvsWrappers ->
-			modules.behaviorEnvWrappers.copy);
-		child.add(\synthDef -> modules.synthDef.copy);
+		child.add(\args -> this.mutateArgs(tmodules));
+		child.add(\envs -> this.mutateEnvs(tmodules));
+		child.add(\wrappers -> modules.wrappers.copy);
+		child.add(\synthDefFunction -> modules.synthDefFunction.copy);
 		^child;
 	}
 
@@ -96,17 +95,17 @@ GenOrgBehavior : CodexHybrid {
 	}
 
 	mutateEnvs { | target |
-		var tenvs = target.behaviorEnvs, child = ();
-		modules.behaviorEnvs.keyValuesDo({ | key, value |
+		var tenvs = target.cellularEnvs, child = ();
+		modules.envs.keyValuesDo({ | key, value |
 			child.add(key -> this.mutateEnv(value, tenvs[key]));
 		});
 		^child;
 	}
 
 	mutateSpecs { | target |
-		var targs = target.behaviorArgs;
+		var targs = target.cellularArgs;
 		var child = Dictionary.new;
-		modules.behaviorArgs.keyValuesDo({ | key, value |
+		modules.args.keyValuesDo({ | key, value |
 			var tval = targs[key];
 			var minval = value.minval + tval.minval / 2;
 			var maxval = value.maxval + tval.maxval / 2;

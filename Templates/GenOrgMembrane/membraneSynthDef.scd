@@ -1,4 +1,4 @@
-{ | modules, spatializerUgens | 
+{ | modules, signalFunction | 
 	SynthDef(\synth, { 
 		var timer = \timer.kr(8); 
 		var env = EnvGen.kr(
@@ -8,7 +8,7 @@
 		); 
 		var lag = \lag.kr(0.1); 
 		var in = In.ar(\in.kr(0), 1) * \ampDB.kr(0).dbamp; 
-		var sig = spatializerUgens.value(
+		var sig = signalFunction.value(
 			in, 
 			\distance.kr(1, lag).clip(1.0, 120.0).squared,
 			\azimuth.kr(0, lag).wrap(pi.neg, pi), 

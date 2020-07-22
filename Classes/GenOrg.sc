@@ -1,14 +1,14 @@
 GenOrg {    
 	var moduleSet, from, buffer, freeFunc; 
-	var server, <mater, <eater, <behavior, <spatializer; 
+	var server, <mater, <eater, <cell, <membrane; 
 
-	*new { | spatializerType(\mono), moduleSet(\default), from | 
-		^super.newCopyArgs(moduleSet, from).initGenOrg(spatializerType);
+	*new { | membraneType(\mono), moduleSet(\default), from | 
+		^super.newCopyArgs(moduleSet, from).initGenOrg(membraneType);
 	}
 
 	modulSet_{ | newModuleSet, newFrom | 
-		spatializer.moduleSet_(newModuleSet, newFrom); 
-		behavior.moduleSet_(newModuleSet, newFrom); 
+		membrane.moduleSet_(newModuleSet, newFrom); 
+		cell.moduleSet_(newModuleSet, newFrom); 
 		eater.moduleSet_(newModuleSet, newFrom); 
 		mater.moduleSet_(newModuleSet, newFrom);
 		moduleSet = newModuleSet; 
@@ -21,18 +21,18 @@ GenOrg {
 		server ?? {server = Server.default }; 
 		mater = GenOrgMutator.new(moduleSet, from);
 		eater = GenOrgMutator.new(moduleSet, from);
-		behavior = GenOrgBehavior.new(moduleSet, from);
-		spatializer = this.getSpatialzer(type);
+		cell = GenOrgCell.new(moduleSet, from);
+		membrane = this.getSpatialzer(type);
 	}
 
 	getSpatialzer { | type |
 		case
-		{type==\mono}{^MonoNucleus.new(moduleSet, from)}
-		{type==\stereo}{^StereoNucleus.new(moduleSet, from)}
-		{type==\quad}{^QuadNucleus.new(moduleSet, from)}
-		{type==\foa}{^FOANucleus.new(moduleSet, from)}
-		{type==\hoa}{^HOANucleus.new(moduleSet, from)}
-		{Error("Specify spatializer type: \mono, \stereo, \quad, \foa, \hoa").throw};
+		{type==\mono}{^MonoMembrane.new(moduleSet, from)}
+		{type==\stereo}{^StereoMembrane.new(moduleSet, from)}
+		{type==\quad}{^QuadMembrane.new(moduleSet, from)}
+		{type==\foa}{^FOAMembrane.new(moduleSet, from)}
+		{type==\hoa}{^HOAMembrane.new(moduleSet, from)}
+		{Error("Specify membrane type: \mono, \stereo, \quad, \foa, \hoa").throw};
 	}
 
 	buffer { ^buffer.value; }
@@ -47,34 +47,34 @@ GenOrg {
 		};
 	}
 
-	spatializer_{ | newSpatializer | 
-		if(newSpatializer.isKindOf(SpatialNucleus), { 
-			spatializer = newSpatializer;
+	membrane_{ | newSpatializer | 
+		if(newSpatializer.isKindOf(SpatialMembrane), { 
+			membrane = newSpatializer;
 		});
 	}
 
-	behavior_{ | newBehavior |
-		if(newBehavior.isKindOf(GenOrgBehavior), { 
-			behavior = newBehavior;
+	cell_{ | newCell |
+		if(newCell.isKindOf(GenOrgCell), { 
+			cell = newCell;
 		}); 
 	} 
 
 	play { | db = -3 | 
-		spatializer.play; 
-		behavior.play(
+		membrane.play; 
+		cell.play(
 			this.buffer, 
 			db, 
-			spatializer.inputBus, 
-			spatializer.group, 
+			membrane.inputBus, 
+			membrane.group, 
 			'addToHead'
 		);
 	}
 
 	mate { | organism | 
 		if(organism.isKindOf(GenOrg), { 
-			var newSpatializer = spatializer.class
+			var newSpatializer = membrane.class
 			.new(moduleSet, from);
-			var newBehavior = behavior.mutateWith(organism.behavior);
+			var newCell = cell.mutateWith(organism.cell);
 			var newBuffer = mater.mutate(
 				this.buffer, 
 				organism.buffer, 
@@ -82,8 +82,8 @@ GenOrg {
 			);
 			^GenOrg.basicNew
 			.buffer_(newBuffer)
-			.behavior_(newBehavior)
-			.spatializer_(newSpatializer);
+			.cell_(newCell)
+			.membrane_(newSpatializer);
 		});
 	}
 
