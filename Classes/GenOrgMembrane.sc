@@ -76,7 +76,7 @@ GenOrgMembrane : CodexHybrid {
 		function !? { freeFunctions.add(function) };
 	}
 
-	isRunning { synth !? {^synth.isRunning} ?? {^false} }
+	isRunning { synth !? { ^synth.isRunning } ?? { ^false } }
 
 	isPlaying { ^synth.isPlaying }
 
@@ -88,7 +88,7 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	freeBus { | bus |
-		if(bus.isKindOf(Bus) and: {bus.index.notNil}, {
+		if(bus.isKindOf(Bus) and: { bus.index.notNil }, {
 			bus.free;
 		});
 	}
