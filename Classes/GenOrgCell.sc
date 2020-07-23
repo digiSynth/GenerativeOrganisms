@@ -51,24 +51,35 @@ GenOrgCell : CodexHybrid {
 	free { this.removeSynthDefs }
 
 	playCell { | buffer, db(-12), outputBus(0),
-		target, addAction(\addToTail) |
+		target, addAction |
 		if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
 		if(membrane.isNil, {
 			this.cellularSynth(buffer, db, outputBus, target, addAction);
 		}, {
+			if(target.isKindOf(Group), {
+				case { addAction==\addToTail }{
+					membrane.group.moveToTail(target);
+				}{ addAction==\addToHead }{
+					membrane.group.moveToHead(target);
+				}{ membrane.group = target };
+			});
+
+			case { addAction==\addAfter }{ membrane.group.moveAfter(target) }
+			{ addAction==\addBefore }{ membrane.group.moveBefore(target) };
+
 			membrane.playMembrane;
 			membrane.outputBus = outputBus;
 			this.cellularSynth(
 				buffer,
 				db,
 				membrane.inputBus,
-				membrane.group,
-				\addToHead
+				membrane.synth,
+				\addBefore
 			);
 		})
 	}
 
-	cellularSynth { | buffer, db, outputBus, target, addAction |
+	cellularSynth { | buffer, db, outputBus, target, addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
 			this.getSynthArgs(buffer, db, outputBus),
@@ -148,6 +159,7 @@ GenOrgCell : CodexHybrid {
 		membrane !? { membrane.free };
 		if(newMembrane.isKindOf(GenOrgMembrane), {
 			membrane = newMembrane;
+			membrane.onFree({ membrane = nil });
 		});
 		this.attachCilium;
 	}
