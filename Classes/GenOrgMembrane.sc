@@ -1,21 +1,28 @@
 GenOrgMembrane : CodexHybrid {
-	var freeFunctions;
+	var freeFunctions, isFreed = false;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
-	var pausingRoutine, cilium;
+	var pauser, cilium;
 
 	*makeTemplates { | templater |
-		templater.nucleusShell;
+		templater.membraneFunction;
 		this.setMembrane(templater);
 	}
-	
-	*setMembrane { | templater | 
-		this.subclassResponsibility(thisMethod); 
+
+	*setMembrane { | templater | this.subclassResponsibility(thisMethod) }
+
+	initComposite {
+		this.addSynthDef;
+		super.initComposite;
 	}
 
-	initComposite { 
-		modules[\synthDef] = modules.synthDef(modules[\signalFunction]);
-		super.initComposite;
+	initHybrid { this.onFree }
+
+	addSynthDef {
+		modules[\synthDef] ?? {
+			var synthDef = modules.function(modules[\membraneWrap]);
+			modules.add(\synthDef -> synthDef);
+		};
 	}
 
 	initResources {
@@ -24,13 +31,28 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	makeBusses {
-		inputBus ?? {Bus.audio(server, 1)};
+		inputBus ?? {inputBus = Bus.audio(server, 1)};
 		outputBus ?? {outputBus  =  0};
 	}
 
-	initGroup { group ?? {group = Group.new.register} }
+	inputBus_{ | newBus |
+		if(inputBus != newBus, {
+			inputBus = newBus;
+			if(synth.isPlaying, { synth.set(\in, inputBus) })
+		});
+	}
+
+	outputBus_{ | newBus |
+		if(outputBus != newBus, {
+			outputBus = newBus;
+			if(synth.isPlaying, { synth.set(\out, outputBus) })
+		});
+	}
+
+	initGroup { group = Group.new }
 
 	initSynth {
+		this.initResources;
 		lag = lag ?? {server.latency  * 0.1};
 		synth = Synth.newPaused(modules.synthDef.name, [
 			\in, inputBus,
@@ -40,117 +62,110 @@ GenOrgMembrane : CodexHybrid {
 			\timer, server.latency,
 			\doneAction, 0
 		], group).register;
-		synth.onFree({this.freeList});
+		synth.onFree({ this.freeList });
 	}
 
-	freeList { 
-		this.onFree;
-		freeFunctions.do(_.value);
-	}
+	freeList { freeFunctions.do(_.value) }
 
 	onFree { | function |
-		freeFunctions ?? { 
-			var list = List.new; 
-			list.add({this.freeResources});
+		freeFunctions ?? {
+			var list = List.new;
+			list.add({ this.freeResources });
 			freeFunctions = list;
-		}; 
-		function !? {freeFunctions.add(function)};
-	}
-
-	outputBus_{|newBus|
-		outputBus = newBus;
-		if(this.isRunning, {synth.set(\out, outputBus)});
+		};
+		function !? { freeFunctions.add(function) };
 	}
 
 	isRunning { synth !? {^synth.isRunning} ?? {^false} }
 
 	isPlaying { ^synth.isPlaying }
 
-	freeResources { 
-		group !? {group.free}; 
-		this.freeBus(inputBus); 
+	freeResources {
+		group.free;
+		this.freeBus(inputBus);
 		this.freeBus(outputBus);
 		inputBus = outputBus = nil;
 	}
 
 	freeBus { | bus |
-		if(bus.isKindOf(Bus) and: {bus.index.notNil}, { 
-			bus.free; 
-		});	
+		if(bus.isKindOf(Bus) and: {bus.index.notNil}, {
+			bus.free;
+		});
 	}
 
 	free {
-		case
-		{this.isPlaying and: {this.isRunning}}{
-			synth.set(\doneAction, 2, \gate, 0);
-		}
-		{this.isPlaying and: {this.isRunning.not}}{synth.free;}
-		{this.isPlaying.not}{this.freeList};
+		if(this.isPlaying, {
+			if(this.isRunning, {
+				synth.set(\doneAction, 2, \gate, 0);
+			}, { synth.free });
+		}, { this.freeList });
 	}
 
 	setArg { | key, value |
-		if({this.isPlaying}, { 
+		if({this.isPlaying}, {
 			synth.set(key, value);
 		});
 	}
 
-	azimuth_{ | newAzimuth(pi) | 
-		azimuth = newAzimuth.wrap(pi.neg, pi); 
+	azimuth_{ | newAzimuth(pi) |
+		azimuth = newAzimuth.wrap(pi.neg, pi);
 		this.setArg(\azimuth, azimuth);
 	}
 
-	elevation_{ | newElevation(0) | 
-		elevation = newElevation.wrap(pi.neg, pi); 
+	elevation_{ | newElevation(0) |
+		elevation = newElevation.wrap(pi.neg, pi);
 		this.setArg(\elevation, elevation);
 	}
 
-	distance_{ | newDistance(2) | 
+	distance_{ | newDistance(2) |
 		distance = newDistance.clip(1.0, 100.0);
 		this.setArg(\distance, distance);
 	}
 
-	lag_{ |newLag(server.latency)| 
+	lag_{ |newLag(server.latency)|
 		lag = newLag;
 		this.setArg(\lag, lag);
 	}
 
 	awaken { | doneAction(0) |
-		if(this.isRunning.not, {  
-			if(pausingRoutine.isPlaying, {			
-				pausingRoutine.stop;
+		if(this.isRunning.not, {
+			if(pauser.isPlaying, {
+				pauser.stop;
 			});
-			pausingRoutine = Routine({
+			pauser = Routine({
 				synth.set(\doneAction, 0, \wakeUp, 1);
 				synth.run(true);
 				(server.latency * 2).wait;
 				synth.set(\doneAction, doneAction);
 			});
-			pausingRoutine.play;
+			pauser.play;
 		});
 	}
 
-	play{
-		if(synth.isNil, { this.initSynth });
-		this.awaken
+	playMembrane {
+		if(synth.isNil or: { synth.isPlaying.not }, {
+			this.initSynth;
+		});
+		this.awaken;
 	}
 }
 
-MonoMembrane : GenOrgMembrane { 
-	*setMembrane { | templater | templater.monoMembrane } 
+MonoMembrane : GenOrgMembrane {
+	*setMembrane { | templater | templater.monoMembrane }
 }
 
-StereoMembrane : GenOrgMembrane { 
-	*setMembrane { | templater | templater.stereoMembrane } 
+StereoMembrane : GenOrgMembrane {
+	*setMembrane { | templater | templater.stereoMembrane }
 }
 
-QuadMembrane : GenOrgMembrane { 
-	*setMembrane { | templater | templater.quadMembrane } 
+QuadMembrane : GenOrgMembrane {
+	*setMembrane { | templater | templater.quadMembrane }
 }
 
-FOAMembrane : GenOrgMembrane { 
-	*setMembrane { | templater | templater.foaMembrane } 
+FOAMembrane : GenOrgMembrane {
+	*setMembrane { | templater | templater.foaMembrane }
 }
 
 HOAMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.hoaMembrane } 
+	*setMembrane { | templater | templater.hoaMembrane }
 }

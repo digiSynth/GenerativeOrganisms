@@ -1,26 +1,18 @@
 + CodexTemplater { 
 
-	membranePath { ^PathName(this.filenameString).pathOnly }
+	membranePath { ^PathName(thisMethod.filenameSymbol.asString).pathOnly }
 
-	genOrgTemplate { | object, name | 
+	membraneFunction { 
 		this.makeExtTemplate(
-			this.genOrgPath, 
-			name ?? { object }, 
-			object
-		)
-	}
-
-	nucleusSynthDef { 
-		this.makeExtTemplate(
-			"synthDef", 
-			"nucleusSynthDef", 
+			"function", 
+			"membraneFunction", 
 			this.membranePath
 		);
 	}
 
 	monoMembrane { 
 		this.makeExtTemplate( 
-			"signalFunction", 
+			"membraneWrap", 
 			"monoMembrane", 
 			this.membranePath
 		)
@@ -28,7 +20,7 @@
 	
 	stereoMembrane { 
 		this.makeExtTemplate( 
-			"signalFunction", 
+			"membraneWrap", 
 			"stereoMembrane", 
 			this.membranePath
 		)
@@ -36,7 +28,7 @@
 	
 	quadMembrane { 
 		this.makeExtTemplate( 
-			"signalFunction", 
+			"membraneWrap", 
 			"quadMembrane", 
 			this.membranePath
 		)
@@ -44,7 +36,7 @@
 	
 	foaMembrane { 
 		this.makeExtTemplate( 
-			"signalFunction", 
+			"membraneWrap", 
 			"foaMembrane", 
 			this.membranePath
 		)
@@ -52,7 +44,7 @@
 
 	hoaMembrane { 
 		this.makeExtTemplate( 
-			"signalFunction", 
+			"membraneWrap", 
 			"hoaMembrane", 
 			this.membranePath
 		)

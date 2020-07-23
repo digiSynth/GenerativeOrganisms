@@ -1,19 +1,19 @@
 GenOrgCell : CodexHybrid {
 	classvar instances;
-	var <>instance, <parameters, synthDefName;
+	var <instance, <membrane, <cilium;
 
 	*initClass { instances = 0 }
 
 	*notAt { | set | ^CodexComposite.notAt(set) }
 
-	*newMutation { | set(\default) |
+	*mutation { | set(\default) |
 		^super.newCopyArgs(
 			format("%_mutation", set).asSymbol
 		).loadModules(set);
 	}
 
 	initComposite {
-		instance = this.increment;
+		instance ?? { instance = this.increment };
 		this.evaluateModules;
 		server = Server.default;
 		this.processSynthDefs;
@@ -21,12 +21,9 @@ GenOrgCell : CodexHybrid {
 	}
 
 	evaluateModules {
-		/*modules.keysValuesDo({ | key, module |
-		if(module.isFunction, {
-		modules[key] = module.value;
+		if(modules[\synthDef].isNil, {
+			modules[\synthDef] = modules.function;
 		});
-		});*/
-		modules[\synthDef] = modules.function;
 	}
 
 	name { ^(super.name.asString++instance).asSymbol }
@@ -53,24 +50,35 @@ GenOrgCell : CodexHybrid {
 
 	free { this.removeSynthDefs }
 
-	playCell { | buffer, db(-12), outBus(0),
-		target(server.defaultGroup), addAction(\addToTail) |
+	playCell { | buffer, db(-12), outputBus(0),
+		target, addAction(\addToTail) |
+		if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
+		if(membrane.isNil, {
+			this.cellularSynth(buffer, db, outputBus, target, addAction);
+		}, {
+			membrane.playMembrane;
+			membrane.outputBus = outputBus;
+			this.cellularSynth(
+				buffer,
+				db,
+				membrane.inputBus,
+				membrane.group,
+				\addToHead
+			);
+		})
+	}
+
+	cellularSynth { | buffer, db, outputBus, target, addAction |
 		Synth(
 			modules.synthDef.name,
-			this.getSynthArgs(db, outBus),
+			this.getSynthArgs(buffer, db, outputBus),
 			target,
 			addAction
 		);
 	}
 
-	parameters_{ | newParameters |
-		if(newParameters.isKindOf(GenOrgParameters), {
-			parameters = newParameters;
-		});
-	}
-
 	mutateWith { | target |
-		var child = GenOrgCell.newMutation(moduleSet);
+		var child = GenOrgCell.mutation(moduleSet);
 		this.mutateModules(target)
 		.keysValuesDo({ | key, value |
 			child[key] = value;
@@ -119,19 +127,49 @@ GenOrgCell : CodexHybrid {
 		^(arr0 + arr1 / 2);
 	}
 
-	getSynthArgs { | db(0), outbus(0) |
+	getSynthArgs { | buffer, db(0), outbus(0) |
 		var args = [];
 		modules.args.keysValuesDo({ | key, value |
-			 if(key==\timescale, {
-				args = args.add([\timescale, value.map(1.0.rand)]);
+			if(key==\timescale, {
+				args = args.add(\timescale); args = args.add(value.map(1.0.rand));
 			}, {
 				var lo = format("%lo", key).asSymbol;
 				var hi = format("%hi", key).asSymbol;
-				args = args.add([lo, value.map(0.5.rand),
-					hi, value.map(rrand(0.5, 1.0))]);
+				args = args.add(lo);
+				args = args.add(value.map(0.5.rand));
+				args = args.add(hi);
+				args = args.add(rrand(0.5, 1.0));
 			});
 		});
-		^([\ampDB, db, \out, outbus]++args.flat.asPairs);
+		^([\buf, buffer, \ampDB, db, \out, outbus]++args);
+	}
+
+	membrane_{ | newMembrane |
+		membrane !? { membrane.free };
+		if(newMembrane.isKindOf(GenOrgMembrane), {
+			membrane = newMembrane;
+		});
+		this.attachCilium;
+	}
+
+	cilium_{ | newCilium |
+		cilium !? { cilium.free };
+		if(newCilium.isKindOf(GenOrgCilium), {
+			cilium = newCilium;
+		});
+		this.attachCilium;
+	}
+
+	attachCilium {
+		if(cilium.notNil and: { membrane.notNil }, {
+			//membrane.attachCilium(cilium);
+		});
+	}
+
+	reloadScripts {
+		cache.removeModules(this.class.name, moduleSet);
+		this.removeSynthDefs;
+		this.moduleSet = moduleSet;
 	}
 
 }
