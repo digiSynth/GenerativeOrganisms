@@ -13,7 +13,6 @@
 			\distance.kr(1, lag).clip(1.0, 120.0).squared,
 			\azimuth.kr(0, lag).wrap(pi.neg, pi), 
 			\elevation.kr(1, lag).wrap(pi.neg, pi), 
-			lag
 		);
 		var wakeSignal = EnvGen.kr(
 			Env.perc(0.0, timer / 2), 
