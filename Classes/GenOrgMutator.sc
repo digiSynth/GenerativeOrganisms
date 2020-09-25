@@ -112,7 +112,7 @@ GenOrgMutator : GenOrgHybrid {
 	}
 
 	buildSynthDef { 
-		^SynthDef.new(\GOMutator_MatingSynth, {
+		^SynthDef.new(\synth, {
 			var timescale = \timescale.kr(1);
 			var buffer0 = \buffer0.kr(0); 
 			var buffer1 = \buffer1.kr(1); 
