@@ -10,13 +10,12 @@ GenOrgMembrane : CodexHybrid {
 
 	initHybrid {
 		this.addSynthDef;
-		super.initComposite;
 		this.onFree;
 	}
 
 	addSynthDef {
 		modules[\synthDef] ?? {
-			modules.add(\synthDef -> this.buildSynthDef);
+			modules.add(\synthDef -> this.buildSynthDef(modules[\membrane_function]));
 			this.class.processSynthDefs(moduleSet);
 		};
 	}
@@ -25,7 +24,7 @@ GenOrgMembrane : CodexHybrid {
 		CodexComposite.addModules(key);
 	}
 
-	*buildSynthDef { 
+	buildSynthDef { | function | 
 		^SynthDef(\membrane, { 
 			var timer = \timer.kr(8); 
 			var env = EnvGen.kr(
