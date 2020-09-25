@@ -5,7 +5,7 @@ GenOrgMembrane : CodexHybrid {
 	var pauser, cilium;
 
 	*makeTemplates { | templater | 
-		templater.membrane_function("membrane_fucntion");
+		templater.membrane_function;
 	}
 
 	initHybrid {
@@ -19,13 +19,14 @@ GenOrgMembrane : CodexHybrid {
 			modules.add(\synthDef -> this.buildSynthDef(modules[\membrane_function]));
 			this.class.processSynthDefs(moduleSet);
 		};
+		modules.postln;
 	}
 
 	*addModules { | key |
-		CodexComposite.addModules(key);
+		this.cache.add(key -> this.loadScripts(key));
 	}
 
-	buildSynthDef { | function | 
+	buildSynthDef {  
 		^SynthDef(\membrane, { 
 			var timer = \timer.kr(8); 
 			var env = EnvGen.kr(
