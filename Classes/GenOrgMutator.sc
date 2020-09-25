@@ -2,7 +2,7 @@ GenOrgMutator : CodexHybrid {
 	var incrementer, <options, cleanupList; 
 
 	*makeTemplates { | templater | 
-		templater.mutator_synthDef("synthDef");
+		templater.mutator_function;
 	}
 
 	initHybrid { 
