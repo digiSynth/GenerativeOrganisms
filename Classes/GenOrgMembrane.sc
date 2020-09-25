@@ -130,7 +130,7 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	setArg { | key, value |
-		if({this.isPlaying}, {
+		if(this.isPlaying, {
 			synth.set(key, value);
 		});
 	}
