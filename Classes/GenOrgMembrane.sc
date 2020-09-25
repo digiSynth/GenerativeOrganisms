@@ -5,7 +5,7 @@ GenOrgMembrane : CodexHybrid {
 	var pauser, cilium;
 
 	*makeTemplates { | templater | 
-		templater.membrane_function("membrane_fucntion")
+		templater.membrane_function("membrane_fucntion");
 	}
 
 	initHybrid {
