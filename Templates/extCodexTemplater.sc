@@ -1,13 +1,14 @@
 + CodexTemplater { 
 
-	mutator { 
+	genOrg_path { 
+		^Main.packages.asDict.at(\GenOrg)+/+"Templates";
+	}
 
-		this.makeExtTemplate(
-			"mutator", 
-			"mutator", 
-			PathName(thisMethod.filenameSymbol.asString).pathOnly
+	membrane_function { name("membrane_function")
+		this.makeTemplate(
+			name, 
+			this.genOrg_path+/+"membrane_function.scd"
 		);
-
 	}
 
 }
