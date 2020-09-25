@@ -1,5 +1,6 @@
 GenOrgMembrane : CodexHybrid {
-	var freeFunctions, isFreed = false;
+	var freeFunctions;
+	var isFreed = false;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
@@ -10,7 +11,8 @@ GenOrgMembrane : CodexHybrid {
 
 	initHybrid {
 		this.addSynthDef;
-		this.onFree;
+		freeFunctions = List.new;
+		freeFunctions.add({ this.freeResources });
 	}
 
 	addSynthDef {
@@ -77,7 +79,10 @@ GenOrgMembrane : CodexHybrid {
 		});
 	}
 
-	initGroup { group = Group.new }
+	initGroup {
+		group !? { group.free }
+		group = Group.new;
+	}
 
 	initSynth {
 		this.initResources;
@@ -96,11 +101,6 @@ GenOrgMembrane : CodexHybrid {
 	freeList { freeFunctions.do(_.value) }
 
 	onFree { | function |
-		freeFunctions ?? {
-			var list = List.new;
-			list.add({ this.freeResources });
-			freeFunctions = list;
-		};
 		function !? { freeFunctions.add(function) };
 	}
 
