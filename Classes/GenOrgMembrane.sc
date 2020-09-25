@@ -15,11 +15,13 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	addSynthDef {
-		modules[\synthDef] ?? {
-			modules.add(\synthDef -> this.buildSynthDef(modules[\membrane_function]));
+		var cache = this.class.cache.at(moduleSet);
+		if(cache.at(\synthDef).isNil, {  
+			var synthDef = this.buildSynthDef(modules[\membrane_function]);
+			cache.add(\synthDef -> synthDef);
+			modules.add(\synthDef -> synthDef);
 			this.class.processSynthDefs(moduleSet);
-		};
-		modules.postln;
+		});
 	}
 
 	*addModules { | key |
@@ -27,7 +29,7 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	buildSynthDef {  
-		^SynthDef(\membrane, { 
+		^SynthDef(\synth, { 
 			var timer = \timer.kr(8); 
 			var env = EnvGen.kr(
 				Env.asr(0.0, 1, \release.kr(1.0)), 
