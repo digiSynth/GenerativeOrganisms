@@ -4,6 +4,31 @@ GenOrgMembrane : CodexHybrid {
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
 
+	*contribute { | versions | 
+		var path = Main.packages.asDict.at(\GenOrg)
+		+/+"Classes/GenOrgMembrane";
+
+		versions.add(
+			[\mono, path+/+"mono"]
+		); 
+
+		versions.add(
+			[\stereo, path+/+"stereo"]
+		); 
+
+		versions.add(
+			[\quad, path+/+"quad"]
+		);
+
+		versions.add(
+			[\foa, path+/+"foa"]
+		);
+
+		versions.add(
+			[\hoa, path+/+"hoa"]
+		);
+	}
+
 	*makeTemplates { | templater | 
 		templater.membrane_function;
 	}
