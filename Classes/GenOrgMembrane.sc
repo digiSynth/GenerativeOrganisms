@@ -4,25 +4,54 @@ GenOrgMembrane : CodexHybrid {
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
 
-	*makeTemplates { | templater |
-		templater.membraneFunction;
-		this.setMembrane(templater);
+	*makeTemplates { | templater | 
+		templater.membrane_function("membrane_fucntion")
 	}
 
-	*setMembrane { | templater | this.subclassResponsibility(thisMethod) }
-
-	initComposite {
+	initHybrid {
 		this.addSynthDef;
 		super.initComposite;
+		this.onFree;
 	}
-
-	initHybrid { this.onFree }
 
 	addSynthDef {
 		modules[\synthDef] ?? {
-			var synthDef = modules.function(modules[\membraneWrap]);
-			modules.add(\synthDef -> synthDef);
+			modules.add(\synthDef -> this.buildSynthDef);
+			this.class.processSynthDefs(moduleSet);
 		};
+	}
+
+	*addModules { | key |
+		CodexComposite.addModules(key);
+	}
+
+	*buildSynthDef { 
+		^SynthDef(\membrane, { 
+			var timer = \timer.kr(8); 
+			var env = EnvGen.kr(
+				Env.asr(0.0, 1, \release.kr(1.0)), 
+				\gate.kr(1), 
+				doneAction: Done.freeSelf
+			); 
+			var lag = \lag.kr(0.1); 
+			var in = In.ar(\in.kr(0), 1) * \ampDB.kr(0).dbamp; 
+			var sig = modules.membrane_function(
+				in, 
+				\distance.kr(1, lag).clip(1.0, 64).squared,
+				\azimuth.kr(0, lag).wrap(pi.neg, pi), 
+				\elevation.kr(1, lag).wrap(pi.neg, pi), 
+			);
+			var wakeSignal = EnvGen.kr(
+				Env.perc(0.0, timer / 2), 
+				gate: \wakup.tr(1)
+			) * PinkNoise.ar;
+			DetectSilence.ar(
+				in + wakeSignal, 
+				time: timer / 2,
+				doneAction: \doneAction.kr(1)
+			);
+			Out.ar(\out.kr(0), sig * env);
+		});
 	}
 
 	initResources {
@@ -148,24 +177,4 @@ GenOrgMembrane : CodexHybrid {
 		});
 		this.awaken;
 	}
-}
-
-MonoMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.monoMembrane }
-}
-
-StereoMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.stereoMembrane }
-}
-
-QuadMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.quadMembrane }
-}
-
-FOAMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.foaMembrane }
-}
-
-HOAMembrane : GenOrgMembrane {
-	*setMembrane { | templater | templater.hoaMembrane }
 }
