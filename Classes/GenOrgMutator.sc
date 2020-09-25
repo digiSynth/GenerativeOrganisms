@@ -1,4 +1,4 @@
-GenOrgMutator : CodexHybrid { 
+GenOrgMutator : GenOrgHybrid { 
 	var incrementer, <options, cleanupList; 
 
 	*makeTemplates { | templater | 
@@ -16,48 +16,25 @@ GenOrgMutator : CodexHybrid {
 	getSynthMsg { | buffer0, buffer1, timescale |
 		this.processSynthArgs(buffer0, buffer1, timescale);
 		^((Synth.basicNew(modules.synthDef.name)).newMsg(
-			args: this.processSynthArgs(
-				buffer0, 
-				buffer1, 
-				timescale
-			);
+			args: this.getArguments(buffer0, buffer1, timescale);
 		));
 	}
 
-	processSynthArgs { | buffer0, buffer1, timescale | 
-		var dict = modules.mutator.metadata; 
-		dict.keysDo({ | key | 
-			dict[key]  = dict[key].map(1.0.rand); 
+	getArguments  { | buffer0, buffer1, timescale | 
+		var array = [];
+		this.synthDef.specs.keysValuesDo({ | key, value |
+			array = array.add(key);
+			array = array.add(value.map(1.0.rand));
 		});
-		^this.enforceArgs(dict.asPairs, buffer0, buffer1, timescale);
+		array = array++[
+			\buffer0, buffer0, 
+			\buffer1, buffer1, 
+			\timescale, timescale
+		];
+		^array;
 	}
 
-	enforceArgs { | argArr, buffer0, buffer1, timescale |
-		^this.enforceTimescale( 
-			this.enforceBufs(argArr, buffer0, buffer1),
-			timescale
-		);
-	}
-
-	enforceBufs { | argArr, buffer0, buffer1 |
-		^this.addArg( 
-			this.addArg(argArr, \buf0, buffer0), 
-			\buf1, 
-			buffer1
-		);
-	}
-
-	enforceTimescale { | argArr, timescale(1)|
-		^this.addArg(argArr, \timescale, timescale);
-	}
-
-	addArg { |argArr, key, val| 
-		^if(argArr.containsIdentical(key).not, {
-			argArr++[key, val];		
-		}, {argArr});
-	}
-
-	mutate { | buffer0, buffer1, timescale, action| 
+	mutate { | buffer0, buffer1, timescale, action | 
 		var oscpath = PathName.tmp +/+ UniqueID.next ++ ".osc";
 		var outpath = incrementer.increment;
 		var reference = `nil;
