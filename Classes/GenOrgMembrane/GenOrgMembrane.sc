@@ -1,4 +1,4 @@
-GenOrgMembrane : CodexHybrid {
+GenOrgMembrane : GenOrgHybrid {
 	var freeFunctions, isFreed = false;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
@@ -33,24 +33,9 @@ GenOrgMembrane : CodexHybrid {
 		templater.membrane_function;
 	}
 
-	initHybrid {
-		this.addSynthDef;
+	initGenOrgHybrid {
 		freeFunctions = List.new;
 		freeFunctions.add({ this.freeResources });
-	}
-
-	addSynthDef {
-		var cache = this.class.cache.at(moduleSet);
-		if(cache.at(\synthDef).isNil, {
-			var synthDef = this.buildSynthDef(modules[\membrane_function]);
-			cache.add(\synthDef -> synthDef);
-			modules.add(\synthDef -> synthDef);
-			this.class.processSynthDefs(moduleSet);
-		});
-	}
-
-	*addModules { | key |
-		this.cache.add(key -> this.loadScripts(key));
 	}
 
 	buildSynthDef {
