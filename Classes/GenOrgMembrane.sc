@@ -1,6 +1,5 @@
 GenOrgMembrane : CodexHybrid {
-	var freeFunctions;
-	var isFreed = false;
+	var freeFunctions, isFreed = false;
 	var <group, <inputBus, <outputBus, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
