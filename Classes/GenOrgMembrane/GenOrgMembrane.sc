@@ -4,17 +4,17 @@ GenOrgMembrane : CodexHybrid {
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
 
-	*contribute { | versions | 
+	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
 		+/+"Classes/GenOrgMembrane";
 
 		versions.add(
 			[\mono, path+/+"mono"]
-		); 
+		);
 
 		versions.add(
 			[\stereo, path+/+"stereo"]
-		); 
+		);
 
 		versions.add(
 			[\quad, path+/+"quad"]
@@ -29,7 +29,7 @@ GenOrgMembrane : CodexHybrid {
 		);
 	}
 
-	*makeTemplates { | templater | 
+	*makeTemplates { | templater |
 		templater.membrane_function;
 	}
 
@@ -41,7 +41,7 @@ GenOrgMembrane : CodexHybrid {
 
 	addSynthDef {
 		var cache = this.class.cache.at(moduleSet);
-		if(cache.at(\synthDef).isNil, {  
+		if(cache.at(\synthDef).isNil, {
 			var synthDef = this.buildSynthDef(modules[\membrane_function]);
 			cache.add(\synthDef -> synthDef);
 			modules.add(\synthDef -> synthDef);
@@ -53,28 +53,28 @@ GenOrgMembrane : CodexHybrid {
 		this.cache.add(key -> this.loadScripts(key));
 	}
 
-	buildSynthDef {  
-		^SynthDef(\synth, { 
-			var timer = \timer.kr(8); 
+	buildSynthDef {
+		^SynthDef(\synth, {
+			var timer = \timer.kr(8);
 			var env = EnvGen.kr(
-				Env.asr(0.0, 1, \release.kr(1.0)), 
-				\gate.kr(1), 
+				Env.asr(0.0, 1, \release.kr(1.0)),
+				\gate.kr(1),
 				doneAction: Done.freeSelf
-			); 
-			var lag = \lag.kr(0.1); 
-			var in = In.ar(\in.kr(0), 1) * \ampDB.kr(0).dbamp; 
+			);
+			var lag = \lag.kr(0.1);
+			var in = In.ar(\in.kr(0), 1) * \ampDB.kr(0).dbamp;
 			var sig = modules.membrane_function(
-				in, 
+				in,
 				\distance.kr(1, lag).clip(1.0, 64).squared,
-				\azimuth.kr(0, lag).wrap(pi.neg, pi), 
-				\elevation.kr(1, lag).wrap(pi.neg, pi), 
+				\azimuth.kr(0, lag).wrap(pi.neg, pi),
+				\elevation.kr(1, lag).wrap(pi.neg, pi),
 			);
 			var wakeSignal = EnvGen.kr(
-				Env.perc(0.0, timer / 2), 
+				Env.perc(0.0, timer / 2),
 				gate: \wakup.tr(1)
 			) * PinkNoise.ar;
 			DetectSilence.ar(
-				in + wakeSignal, 
+				in + wakeSignal,
 				time: timer / 2,
 				doneAction: \doneAction.kr(1)
 			);
@@ -107,13 +107,12 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	initGroup {
-		group !? { group.free };
-		group = Group.new;
+		group ?? { group = Group.new };
 	}
 
 	initSynth {
 		this.initResources;
-		lag = lag ?? {server.latency  * 0.1};
+		lag = lag ?? { server.latency  * 0.1 };
 		synth = Synth.newPaused(modules.synthDef.name, [
 			\in, inputBus,
 			\out, outputBus,
@@ -136,7 +135,7 @@ GenOrgMembrane : CodexHybrid {
 	isPlaying { ^synth.isPlaying }
 
 	freeResources {
-		group.free;
+		group !? { group.free; group = nil };
 		this.freeBus(inputBus);
 		this.freeBus(outputBus);
 		inputBus = outputBus = nil;
