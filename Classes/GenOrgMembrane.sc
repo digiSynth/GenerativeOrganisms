@@ -79,7 +79,7 @@ GenOrgMembrane : CodexHybrid {
 	}
 
 	initGroup {
-		group !? { group.free }
+		group !? { group.free };
 		group = Group.new;
 	}
 
