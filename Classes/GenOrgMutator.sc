@@ -1,16 +1,28 @@
 GenOrgMutator : GenOrgHybrid { 
-	var incrementer, <options, cleanupList; 
+	var incrementer, <options, cleanup; 
 
 	*makeTemplates { | templater | 
 		templater.mutator_function;
 	}
 
-	initHybrid { 
-		cleanupList = List.new;
+	initGenOrgHybrid { 
+		cleanup = List.new;
 		options = server.options.copy
 		.verbosity_(-2)
 		.sampleRate_(48e3)
-		.recSampleFormat_("int24")
+		.recSampleFormat_("int24");
+		incrementer = CodexIncrementer(
+			"mutation.wav", 
+			"~/mutations".standardizePath
+		);
+	}
+
+	folder { 
+		^incrementer.folder;
+	}
+
+	folder_{ | newFolder |
+		incrementer.folder = newFolder;
 	}
 
 	getSynthMsg { | buffer0, buffer1, timescale |
@@ -49,6 +61,9 @@ GenOrgMutator : GenOrgHybrid {
 			"", 
 			timescale, 
 			action: { 
+				cleanup.add({ File.delete(oscpath) });
+				cleanup.do(_.value);
+				cleanup.clear;
 				fork {
 					var condition = Condition.new;
 					var buffer = Buffer.read(
@@ -58,8 +73,6 @@ GenOrgMutator : GenOrgHybrid {
 					);
 					condition.hang;
 					reference.value = buffer;
-					cleanupList.do(_.value); 
-					cleanupList.clear;
 				};
 			}
 		);
@@ -90,11 +103,28 @@ GenOrgMutator : GenOrgHybrid {
 			0, synthMsg
 		]);
 
-		cleanupList.add({ 
+		cleanup.add({ 
 			b0c.free; 
 			b1c.free; 
 		});
 		
 		^score.sort;
+	}
+
+	buildSynthDef { 
+		^SynthDef.new(\GOMutator_MatingSynth, {
+			var timescale = \timescale.kr(1);
+			var buffer0 = \buffer0.kr(0); 
+			var buffer1 = \buffer1.kr(1); 
+			var env = Env(
+				[0, 1, 1, 0], 
+				[0.1, 1, 0.1].normalizeSum
+			).ar(
+				timeScale: timescale, 
+				doneAction: Done.freeSelf;
+			);
+			var sig = modules.mutator_function(buffer0, buffer1, timescale);
+			Out.ar(\out.kr(0), sig * env);
+		});
 	}
 }
