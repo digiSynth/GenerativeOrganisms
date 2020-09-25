@@ -2,7 +2,7 @@ GenOrgMutator : CodexHybrid {
 	var incrementer, <options, cleanupList; 
 
 	*makeTemplates { | templater | 
-		templater.mutator
+		templater.mutator_synthDef("synthDef");
 	}
 
 	initHybrid { 
@@ -15,7 +15,7 @@ GenOrgMutator : CodexHybrid {
 
 	getSynthMsg { | buffer0, buffer1, timescale |
 		this.processSynthArgs(buffer0, buffer1, timescale);
-		^((Synth.basicNew(modules.mutator.name)).newMsg(
+		^((Synth.basicNew(modules.synthDef.name)).newMsg(
 			args: this.processSynthArgs(
 				buffer0, 
 				buffer1, 
