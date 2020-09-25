@@ -4,10 +4,17 @@
 		^Main.packages.asDict.at(\GenOrg)+/+"Templates";
 	}
 
-	membrane_function { | name("membrane_function") |
+	membrane_function { | templateName("membrane_function") |
 		this.makeTemplate(
-			name, 
+			templateName, 
 			this.genOrg_path+/+"membrane_function.scd"
+		);
+	}
+
+	mutator_function { | templateName("mutator_function") |
+		this.makeTemplate(
+			templateName, 
+			this.genOrg_path+/+"mutator_function.scd"
 		);
 	}
 
