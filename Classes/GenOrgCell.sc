@@ -1,10 +1,51 @@
-GenOrgCell : CodexHybrid {
+GenOrgCell : GenOrgHybrid {
 	classvar instances;
-	var <instance, <membrane, <cilium;
+	var <instance, envs, busses;
+	var membrane, cilium;
 
-	*initClass { instances = 0 }
+	buildSynthDef {
+		^SynthDef(\synth, {
+			var buffer = \buffer.kr(0);
+			var timescale = \timescsale.kr(1);
+			var env = Env(
+				[0, 1, 1, 0],
+				[0.1, 1, 0.1].normalizeSum
+			).kr(
+				timeScale: timescale,
+				doneAction: Done.freeSelf
+			);
+			var sig = modules.cellular_function(buffer, timescale);
+			Out.ar(\out.kr(0), sig * env);
+		});
+	}
 
-	*notAt { | set | ^CodexComposite.notAt(set) }
+	addSynthDef {
+		var cache = this.class.cache.at(moduleSet);
+		if(cache.at(\synthDef).isNil, {
+			var synthDef = this.buildSynthDef;
+			cache.add(\synthDef -> synthDef);
+			modules.add(\synthDef -> synthDef);
+			this.makeEnvs;
+			this.class.processSynthDefs(moduleSet);
+		});
+	}
+
+	makeEnvs {
+		var specs = modules.synthDef.specs;
+		envs = ();
+		specs.keysValuesDo({ | key, value |
+			var numSegs = exprand(4, 32);
+			var env = Env(
+				Array.rand(numSegs, value.minval, value.maxval),
+				Array.rand(numSegs - 1, 0.01, 1).normalizeSum,
+				Array.rand(numSegs - 1, -12, 12)
+			);
+			envs.add(key -> env);
+			modules.add(key -> SynthDef(key, {
+				Out.ar(\out.kr(0), EnvGen.kr(env));
+			}));
+		});
+	}
 
 	*mutation { | set(\default) |
 		^super.newCopyArgs(
@@ -12,18 +53,9 @@ GenOrgCell : CodexHybrid {
 		).loadModules(set);
 	}
 
-	initComposite {
+	initGenOrgHybrid {
 		instance ?? { instance = this.increment };
-		this.evaluateModules;
-		server = Server.default;
-		this.processSynthDefs;
-		this.initHybrid;
-	}
-
-	evaluateModules {
-		if(modules[\synthDef].isNil, {
-			modules[\synthDef] = modules.function;
-		});
+		busses = ();
 	}
 
 	name { ^(super.name.asString++instance).asSymbol }
@@ -34,10 +66,7 @@ GenOrgCell : CodexHybrid {
 	}
 
 	*makeTemplates { | templater |
-		templater.cellularFunction;
-		templater.cellularArgs;
-		templater.cellularEnvs;
-		templater.cellularWrappers;
+		templater.cellular_function;
 	}
 
 	arguments { ^modules.cellularArgs }
