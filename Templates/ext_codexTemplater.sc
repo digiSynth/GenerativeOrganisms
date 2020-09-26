@@ -18,4 +18,11 @@
 		);
 	}
 
+	cellular_function { | templateName("cellular_function") |
+		this.makeTemplate(
+			templateName, 
+			this.genOrg_path+/+"cellular_function.scd"
+		);
+	}
+
 }
