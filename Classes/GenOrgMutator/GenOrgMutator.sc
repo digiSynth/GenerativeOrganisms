@@ -9,6 +9,10 @@ GenOrgMutator : GenOrgHybrid {
 			[\morph, path+/+"morph"]
 		);
 
+		versions.add(
+			[\amp_mod, path+/+"amp_mod"]
+		);
+
 	}
 
 	*makeTemplates { | templater |
@@ -21,10 +25,12 @@ GenOrgMutator : GenOrgHybrid {
 		.verbosity_(-2)
 		.sampleRate_(48e3)
 		.recSampleFormat_("int24");
-		incrementer = CodexIncrementer(
-			"mutation.wav",
-			"~/mutations".standardizePath
-		);
+		incrementer = incrementer ?? {
+			CodexIncrementer(
+				"mutation.wav",
+				"~/mutations".standardizePath
+			);
+		};
 	}
 
 	fileTemplate {

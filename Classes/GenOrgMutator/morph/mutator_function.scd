@@ -12,7 +12,6 @@
 		) * BufFrames.kr(buffer0),
 		loop: 1
 	);
-
 	var sig1 = PlayBuf.ar(
 		1,
 		buffer1,
@@ -26,7 +25,6 @@
 		) * BufFrames.kr(buffer1),
 		loop: 1
 	);
-
 	var fftsize = 2.pow(10);
 	var chain0 = FFT(LocalBuf(fftsize), sig0);
 	var chain1 = FFT(LocalBuf(fftsize), sig1);
@@ -41,13 +39,5 @@
 			spec: ControlSpec(1.01, 4.0, \exp)
 		))
 	).unipolar;
-	var env = Env(
-		levels: [0, 1, 1, 0],
-		times: [0.1, 1, 0.1].normalizeSum,
-		curve: \welch
-	).ar(
-		timeScale: timescale,
-		doneAction: Done.freeSelf
-	);
-	IFFT(PV_Morph(chain0, chain1, morph)) * env;
+	IFFT(PV_Morph(chain0, chain1, morph));
 };
