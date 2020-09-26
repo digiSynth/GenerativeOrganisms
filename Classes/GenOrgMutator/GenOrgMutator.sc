@@ -36,7 +36,6 @@ GenOrgMutator : GenOrgHybrid {
 	}
 
 	getSynthMsg { | buffer0, buffer1, timescale |
-		this.processSynthArgs(buffer0, buffer1, timescale);
 		^((Synth.basicNew(modules.synthDef.name)).newMsg(
 			args: this.getArguments(buffer0, buffer1, timescale);
 		));
@@ -44,7 +43,7 @@ GenOrgMutator : GenOrgHybrid {
 
 	getArguments  { | buffer0, buffer1, timescale |
 		var array = [];
-		this.synthDef.specs.keysValuesDo({ | key, value |
+		modules.synthDef.specs.keysValuesDo({ | key, value |
 			array = array.add(key);
 			array = array.add(value.map(1.0.rand));
 		});
@@ -96,7 +95,7 @@ GenOrgMutator : GenOrgHybrid {
 		var synthMsg = this.getSynthMsg(buffer0, buffer1, timescale);
 
 		score.add([
-			0, [\d_recv, modules.mutator.asBytes]
+			0, [\d_recv, modules.synthDef.asBytes]
 		]);
 
 		score.add([
@@ -128,7 +127,8 @@ GenOrgMutator : GenOrgHybrid {
 			var buffer1 = \buffer1.kr(1);
 			var env = Env(
 				[0, 1, 1, 0],
-				[0.1, 1, 0.1].normalizeSum
+				[0.1, 1, 0.1].normalizeSum, 
+				\welch
 			).ar(
 				timeScale: timescale,
 				doneAction: Done.freeSelf;
