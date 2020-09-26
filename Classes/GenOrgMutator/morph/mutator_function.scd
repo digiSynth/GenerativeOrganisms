@@ -5,7 +5,12 @@
 		BufRateScale.kr(buffer0) * \rate0.kr(
 			1,
 			spec: ControlSpec(0.1, 2.0, \exp)
-		);
+		),
+		startPos: \startPos0.ir(
+			0.0,
+			spec: ControlSpec(0.0, 1.0)
+		) * BufFrames.kr(buffer0),
+		loop: 1
 	);
 
 	var sig1 = PlayBuf.ar(
@@ -14,7 +19,12 @@
 		BufRateScale.kr(buffer1) * \rate1.kr(
 			1,
 			spec: ControlSpec(0.1, 2.0, \exp)
-		);
+		),
+		startPos: \startPos1.ir(
+			0.0,
+			spec: ControlSpec(0.0, 1.0)
+		) * BufFrames.kr(buffer1),
+		loop: 1
 	);
 
 	var fftsize = 2.pow(10);
@@ -31,5 +41,13 @@
 			spec: ControlSpec(1.01, 4.0, \exp)
 		))
 	).unipolar;
-	IFFT(PV_Morph(chain0, chain1, morph));
+	var env = Env(
+		levels: [0, 1, 1, 0],
+		times: [0.1, 1, 0.1].normalizeSum,
+		curve: \welch
+	).ar(
+		timeScale: timescale,
+		doneAction: Done.freeSelf
+	);
+	IFFT(PV_Morph(chain0, chain1, morph)) * env;
 };
