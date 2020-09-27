@@ -120,14 +120,6 @@ GenOrgCell : GenOrgHybrid {
 		templater.cellular_function;
 	}
 
-	arguments { ^modules.cellularArgs }
-
-	getCurves {
-		^this.arguments.collect({|item, index|
-			[item, modules[item]];
-		}).asPairs(Dictionary);
-	}
-
 	/*playCell { | buffer, db(-12), outputBus(0),
 		target, addAction |
 		if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
