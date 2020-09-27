@@ -1,7 +1,17 @@
 GenOrgCell : GenOrgHybrid {
-	classvar instances;
+	classvar nInstances;
 	var <instance, envs, busses;
 	var membrane, cilium;
+
+	*initClass { nInstances = 0; }
+
+	*new { | moduleSet, from | 
+		^super.new((moduleSet.asString++nInstances).asSymbol, from);
+	}
+
+	initGenOrgHybrid { 
+		instance = this.increment;
+	}
 
 	buildSynthDef {
 		^SynthDef(\synth, {
@@ -25,14 +35,15 @@ GenOrgCell : GenOrgHybrid {
 			var synthDef = this.buildSynthDef;
 			cache.add(\synthDef -> synthDef);
 			modules.add(\synthDef -> synthDef);
-			this.makeEnvs;
+			this.generateControls;
 			this.class.processSynthDefs(moduleSet);
 		});
 	}
 
-	makeEnvs {
+	generateControls {
 		var specs = modules.synthDef.specs;
 		envs = ();
+		busses = ();
 		specs.keysValuesDo({ | key, value |
 			var numSegs = exprand(4, 32);
 			var env = Env(
@@ -41,28 +52,46 @@ GenOrgCell : GenOrgHybrid {
 				Array.rand(numSegs - 1, -12, 12)
 			);
 			envs.add(key -> env);
+			busses.add(key -> Bus.control(server, 1));
 			modules.add(key -> SynthDef(key, {
-				Out.ar(\out.kr(0), EnvGen.kr(env));
+				Out.ar(busses[key], EnvGen.kr(env));
 			}));
 		});
 	}
 
-	*mutation { | set(\default) |
-		^super.newCopyArgs(
-			format("%_mutation", set).asSymbol
-		).loadModules(set);
+	playCell { | buffer, output(0), target(server.defaultGroup), addAction(\addToHead) |
+		server.bind({ 
+			var group = Group.new(target, addAction);
+			var synth = Synth(
+				modules.synthDef.name, 
+				this.getArguments(buffer), 
+				target: group
+			);
+			envs.keys.do { | key |
+				Synth(
+					modules[key].name,
+					target: group, 
+					addAction: \addToHead
+				);
+			};
+			synth.onFree({
+				group.free;
+			});
+		});
 	}
-
-	initGenOrgHybrid {
-		instance ?? { instance = this.increment };
-		busses = ();
+	
+	getArguments { | buffer |
+		var array = [];
+		busses.keysValuesDo({ | key, value |
+			array = array.add(key);
+			array = array.add(value.asMap);
+		}); 
+		^(array++[\buffer, buffer]);
 	}
-
-	name { ^(super.name.asString++instance).asSymbol }
 
 	increment {
-		instances = instances + 1;
-		^(instances - 1);
+		nInstances = nInstances + 1; 
+		^(nInstances - 1);
 	}
 
 	*makeTemplates { | templater |
@@ -79,7 +108,7 @@ GenOrgCell : GenOrgHybrid {
 
 	free { this.removeSynthDefs }
 
-	playCell { | buffer, db(-12), outputBus(0),
+	/*playCell { | buffer, db(-12), outputBus(0),
 		target, addAction |
 		if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
 		if(membrane.isNil, {
@@ -106,16 +135,16 @@ GenOrgCell : GenOrgHybrid {
 				\addBefore
 			);
 		})
-	}
+	}*/
 
-	cellularSynth { | buffer, db, outputBus, target, addAction(\addToTail) |
+	/*cellularSynth { | buffer, db, outputBus, target, addAction(\addToTail) |
 		Synth(
 			modules.synthDef.name,
 			this.getSynthArgs(buffer, db, outputBus),
 			target,
 			addAction
 		);
-	}
+	}*/
 
 	mutateWith { | target |
 		var child = GenOrgCell.mutation(moduleSet);
@@ -207,10 +236,9 @@ GenOrgCell : GenOrgHybrid {
 		});
 	}
 
-	reloadScripts {
-		cache.removeModules(this.class.name, moduleSet);
-		this.removeSynthDefs;
-		this.moduleSet = moduleSet;
+	moduleSet_{ | newSet, from |
+		var newNSet = (newSet.asString++instance).asSymbol; 
+		super.moduleSet_(newNSet, from);
 	}
 
 }
