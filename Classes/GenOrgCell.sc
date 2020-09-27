@@ -68,17 +68,17 @@ GenOrgCell : GenOrgHybrid {
 
 	generateEnvs {
 		envs ?? {
-			var tmpvar = ();
+			var dict = ();
 			modules.synhtDef.specs
 			.keysValuesArrayDo({ | key, value |
 				var numSegs = exprand(4, 32);
-				tmpvar.add(key -> Env(
+				dict.add(key -> Env(
 					Array.rand(numSegs, value.minval, value.maxval),
 					Array.rand(numSegs - 1, 0.01, 1).normalizeSum,
 					Array.rand(numSegs - 1, -12, 12)
 				));
 			});
-			this.envs = tmpvar;
+			this.envs = dict;
 		}
 	}
 
@@ -160,75 +160,7 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	averageArray { | array0, array1 |
-		if(arr0.size!=arr1.size, { arr1 = arr1.resize(arr0) });
-		^(arr0 + arr1 / 2);
-	}
-
-	mutateWith { | target |
-		var child = GenOrgCell.mutation(moduleSet);
-		this.mutateModules(target)
-		.keysValuesDo({ | key, value |
-			child[key] = value;
-		});
-		^child.initComposite;
-	}
-
-	mutateModules { | target |
-		var tmodules = target.modules, child = ();
-		child.add(\args -> this.mutateArgs(tmodules));
-		child.add(\envs -> this.mutateEnvs(tmodules));
-		child.add(\wrappers -> modules.wrappers.copy);
-		child.add(\synthDefFunction -> modules.synthDefFunction.copy);
-		^child;
-	}
-
-	mutateEnv { | env0, env1 |
-		var levels = this.averageArr(env0.levels, env1.levels);
-		var times = this.averageArr(env0.times, env1.times);
-		var curves = this.averageArr(env0.curves, env1.curves);
-		^Env(levels, times, curves);
-	}
-
-	mutateEnvs { | target |
-		var tenvs = target.cellularEnvs, child = ();
-		modules.envs.keyValuesDo({ | key, value |
-			child.add(key -> this.mutateEnv(value, tenvs[key]));
-		});
-		^child;
-	}
-
-	mutateSpecs { | target |
-		var targs = target.cellularArgs;
-		var child = Dictionary.new;
-		modules.args.keyValuesDo({ | key, value |
-			var tval = targs[key];
-			var minval = value.minval + tval.minval / 2;
-			var maxval = value.maxval + tval.maxval / 2;
-			var warp = [value.warp, tval.warp].choose;
-			child.add(key -> ControlSpec(minval, maxval, warp));
-		});
-	}
-
-	averageArr { | arr0, arr1 |
-		if(arr0.size!=arr1.size, { arr1 = arr1.resize(arr0) });
-		^(arr0 + arr1 / 2);
-	}
-
-	getSynthArgs { | buffer, db(0), outbus(0) |
-		var args = [];
-		modules.args.keysValuesDo({ | key, value |
-			if(key==\timescale, {
-				args = args.add(\timescale); args = args.add(value.map(1.0.rand));
-			}, {
-				var lo = format("%lo", key).asSymbol;
-				var hi = format("%hi", key).asSymbol;
-				args = args.add(lo);
-				args = args.add(value.map(0.5.rand));
-				args = args.add(hi);
-				args = args.add(rrand(0.5, 1.0));
-			});
-		});
-		^([\buf, buffer, \ampDB, db, \out, outbus]++args);
+		^(array0 + array1.resize(array0.size) / 2);
 	}
 
 	membrane_{ | newMembrane |
