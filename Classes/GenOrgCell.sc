@@ -150,17 +150,11 @@ GenOrgCell : GenOrgHybrid {
 		var newEnvs = ();
 		envs.keysValuesDo({ | key, env |
 			var target = targetEnvs[key];
-			newEnvs.add(key -> Env(
-				this.averageArray(env.levels, target.levels),
-				this.averageArray(env.times, target.times),
-				this.averageArray(env.curves, target.curves)
-			));
+			var toAdd = env + target / 2; 
+			toAdd.times = toAdd.times.normalizeSum; 
+			newEnvs.add(key -> toAdd);
 		});
 		^newEnvs;
-	}
-
-	averageArray { | array0, array1 |
-		^(array0 + array1.resize(array0.size) / 2);
 	}
 
 	membrane_{ | newMembrane |
