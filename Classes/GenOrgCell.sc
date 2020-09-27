@@ -1,6 +1,5 @@
 GenOrgCell : GenOrgHybrid {
 	var <envs, <busses, synth;
-	var membrane, cilium;
 
 	*formatName { | symbol, key |
 		var nKey = key.asString++"_"++UniqueID.next;
@@ -155,29 +154,6 @@ GenOrgCell : GenOrgHybrid {
 			newEnvs.add(key -> toAdd);
 		});
 		^newEnvs;
-	}
-
-	membrane_{ | newMembrane |
-		membrane !? { membrane.free };
-		if(newMembrane.isKindOf(GenOrgMembrane), {
-			membrane = newMembrane;
-			membrane.onFree({ membrane = nil });
-		});
-		this.attachCilium;
-	}
-
-	cilium_{ | newCilium |
-		cilium !? { cilium.free };
-		if(newCilium.isKindOf(GenOrgCilium), {
-			cilium = newCilium;
-		});
-		this.attachCilium;
-	}
-
-	attachCilium {
-		if(cilium.notNil and: { membrane.notNil }, {
-			//membrane.attachCilium(cilium);
-		});
 	}
 
 	moduleSet_{ | newSet, from |
