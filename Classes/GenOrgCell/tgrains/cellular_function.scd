@@ -34,19 +34,19 @@
 		spec: ControlSpec(0.1, 0.8, \lin)
 	);
 
-	var bufdur = BufDur.kr(buf);
-	var phasor = (pos * bufdur).wrap(0, bufdur);
-	var impulse = Impulse.ar(impulseRate);
+	var bufferdur = BufDur.kr(buffer);
+	var phasor = (pos * bufferdur).wrap(0, bufferdur);
+	var impulse = Impulse.ar(impulserate);
 	var sig = TGrains.ar(
 		1,
 		impulse,
-		buf,
+		buffer,
 		rate,
 		phasor,
-		grainDur
-	) * 16;
+		graindur
+	) * 64;
 	sig = BPF.ar(
-		sig,
+		sig.tanh,
 		ffreq,
 		rq
 	);
