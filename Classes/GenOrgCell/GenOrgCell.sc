@@ -1,6 +1,15 @@
 GenOrgCell : GenOrgHybrid {
 	var <envs, <busses, synth;
 
+	*contribute { | versions |
+		var path = Main.packages.asDict.at(\GenOrg)
+		+/+"Classes/GenOrgCell";
+
+		versions.add(
+			[\tgrains, path+/+"tgrains"]
+		);
+	}
+
 	*formatName { | symbol, key |
 		var nKey = key.asString++"_"++UniqueID.next;
 		^super.formatName(symbol, nKey);
