@@ -1,5 +1,5 @@
 GenOrgCell : GenOrgHybrid {
-	var <>envs, <busses, synth;
+	var <envs, <busses, synth;
 	var membrane, cilium;
 
 	*formatName { | symbol, key |
@@ -154,7 +154,7 @@ GenOrgCell : GenOrgHybrid {
 				this.averageArray(env.levels, target.levels),
 				this.averageArray(env.times, target.times),
 				this.averageArray(env.curves, target.curves)
-			))
+			));
 		});
 		^newEnvs;
 	}
