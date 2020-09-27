@@ -1,5 +1,5 @@
 GenOrgCell : GenOrgHybrid {
-	var <envs, <busses, synth;
+	var <>envs, <busses, synth;
 	var membrane, cilium;
 
 	*formatName { | symbol, key |
@@ -8,7 +8,7 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	buildSynthDef {
-		^SynthDef(\synth, {
+		modules.add(\synthDef -> SynthDef(\synth, {
 			var buffer = \buffer.kr(0);
 			var timescale = \timescsale.kr(1);
 			var env = Env(
@@ -20,13 +20,13 @@ GenOrgCell : GenOrgHybrid {
 			);
 			var sig = modules.cellular_function(buffer, timescale);
 			Out.ar(\out.kr(0), sig * env);
-		});
+		}));
 	}
 
 	addSynthDef {
-		var synthDef = this.buildSynthDef;
-		modules.add(\synthDef -> synthDef);
-		this.generateControls;
+		this.generateEnvs;
+		this.buildEnvGens;
+		this.buildSynthDef;
 		this.class.processSynthDefs(modules, moduleSet);
 	}
 
@@ -52,26 +52,43 @@ GenOrgCell : GenOrgHybrid {
 		processor.remove(this.findSynthDefs(modules));
 	}
 
-	generateControls {
-		var specs = modules.synthDef.specs;
-		envs = ();
-		busses = ();
-		specs.keysValuesDo({ | key, value |
-			var numSegs = exprand(4, 32);
-			var env = Env(
-				Array.rand(numSegs, value.minval, value.maxval),
-				Array.rand(numSegs - 1, 0.01, 1).normalizeSum,
-				Array.rand(numSegs - 1, -12, 12)
-			);
-			envs.add(key -> env);
-			busses.add(key -> Bus.control(server, 1));
+	buildEnvGens {
+		envs.keysValuesDo({ | key, env |
 			modules.add(key -> SynthDef(key, {
-				Out.kr(busses[key], EnvGen.kr(
-					env,
-					doneAction: Done.freeSelf,
-					timeScale: \timescale.kr(1)
-				));
+				Out.kr(
+					busses[key],
+					env.kr(
+						doneAction: Done.freeSelf,
+						timeScale: \timescale.kr(1);
+					)
+				);
 			}));
+		});
+	}
+
+	generateEnvs {
+		envs ?? {
+			var tmpvar = ();
+			modules.synhtDef.specs
+			.keysValuesArrayDo({ | key, value |
+				var numSegs = exprand(4, 32);
+				tmpvar.add(key -> Env(
+					Array.rand(numSegs, value.minval, value.maxval),
+					Array.rand(numSegs - 1, 0.01, 1).normalizeSum,
+					Array.rand(numSegs - 1, -12, 12)
+				));
+			});
+			this.envs = tmpvar;
+		}
+	}
+
+	envs_{ | newEnvs |
+		if(envs.isKindOf(Dictionary), {
+			envs = newEnvs;
+			busses !? { busses.do(_.free) };
+			envs.keys.do{ | key |
+				busses.add(key -> Bus.control(server, 1));
+			};
 		});
 	}
 
@@ -120,43 +137,32 @@ GenOrgCell : GenOrgHybrid {
 		templater.cellular_function;
 	}
 
-	/*playCell { | buffer, db(-12), outputBus(0),
-	target, addAction |
-	if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
-	if(membrane.isNil, {
-	this.cellularSynth(buffer, db, outputBus, target, addAction);
-	}, {
-	if(target.isKindOf(Group), {
-	case { addAction==\addToTail }{
-	membrane.group.moveToTail(target);
-	}{ addAction==\addToHead }{
-	membrane.group.moveToHead(target);
-	}{ membrane.group = target };
-	});
+	mutateWith { | target |
+		if(moduleSet == target.moduleSet, {
+			var child = GenOrgCell.basicNew(moduleSet);
+			child.envs = this.mutateEnvs(target.envs);
+			^child.setup;
+		});
+		^nil;
+	}
 
-	case { addAction==\addAfter }{ membrane.group.moveAfter(target) }
-	{ addAction==\addBefore }{ membrane.group.moveBefore(target) };
+	mutateEnvs { | targetEnvs |
+		var newEnvs = ();
+		envs.keysValuesDo({ | key, env |
+			var target = targetEnvs[key];
+			newEnvs.add(key -> Env(
+				this.averageArray(env.levels, target.levels),
+				this.averageArray(env.times, target.times),
+				this.averageArray(env.curves, target.curves)
+			))
+		});
+		^newEnvs;
+	}
 
-	membrane.playMembrane;
-	membrane.outputBus = outputBus;
-	this.cellularSynth(
-	buffer,
-	db,
-	membrane.inputBus,
-	membrane.synth,
-	\addBefore
-	);
-	})
-	}*/
-
-	/*cellularSynth { | buffer, db, outputBus, target, addAction(\addToTail) |
-	Synth(
-	modules.synthDef.name,
-	this.getSynthArgs(buffer, db, outputBus),
-	target,
-	addAction
-	);
-	}*/
+	averageArray { | array0, array1 |
+		if(arr0.size!=arr1.size, { arr1 = arr1.resize(arr0) });
+		^(arr0 + arr1 / 2);
+	}
 
 	mutateWith { | target |
 		var child = GenOrgCell.mutation(moduleSet);
