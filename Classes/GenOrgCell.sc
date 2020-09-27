@@ -1,7 +1,6 @@
 GenOrgCell : GenOrgHybrid {
-	var <envs, <busses;
+	var <envs, <busses, synth;
 	var membrane, cilium;
-
 
 	*formatName { | symbol, key |
 		var nKey = key.asString++"_"++UniqueID.next; 
@@ -79,11 +78,11 @@ GenOrgCell : GenOrgHybrid {
 	playCell { | buffer, output(0), target(server.defaultGroup), addAction(\addToHead) |
 		server.bind({ 
 			var group = Group.new(target, addAction);
-			var synth = Synth(
+			synth = Synth(
 				modules.synthDef.name, 
 				this.getArguments(buffer), 
 				target: group
-			);
+			).register;
 			envs.keys.do { | key |
 				Synth(
 					modules[key].name,
@@ -95,6 +94,17 @@ GenOrgCell : GenOrgHybrid {
 				group.free;
 			});
 		});
+	}
+
+	freeResources { 
+		busses.asArray.do(_.free);
+		this.class.removeSynthDefs(modules);
+	}
+
+	free { 
+		if(synth.isPlaying, { 
+			synth.onFree({ this.freeResources });
+		}, { this.freeResources });
 	}
 	
 	getArguments { | buffer |
@@ -117,8 +127,6 @@ GenOrgCell : GenOrgHybrid {
 			[item, modules[item]];
 		}).asPairs(Dictionary);
 	}
-
-	free { this.removeSynthDefs }
 
 	/*playCell { | buffer, db(-12), outputBus(0),
 		target, addAction |
