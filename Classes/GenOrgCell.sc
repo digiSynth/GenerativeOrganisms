@@ -136,13 +136,13 @@ GenOrgCell : GenOrgHybrid {
 		templater.cellular_function;
 	}
 
-	mutateWith { | target |
-		if(moduleSet == target.moduleSet, {
-			var child = GenOrgCell.basicNew(moduleSet);
-			child.envs = this.mutateEnvs(target.envs);
-			^child.setup;
+	mateWith { | target |
+		var child = GenOrgCell.basicNew(moduleSet);
+		if(moduleSet != target.moduleSet, { 
+			target.moduleSet = modulesSet;
 		});
-		^nil;
+		child.envs = this.mutateEnvs(target.envs);
+		^child.setup;
 	}
 
 	mutateEnvs { | targetEnvs |
