@@ -3,7 +3,7 @@ GenOrgCell : GenOrgHybrid {
 	var membrane, cilium;
 
 	*formatName { | symbol, key |
-		var nKey = key.asString++"_"++UniqueID.next; 
+		var nKey = key.asString++"_"++UniqueID.next;
 		^super.formatName(symbol, nKey);
 	}
 
@@ -67,7 +67,7 @@ GenOrgCell : GenOrgHybrid {
 			busses.add(key -> Bus.control(server, 1));
 			modules.add(key -> SynthDef(key, {
 				Out.kr(busses[key], EnvGen.kr(
-					env, 
+					env,
 					doneAction: Done.freeSelf,
 					timeScale: \timescale.kr(1)
 				));
@@ -76,17 +76,17 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	playCell { | buffer, output(0), target(server.defaultGroup), addAction(\addToHead) |
-		server.bind({ 
+		server.bind({
 			var group = Group.new(target, addAction);
 			synth = Synth(
-				modules.synthDef.name, 
-				this.getArguments(buffer), 
+				modules.synthDef.name,
+				this.getArguments(buffer),
 				target: group
 			).register;
 			envs.keys.do { | key |
 				Synth(
 					modules[key].name,
-					target: group, 
+					target: group,
 					addAction: \addToHead
 				);
 			};
@@ -96,23 +96,23 @@ GenOrgCell : GenOrgHybrid {
 		});
 	}
 
-	freeResources { 
+	freeResources {
 		busses.asArray.do(_.free);
 		this.class.removeSynthDefs(modules);
 	}
 
-	free { 
-		if(synth.isPlaying, { 
+	free {
+		if(synth.isPlaying, {
 			synth.onFree({ this.freeResources });
 		}, { this.freeResources });
 	}
-	
+
 	getArguments { | buffer |
 		var array = [];
 		busses.keysValuesDo({ | key, value |
 			array = array.add(key);
 			array = array.add(value.asMap);
-		}); 
+		});
 		^(array++[\buffer, buffer]);
 	}
 
@@ -121,41 +121,41 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	/*playCell { | buffer, db(-12), outputBus(0),
-		target, addAction |
-		if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
-		if(membrane.isNil, {
-			this.cellularSynth(buffer, db, outputBus, target, addAction);
-		}, {
-			if(target.isKindOf(Group), {
-				case { addAction==\addToTail }{
-					membrane.group.moveToTail(target);
-				}{ addAction==\addToHead }{
-					membrane.group.moveToHead(target);
-				}{ membrane.group = target };
-			});
+	target, addAction |
+	if(buffer.isNil, { "Warning: no buffer".postln; ^this; });
+	if(membrane.isNil, {
+	this.cellularSynth(buffer, db, outputBus, target, addAction);
+	}, {
+	if(target.isKindOf(Group), {
+	case { addAction==\addToTail }{
+	membrane.group.moveToTail(target);
+	}{ addAction==\addToHead }{
+	membrane.group.moveToHead(target);
+	}{ membrane.group = target };
+	});
 
-			case { addAction==\addAfter }{ membrane.group.moveAfter(target) }
-			{ addAction==\addBefore }{ membrane.group.moveBefore(target) };
+	case { addAction==\addAfter }{ membrane.group.moveAfter(target) }
+	{ addAction==\addBefore }{ membrane.group.moveBefore(target) };
 
-			membrane.playMembrane;
-			membrane.outputBus = outputBus;
-			this.cellularSynth(
-				buffer,
-				db,
-				membrane.inputBus,
-				membrane.synth,
-				\addBefore
-			);
-		})
+	membrane.playMembrane;
+	membrane.outputBus = outputBus;
+	this.cellularSynth(
+	buffer,
+	db,
+	membrane.inputBus,
+	membrane.synth,
+	\addBefore
+	);
+	})
 	}*/
 
 	/*cellularSynth { | buffer, db, outputBus, target, addAction(\addToTail) |
-		Synth(
-			modules.synthDef.name,
-			this.getSynthArgs(buffer, db, outputBus),
-			target,
-			addAction
-		);
+	Synth(
+	modules.synthDef.name,
+	this.getSynthArgs(buffer, db, outputBus),
+	target,
+	addAction
+	);
 	}*/
 
 	mutateWith { | target |
@@ -249,7 +249,13 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	moduleSet_{ | newSet, from |
-		this.class.removeSynthDefs(modules); 
+		this.class.removeSynthDefs(modules);
 		super.moduleSet_(newSet, from);
+	}
+
+	reloadScripts {
+		this.class.removeSynthDefs(modules);
+		cache.removeModules(this.class.name, moduleSet);
+		this.moduleSet = moduleSet;
 	}
 }
