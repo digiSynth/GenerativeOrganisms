@@ -139,7 +139,7 @@ GenOrgCell : GenOrgHybrid {
 	mateWith { | target |
 		var child = GenOrgCell.basicNew(moduleSet);
 		if(moduleSet != target.moduleSet, { 
-			target.moduleSet = modulesSet;
+			target.moduleSet = moduleSet;
 		});
 		child.envs = this.mutateEnvs(target.envs);
 		^child.setup;
