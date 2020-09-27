@@ -18,13 +18,13 @@ GenOrgCell : GenOrgHybrid {
 	buildSynthDef {
 		modules.add(\synthDef -> SynthDef(\synth, {
 			var buffer = \buffer.kr(0);
-			var timescale = \timescsale.kr(1);
+			var timescale = \timescsale.ir(1);
 			var env = Env(
 				[0, 1, 1, 0],
 				[0.1, 1, 0.1].normalizeSum
 			).kr(
-				timeScale: timescale,
-				doneAction: Done.freeSelf
+				doneAction: Done.freeSelf,
+				timeScale: timescale
 			);
 			var sig = modules.cellular_function(buffer, timescale);
 			Out.ar(\out.kr(0), sig * env);
@@ -67,7 +67,7 @@ GenOrgCell : GenOrgHybrid {
 					busses[key],
 					env.kr(
 						doneAction: Done.freeSelf,
-						timeScale: \timescale.kr(1);
+						timeScale: \timescale.ir(1);
 					)
 				);
 			}));
@@ -100,17 +100,18 @@ GenOrgCell : GenOrgHybrid {
 		});
 	}
 
-	playCell { | buffer, output(0), target(server.defaultGroup), addAction(\addToHead) |
+	playCell { | buffer, output(0), timescale(1), target(server.defaultGroup), addAction(\addToHead) |
 		server.bind({
 			var group = Group.new(target, addAction);
 			synth = Synth(
 				modules.synthDef.name,
-				this.getArguments(buffer),
+				this.getArguments(buffer, timescale),
 				target: group
 			).register;
 			envs.keys.do { | key |
 				Synth(
 					modules[key].name,
+					[ \timescale, timescale ],
 					target: group,
 					addAction: \addToHead
 				);
@@ -132,13 +133,13 @@ GenOrgCell : GenOrgHybrid {
 		}, { this.freeResources });
 	}
 
-	getArguments { | buffer |
+	getArguments { | buffer, timescale |
 		var array = [];
 		busses.keysValuesDo({ | key, value |
 			array = array.add(key);
 			array = array.add(value.asMap);
 		});
-		^(array++[\buffer, buffer]);
+		^(array++[\buffer, buffer, \timescale, timescale]);
 	}
 
 	*makeTemplates { | templater |
@@ -147,7 +148,7 @@ GenOrgCell : GenOrgHybrid {
 
 	mateWith { | target |
 		var child = GenOrgCell.basicNew(moduleSet);
-		if(moduleSet != target.moduleSet, { 
+		if(moduleSet != target.moduleSet, {
 			target.moduleSet = moduleSet;
 		});
 		child.envs = this.mutateEnvs(target.envs);

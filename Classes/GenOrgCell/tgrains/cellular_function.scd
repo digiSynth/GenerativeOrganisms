@@ -6,12 +6,12 @@
 
 	var pos = \pos.kr(
 		0.5,
-		ControlSpec()
+		ControlSpec(0.0, 1.0, \lin)
 	);
 
 	var amp = \ampDB.kr(
 		-12,
-		spec: ControlSpec(-36, -3)
+		spec: ControlSpec(-36, -3, \lin)
 	).dbamp;
 
 	var ffreq = \ffreq.kr(
@@ -33,7 +33,6 @@
 		0.2,
 		spec: ControlSpec(0.1, 0.8, \lin)
 	);
-
 	var bufferdur = BufDur.kr(buffer);
 	var phasor = (pos * bufferdur).wrap(0, bufferdur);
 	var impulse = Impulse.ar(impulserate);
