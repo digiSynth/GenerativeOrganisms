@@ -23,9 +23,9 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	addSynthDef {
+		this.buildSynthDef;
 		this.generateEnvs;
 		this.buildEnvGens;
-		this.buildSynthDef;
 		this.class.processSynthDefs(modules, moduleSet);
 	}
 
@@ -66,10 +66,9 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	generateEnvs {
-		envs ?? {
+		if(envs.isNil or: { envs.isEmpty }, {
 			var dict = ();
-			modules.synhtDef.specs
-			.keysValuesArrayDo({ | key, value |
+			modules.synthDef.specs.keysValuesDo({ | key, value |
 				var numSegs = exprand(4, 32);
 				dict.add(key -> Env(
 					Array.rand(numSegs, value.minval, value.maxval),
@@ -78,13 +77,14 @@ GenOrgCell : GenOrgHybrid {
 				));
 			});
 			this.envs = dict;
-		}
+		});
 	}
 
 	envs_{ | newEnvs |
-		if(envs.isKindOf(Dictionary), {
+		if(newEnvs.isKindOf(Dictionary), {
 			envs = newEnvs;
 			busses !? { busses.do(_.free) };
+			busses = ();
 			envs.keys.do{ | key |
 				busses.add(key -> Bus.control(server, 1));
 			};
@@ -149,8 +149,8 @@ GenOrgCell : GenOrgHybrid {
 		var newEnvs = ();
 		envs.keysValuesDo({ | key, env |
 			var target = targetEnvs[key];
-			var toAdd = env + target / 2; 
-			toAdd.times = toAdd.times.normalizeSum; 
+			var toAdd = env + target / 2;
+			toAdd.times = toAdd.times.normalizeSum;
 			newEnvs.add(key -> toAdd);
 		});
 		^newEnvs;
