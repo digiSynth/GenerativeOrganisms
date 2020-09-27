@@ -1,16 +1,11 @@
 GenOrgCell : GenOrgHybrid {
-	classvar nInstances;
-	var <instance, envs, busses;
+	var <envs, <busses;
 	var membrane, cilium;
 
-	*initClass { nInstances = 0; }
 
-	*new { | moduleSet, from | 
-		^super.new((moduleSet.asString++nInstances).asSymbol, from);
-	}
-
-	initGenOrgHybrid { 
-		instance = this.increment;
+	*formatName { | symbol, key |
+		var nKey = key.asString++"_"++UniqueID.next; 
+		^super.formatName(symbol, nKey);
 	}
 
 	buildSynthDef {
@@ -30,14 +25,32 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	addSynthDef {
-		var cache = this.class.cache.at(moduleSet);
-		if(cache.at(\synthDef).isNil, {
-			var synthDef = this.buildSynthDef;
-			cache.add(\synthDef -> synthDef);
-			modules.add(\synthDef -> synthDef);
-			this.generateControls;
-			this.class.processSynthDefs(moduleSet);
-		});
+		var synthDef = this.buildSynthDef;
+		modules.add(\synthDef -> synthDef);
+		this.generateControls;
+		this.class.processSynthDefs(modules, moduleSet);
+	}
+
+	*findSynthDefs { | modules |
+		^modules.select({ | module |
+			module.isKindOf(SynthDef);
+		}).asArray;
+	}
+
+	*namedSynthDefs { | modules, key |
+		var synthDefs = this.findSynthDefs(modules);
+		synthDefs.do { | synthDef |
+			synthDef.name = this.formatName(synthDef.name, key);
+		};
+		^synthDefs;
+	}
+
+	*processSynthDefs { | modules, key |
+		processor.add(this.namedSynthDefs(modules, key));
+	}
+
+	*removeSynthDefs { | modules |
+		processor.remove(this.findSynthDefs(modules));
 	}
 
 	generateControls {
@@ -54,7 +67,11 @@ GenOrgCell : GenOrgHybrid {
 			envs.add(key -> env);
 			busses.add(key -> Bus.control(server, 1));
 			modules.add(key -> SynthDef(key, {
-				Out.ar(busses[key], EnvGen.kr(env));
+				Out.kr(busses[key], EnvGen.kr(
+					env, 
+					doneAction: Done.freeSelf,
+					timeScale: \timescale.kr(1)
+				));
 			}));
 		});
 	}
@@ -87,11 +104,6 @@ GenOrgCell : GenOrgHybrid {
 			array = array.add(value.asMap);
 		}); 
 		^(array++[\buffer, buffer]);
-	}
-
-	increment {
-		nInstances = nInstances + 1; 
-		^(nInstances - 1);
 	}
 
 	*makeTemplates { | templater |
@@ -237,8 +249,7 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	moduleSet_{ | newSet, from |
-		var newNSet = (newSet.asString++instance).asSymbol; 
-		super.moduleSet_(newNSet, from);
+		this.class.removeSynthDefs(modules); 
+		super.moduleSet_(newSet, from);
 	}
-
 }
