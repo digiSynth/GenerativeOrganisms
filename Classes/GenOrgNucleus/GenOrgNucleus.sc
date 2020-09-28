@@ -1,5 +1,5 @@
 GenOrgNucleus : GenOrgHybrid {
-	var <envs, <busses, synth;
+	var <envs, <busses, <synth;
 
 	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
@@ -116,8 +116,8 @@ GenOrgNucleus : GenOrgHybrid {
 				Synth(
 					modules[key].name,
 					[ \timescale, timescale ],
-					target: group,
-					addAction: \addToHead
+					target: synth,
+					addAction: \addBefore
 				);
 			};
 			synth.onFree({
