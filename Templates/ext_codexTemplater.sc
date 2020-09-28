@@ -25,4 +25,11 @@
 		);
 	}
 
+	cillial_function { | templateName("cillial_function") |
+		this.makeTemplate(
+			templateName, 
+			this.genOrg_path+/+"cillial_function.scd"
+		);
+	}
+
 }
