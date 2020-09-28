@@ -1,6 +1,19 @@
 GenOrgCilium : GenOrgHybrid {
 	var bus, synth, membrane;
 
+	*contribute { | versions |
+		var path = Main.packages.asDict.at(\GenOrg)
+		+/+"Classes/GenOrgCilium";
+
+		versions.add(
+			[\lfnoise2, path+/+"lfnoise2"]
+		);
+
+		versions.add(
+			[\fm, path+/+"fm"]
+		);
+	}
+
 	makeTemplates { | templater |
 		templater.cilia_function;
 	}
