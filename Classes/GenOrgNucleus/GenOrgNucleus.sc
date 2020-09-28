@@ -1,9 +1,9 @@
-GenOrgCell : GenOrgHybrid {
+GenOrgNucleus : GenOrgHybrid {
 	var <envs, <busses, synth;
 
 	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
-		+/+"Classes/GenOrgCell";
+		+/+"Classes/GenOrgNucleus";
 
 		versions.add(
 			[\tgrains, path+/+"tgrains"]
@@ -104,7 +104,7 @@ GenOrgCell : GenOrgHybrid {
 		});
 	}
 
-	playCell { | buffer, timescale(1), out(0), target(server.defaultGroup), addAction(\addToHead) |
+	playNucleus { | buffer, timescale(1), out(0), target(server.defaultGroup), addAction(\addToHead) |
 		server.bind({
 			var group = Group.new(target, addAction);
 			synth = Synth(
@@ -151,7 +151,7 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	mateWith { | target |
-		var child = GenOrgCell.basicNew(moduleSet);
+		var child = GenOrgNucleus.basicNew(moduleSet);
 		if(moduleSet != target.moduleSet, {
 			target.moduleSet = moduleSet;
 		});
