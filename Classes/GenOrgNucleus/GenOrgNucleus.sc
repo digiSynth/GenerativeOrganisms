@@ -30,7 +30,7 @@ GenOrgCell : GenOrgHybrid {
 				timeScale: timescale,
 				doneAction: Done.freeSelf
 			);
-			var sig = modules.cellular_function(buffer, timescale);
+			var sig = modules.nucleus_function(buffer, timescale);
 			Out.ar(\out.kr(0), sig * env);
 		}));
 	}
@@ -147,7 +147,7 @@ GenOrgCell : GenOrgHybrid {
 	}
 
 	*makeTemplates { | templater |
-		templater.cellular_function;
+		templater.nucleus_function;
 	}
 
 	mateWith { | target |
