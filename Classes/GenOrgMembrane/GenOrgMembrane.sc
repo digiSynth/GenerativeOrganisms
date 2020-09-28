@@ -82,17 +82,13 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	input_{ | newBus |
-		if(input != newBus, {
-			input = newBus;
-			if(synth.isPlaying, { synth.set(\in, input) })
-		});
+		input = newBus;
+		if(synth.isPlaying, { synth.set(\in, input) })
 	}
 
 	output_{ | newBus |
-		if(output != newBus, {
-			output = newBus;
-			if(synth.isPlaying, { synth.set(\out, output) })
-		});
+		output = newBus;
+		if(synth.isPlaying, { synth.set(\out, output) })
 	}
 
 	initGroup {
