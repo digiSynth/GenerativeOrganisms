@@ -36,6 +36,7 @@ GenOrgMembrane : GenOrgHybrid {
 	initGenOrgHybrid {
 		freeFunctions = List.new;
 		freeFunctions.add({ this.freeResources });
+		this.initResources;
 	}
 
 	buildSynthDef {
@@ -98,7 +99,6 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	initSynth {
-		this.initResources;
 		lag = lag ?? { server.latency  * 0.1 };
 		synth = Synth.newPaused(modules.synthDef.name, [
 			\in, inputBus,
