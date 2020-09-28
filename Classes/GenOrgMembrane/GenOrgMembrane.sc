@@ -1,5 +1,5 @@
 GenOrgMembrane : GenOrgHybrid {
-	var freeFunctions;
+	var freeList;
 	var <group, <input, <output, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
@@ -34,8 +34,8 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	initGenOrgHybrid {
-		freeFunctions = List.new;
-		freeFunctions.add({ this.freeResources });
+		freeList = List.new;
+		freeList.add({ this.freeResources });
 		this.initResources;
 	}
 
@@ -109,10 +109,10 @@ GenOrgMembrane : GenOrgHybrid {
 		synth.onFree({ this.freeList });
 	}
 
-	freeList { freeFunctions.do(_.value) }
+	freeList { freeList.do(_.value) }
 
 	onFree { | function |
-		function !? { freeFunctions.add(function) };
+		function !? { freeList.add(function) };
 	}
 
 	isRunning { synth !? { ^synth.isRunning } ?? { ^false } }
