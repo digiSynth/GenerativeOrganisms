@@ -102,7 +102,6 @@ GenOrgMembrane : GenOrgHybrid {
 		synth = Synth.newPaused(modules.synthDef.name, [
 			\in, input,
 			\out, output,
-			\angle, pi/2,
 			\lag, lag,
 			\timer, server.latency,
 			\doneAction, 0
