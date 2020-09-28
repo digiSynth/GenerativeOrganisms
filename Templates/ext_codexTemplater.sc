@@ -18,10 +18,10 @@
 		);
 	}
 
-	cellular_function { | templateName("cellular_function") |
+	nucleus_function { | templateName("nucleus_function") |
 		this.makeTemplate(
 			templateName, 
-			this.genOrg_path+/+"cellular_function.scd"
+			this.genOrg_path+/+"nucleus_function.scd"
 		);
 	}
 
