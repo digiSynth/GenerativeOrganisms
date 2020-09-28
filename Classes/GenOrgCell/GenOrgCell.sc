@@ -18,13 +18,13 @@ GenOrgCell : GenOrgHybrid {
 	buildSynthDef {
 		modules.add(\synthDef -> SynthDef(\synth, {
 			var buffer = \buffer.kr(0);
-			var timescale = \timescsale.ir(1);
+			var timescale = \timescale.kr(1);
 			var env = Env(
 				[0, 1, 1, 0],
 				[0.1, 1, 0.1].normalizeSum
 			).kr(
-				doneAction: Done.freeSelf,
-				timeScale: timescale
+				timeScale: timescale,
+				doneAction: Done.freeSelf
 			);
 			var sig = modules.cellular_function(buffer, timescale);
 			Out.ar(\out.kr(0), sig * env);
