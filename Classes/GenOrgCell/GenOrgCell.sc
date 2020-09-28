@@ -104,12 +104,12 @@ GenOrgCell : GenOrgHybrid {
 		});
 	}
 
-	playCell { | buffer, output(0), timescale(1), target(server.defaultGroup), addAction(\addToHead) |
+	playCell { | buffer, timescale(1), out(0), target(server.defaultGroup), addAction(\addToHead) |
 		server.bind({
 			var group = Group.new(target, addAction);
 			synth = Synth(
 				modules.synthDef.name,
-				this.getArguments(buffer, timescale),
+				this.getArguments(buffer, timescale, out),
 				target: group
 			).register;
 			envs.keys.do { | key |
@@ -137,13 +137,13 @@ GenOrgCell : GenOrgHybrid {
 		}, { this.freeResources });
 	}
 
-	getArguments { | buffer, timescale |
+	getArguments { | buffer, timescale, out |
 		var array = [];
 		busses.keysValuesDo({ | key, value |
 			array = array.add(key);
 			array = array.add(value.asMap);
 		});
-		^(array++[\buffer, buffer, \timescale, timescale]);
+		^(array++[\buffer, buffer, \timescale, timescale, \out, out]);
 	}
 
 	*makeTemplates { | templater |
