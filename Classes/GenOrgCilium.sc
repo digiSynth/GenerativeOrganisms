@@ -2,12 +2,12 @@ GenOrgCilium : GenOrgHybrid {
 	var bus, synth, membrane;
 
 	makeTemplates { | templater |
-		templater.cillial_function;
+		templater.cilia_function;
 	}
 
 	buildSynthDef { 
 		modules.add(\synthDef -> SynthDef(\synth, { 
-			var sig = modules.cillial_function.value
+			var sig = modules.cilia_function.value
 			.range(
 				\lo.kr(0), 
 				\hi.kr(1)
