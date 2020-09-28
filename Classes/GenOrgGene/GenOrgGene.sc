@@ -1,9 +1,9 @@
-GenOrgMutator : GenOrgHybrid {
+GenOrgGene : GenOrgHybrid {
 	var <incrementer, <options, cleanup, <>timescale = 1;
 
 	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
-		+/+"Classes/GenOrgMutator";
+		+/+"Classes/GenOrgGene";
 
 		versions.add(
 			[\morph, path+/+"morph"]
@@ -16,7 +16,7 @@ GenOrgMutator : GenOrgHybrid {
 	}
 
 	*makeTemplates { | templater |
-		templater.mutator_function;
+		templater.gene_function;
 	}
 
 	initGenOrgHybrid {
@@ -149,7 +149,7 @@ GenOrgMutator : GenOrgHybrid {
 				timeScale: timescale,
 				doneAction: Done.freeSelf;
 			);
-			var sig = modules.mutator_function(buffer0, buffer1, timescale);
+			var sig = modules.gene_function(buffer0, buffer1, timescale);
 			Out.ar(\out.kr(0), sig * env);
 		});
 	}
