@@ -8,6 +8,10 @@ GenOrgCell : GenOrgHybrid {
 		versions.add(
 			[\tgrains, path+/+"tgrains"]
 		);
+
+		versions.add(
+			[\playbuf, path+/+"tgrains"]
+		);
 	}
 
 	*formatName { | symbol, key |
