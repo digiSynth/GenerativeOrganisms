@@ -1,18 +1,18 @@
-GenOrgCell {    
-	var <buffer, <nucleus, <membrane, <gene, <>server; 
+GenOrgCell {
+	var <buffer, <nucleus, <membrane, <gene, <>server;
 	var freeList, cilia;
 
 	*new { | buffer, nucleus, membrane, gene, server(Server.default) |
 		^super.newCopyArgs(buffer, nucleus, membrane, gene, server);
 	}
 
-	initCell { 
-		freeList = List.new; 
+	initCell {
+		freeList = List.new;
 		freeList.add({ this.freeResources });
 	}
 
 	mate { | organism |
-		if(organism.isKindOf(GenOrgCell), { 
+		if(organism.isKindOf(GenOrgCell), {
 			var c_buffer = gene.mutate(buffer.value, organism.buffer.value);
 			var c_nuclues = nucleus.mateWith(organism.nucleus);
 			var c_membrane = GenOrgMembrane(membrane.moduleSet);
@@ -23,36 +23,37 @@ GenOrgCell {
 	}
 
 	eat { | organism |
-		if(organism.isKindOf(GenOrgCell), { 
+		if(organism.isKindOf(GenOrgCell), {
 			buffer = gene.mutate(buffer.value, organism.buffer.value);
 		});
 	}
 
 	playCell { | timescale(1), out(0), target, addAction(\addToHead) |
-		server.bind({ 
+		server.bind({
+			membrane.output = out;
 			membrane.playMembrane;
-			target !? { 
+			target !? {
 				membrane.group.moveTo(target, addAction);
 			};
 			nucleus.playNucleus(
-				buffer.value, 
-				timescale, 
-				out,
-				membrane.group, 
+				buffer.value,
+				timescale,
+				membrane.input,
+				membrane.group,
 				\addToHead
 			);
 		});
 	}
 
-	freeResources { 
-		membrane.free; 
-		nucleus.free; 
+	freeResources {
+		membrane.free;
+		nucleus.free;
 		buffer.free;
 	}
 
-	free { 
+	free {
 		freeList.do(_.value);
-		freeList.clear; 
+		freeList.clear;
 		freeList.add({ this.freeResources });
 	}
 

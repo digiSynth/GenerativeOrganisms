@@ -1,6 +1,6 @@
 GenOrgMembrane : GenOrgHybrid {
 	var freeFunctions, isFreed = false;
-	var <group, <inputBus, <outputBus, <synth;
+	var <group, <input, <output, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
 
@@ -69,40 +69,43 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	initResources {
-		this.makeBusses;
-		this.initGroup;
-	}
-
-	makeBusses {
-		inputBus ?? {inputBus = Bus.audio(server, 1)};
-		outputBus ?? {outputBus  =  0};
-	}
-
-	inputBus_{ | newBus |
-		if(inputBus != newBus, {
-			inputBus = newBus;
-			if(synth.isPlaying, { synth.set(\in, inputBus) })
+		server.bind({
+			this.makeBusses;
+			this.initGroup;
+			this.initSynth;
 		});
 	}
 
-	outputBus_{ | newBus |
-		if(outputBus != newBus, {
-			outputBus = newBus;
-			if(synth.isPlaying, { synth.set(\out, outputBus) })
+	makeBusses {
+		input ?? {input = Bus.audio(server, 1)};
+		output ?? {output  =  0};
+	}
+
+	input_{ | newBus |
+		if(input != newBus, {
+			input = newBus;
+			if(synth.isPlaying, { synth.set(\in, input) })
+		});
+	}
+
+	output_{ | newBus |
+		if(output != newBus, {
+			output = newBus;
+			if(synth.isPlaying, { synth.set(\out, output) })
 		});
 	}
 
 	initGroup {
 		group !? { group.free };
-		group = Group.new; 
+		group = Group.new;
 		group.onFree({ group = nil });
 	}
 
 	initSynth {
 		lag = lag ?? { server.latency  * 0.1 };
 		synth = Synth.newPaused(modules.synthDef.name, [
-			\in, inputBus,
-			\out, outputBus,
+			\in, input,
+			\out, output,
 			\angle, pi/2,
 			\lag, lag,
 			\timer, server.latency,
@@ -123,9 +126,9 @@ GenOrgMembrane : GenOrgHybrid {
 
 	freeResources {
 		group !? { group.free; group = nil };
-		this.freeBus(inputBus);
-		this.freeBus(outputBus);
-		inputBus = outputBus = nil;
+		this.freeBus(input);
+		this.freeBus(output);
+		input = output = nil;
 	}
 
 	freeBus { | bus |
