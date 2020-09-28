@@ -92,7 +92,9 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	initGroup {
-		group ?? { group = Group.new };
+		group !? { group.free };
+		group = Group.new; 
+		group.onFree({ group = nil });
 	}
 
 	initSynth {
@@ -140,7 +142,7 @@ GenOrgMembrane : GenOrgHybrid {
 		}, { this.freeList });
 	}
 
-	setArg { | key, value |
+	setArgument { | key, value |
 		if(this.isPlaying, {
 			synth.set(key, value);
 		});
@@ -148,22 +150,22 @@ GenOrgMembrane : GenOrgHybrid {
 
 	azimuth_{ | newAzimuth(pi) |
 		azimuth = newAzimuth.wrap(pi.neg, pi);
-		this.setArg(\azimuth, azimuth);
+		this.setArgument(\azimuth, azimuth);
 	}
 
 	elevation_{ | newElevation(0) |
 		elevation = newElevation.wrap(pi.neg, pi);
-		this.setArg(\elevation, elevation);
+		this.setArgument(\elevation, elevation);
 	}
 
 	distance_{ | newDistance(2) |
 		distance = newDistance.clip(1.0, 100.0);
-		this.setArg(\distance, distance);
+		this.setArgument(\distance, distance);
 	}
 
 	lag_{ |newLag(server.latency)|
 		lag = newLag;
-		this.setArg(\lag, lag);
+		this.setArgument(\lag, lag);
 	}
 
 	awaken { | doneAction(0) |
