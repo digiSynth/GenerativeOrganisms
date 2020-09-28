@@ -18,7 +18,7 @@ GenOrgCell : GenOrgHybrid {
 	buildSynthDef {
 		modules.add(\synthDef -> SynthDef(\synth, {
 			var buffer = \buffer.kr(0);
-			var timescale = \timescale.kr(1);
+			var timescale = \timescale.kr(2);
 			var env = Env(
 				[0, 1, 1, 0],
 				[0.1, 1, 0.1].normalizeSum
