@@ -11,10 +11,10 @@
 		);
 	}
 
-	mutator_function { | templateName("mutator_function") |
+	gene_function { | templateName("gene_function") |
 		this.makeTemplate(
 			templateName, 
-			this.genOrg_path+/+"mutator_function.scd"
+			this.genOrg_path+/+"gene_function.scd"
 		);
 	}
 
