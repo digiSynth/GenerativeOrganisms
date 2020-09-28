@@ -1,5 +1,5 @@
 GenOrgMembrane : GenOrgHybrid {
-	var freeFunctions, isFreed = false;
+	var freeFunctions;
 	var <group, <input, <output, <synth;
 	var <lag, <azimuth, <elevation, <distance;
 	var pauser, cilium;
