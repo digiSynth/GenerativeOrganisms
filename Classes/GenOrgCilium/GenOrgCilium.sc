@@ -18,53 +18,53 @@ GenOrgCilium : GenOrgHybrid {
 		templater.cilia_function;
 	}
 
-	buildSynthDef { 
-		modules.add(\synthDef -> SynthDef(\synth, { 
+	buildSynthDef {
+		^SynthDef(\synth, {
 			var sig = modules.cilia_function.value
 			.range(
-				\lo.kr(0), 
+				\lo.kr(0),
 				\hi.kr(1)
 			);
 			Out.ar(\out.kr(0), sig);
-		}));
+		});
 	}
 
-	makeBus {  
-		bus.free; 
+	makeBus {
+		bus.free;
 		bus = Bus.control(server, 1);
 	}
 
-	makeSynth { 
-		synth !? { 
+	makeSynth {
+		synth !? {
 			if(synth.isPlaying, { synth.free });
 		};
-		synth = Synth(modules.synthDef.name, [ 
+		synth = Synth(modules.synthDef.name, [
 			\out, bus
 		]).register;
 		synth.onFree({ this.detachCilium });
 	}
 
-	initGenOrgHybrid { 
-		this.makeBus; 
+	initGenOrgHybrid {
+		this.makeBus;
 		this.makeSynth;
 	}
 
 	attachTo { | input, argument |
 		if(input.isKindOf(GenOrgMembrane), {
-			membrane = input; 
+			membrane = input;
 			membrane.synth.map(argument, bus);
-		});	
+		});
 	}
 
-	detachCilium { 
-		if(membrane.notNil and: { synth.isPlaying }, { 
-			synth.free; 
+	detachCilium {
+		if(membrane.notNil and: { synth.isPlaying }, {
+			synth.free;
 			this.makeSynth;
 		});
 	}
 
 	moduleSet_{ | newSet, from |
-		synth.free; 
+		synth.free;
 		super.moduleSet_(newSet, from);
 	}
 }

@@ -192,4 +192,9 @@ GenOrgMembrane : GenOrgHybrid {
 		});
 		this.awaken;
 	}
+
+	moduleSet_{ | newSet, from |
+		this.free;
+		super.moduleSet_(newSet, from);
+	}
 }
