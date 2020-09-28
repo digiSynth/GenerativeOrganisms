@@ -25,10 +25,10 @@
 		);
 	}
 
-	cillial_function { | templateName("cillial_function") |
+	cilia_function { | templateName("cilia_function") |
 		this.makeTemplate(
 			templateName, 
-			this.genOrg_path+/+"cillial_function.scd"
+			this.genOrg_path+/+"cilia_function.scd"
 		);
 	}
 
