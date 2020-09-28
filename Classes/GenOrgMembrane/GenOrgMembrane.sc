@@ -77,8 +77,8 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	makeBusses {
-		input ?? {input = Bus.audio(server, 1)};
-		output ?? {output  =  0};
+		input ?? { input = Bus.audio(server, 1) };
+		output ?? { output  =  0 };
 	}
 
 	input_{ | newBus |
