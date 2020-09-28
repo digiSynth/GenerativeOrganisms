@@ -5,8 +5,8 @@
 	);
 
 	var pos = \pos.kr(
-		0.5,
-		ControlSpec(0.0, 1.0, \lin)
+		0.5, 
+		spec: ControlSpec(0.0, 1.0, \lin)
 	);
 
 	var amp = \ampDB.kr(
