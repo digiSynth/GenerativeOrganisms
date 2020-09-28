@@ -13,7 +13,7 @@ GenOrgCell {
 
 	mate { | organism |
 		if(organism.isKindOf(GenOrgCell), { 
-			var c_buffer = gene.mutate(buffer, organism.buffer);
+			var c_buffer = gene.mutate(buffer.value, organism.buffer.value);
 			var c_nuclues = nucleus.mateWith(organism.nucleus)
 			var c_membrane = GenOrgMembrane(membrane.moduleSet);
 			var c_gene = GenOrgGene(gene.moduleSet);
@@ -24,7 +24,7 @@ GenOrgCell {
 
 	eat { | organism |
 		if(organism.isKindOf(GenOrgCell), { 
-			buffer = gene.mutate(buffer, organism.buffer);
+			buffer = gene.mutate(buffer.value, organism.buffer.value);
 		});
 	}
 
@@ -35,7 +35,7 @@ GenOrgCell {
 				membrane.group.moveTo(target, addAction);
 			};
 			nucleus.playNucleus(
-				buffer, 
+				buffer.value, 
 				timescale, 
 				out,
 				membrane.group, 
