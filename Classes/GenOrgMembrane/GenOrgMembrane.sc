@@ -101,15 +101,15 @@ GenOrgMembrane : GenOrgHybrid {
 	initFree {
 		var inputCopy = input.copy;
 		var outputCopy = output.copy;
+		var freeBus = { | bus |
+			if(bus.isKindOf(Bus) and: { bus.index.notNil }, {
+				bus.free;
+			});
+		};
 		freeList ?? {
 			freeList = List.new;
 		} !? { freeList.clear };
 		freeList.add({
-			var freeBus = { | bus |
-				if(bus.isKindOf(Bus) and: { bus.index.notNil }, {
-					bus.free;
-				});
-			};
 			freeBus.value(inputCopy);
 			freeBus.value(outputCopy);
 		});
