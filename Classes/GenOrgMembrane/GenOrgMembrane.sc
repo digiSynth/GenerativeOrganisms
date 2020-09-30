@@ -34,9 +34,15 @@ GenOrgMembrane : GenOrgHybrid {
 	}
 
 	initGenOrgHybrid {
-		freeList = List.new;
-		freeList.add({ this.freeResources });
-		this.initResources;
+		output = 0;
+		server.makeBundle(
+			server.latency * 0.1,
+			{
+				input = Bus.audio(server, 1);
+				this.initSynth;
+			}
+		);
+		this.initFree;
 	}
 
 	buildSynthDef {
@@ -68,26 +74,14 @@ GenOrgMembrane : GenOrgHybrid {
 		});
 	}
 
-	initResources {
-		server.bind({
-			this.makeBusses;
-			this.initSynth;
-		});
-	}
-
-	makeBusses {
-		input ?? { input = Bus.audio(server, 1) };
-		output ?? { output  =  0 };
-	}
-
 	input_{ | newBus |
 		input = newBus;
-		if(synth.isPlaying, { synth.set(\in, input) })
+		if(synth.isPlaying, { synth.set(\in, input) });
 	}
 
 	output_{ | newBus |
 		output = newBus;
-		if(synth.isPlaying, { synth.set(\out, output) })
+		if(synth.isPlaying, { synth.set(\out, output) });
 	}
 
 	initSynth {
@@ -102,10 +96,18 @@ GenOrgMembrane : GenOrgHybrid {
 		synth.onFree({ this.freeList });
 	}
 
-	freeList {
-		freeList.do(_.value);
-		freeList.clear;
-		freeList.add({ this.freeResources });
+	freeList { freeList.do(_.value) }
+
+	initFree {
+		var inputCopy = input.copy;
+		var outputCopy = output.copy;
+		freeList ?? {
+			freeList = List.new;
+		} !? { freeList.clear };
+		freeList.add({
+			inputCopy.free;
+			outputCopy.free;
+		});
 	}
 
 	onFree { | function |
@@ -116,21 +118,10 @@ GenOrgMembrane : GenOrgHybrid {
 
 	isPlaying { ^synth.isPlaying }
 
-	freeResources {
-		this.freeBus(input);
-		this.freeBus(output);
-		input = output = nil;
-	}
-
-	freeBus { | bus |
-		if(bus.isKindOf(Bus) and: { bus.index.notNil }, {
-			bus.free;
-		});
-	}
-
 	free {
 		if(this.isPlaying, {
 			if(this.isRunning, {
+				if(pauser.isPlaying, { pauser.stop });
 				synth.set(\doneAction, 2, \gate, 0);
 			}, { synth.free });
 		}, { this.freeList });
@@ -181,7 +172,7 @@ GenOrgMembrane : GenOrgHybrid {
 		if(synth.isNil or: { synth.isPlaying.not }, {
 			this.initSynth;
 		});
-		this.awaken;
+		this.awaken(1);
 	}
 
 	moduleSet_{ | newSet, from |
