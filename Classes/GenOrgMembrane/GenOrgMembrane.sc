@@ -1,7 +1,7 @@
 GenOrgMembrane : GenOrgHybrid {
 	var freeList;
 	var <group, <input, <output, <synth;
-	var <lag, <azimuth, <elevation, <distance;
+	var <lag, <azimuth = 0, <elevation = 0, <distance = 1;
 	var pauser, cilium;
 
 	*contribute { | versions |
@@ -106,10 +106,17 @@ GenOrgMembrane : GenOrgHybrid {
 			\timer, server.latency,
 			\doneAction, 0
 		], group).register;
-		synth.onFree({ this.freeList });
+		synth.onFree({
+			group !? { group.free };
+			this.freeList;
+		});
 	}
 
-	freeList { freeList.do(_.value) }
+	freeList {
+		freeList.do(_.value);
+		freeList.clear;
+		freeList.add({ this.freeResources });
+	}
 
 	onFree { | function |
 		function !? { freeList.add(function) };
@@ -120,7 +127,6 @@ GenOrgMembrane : GenOrgHybrid {
 	isPlaying { ^synth.isPlaying }
 
 	freeResources {
-		group !? { group.free; group = nil };
 		this.freeBus(input);
 		this.freeBus(output);
 		input = output = nil;
