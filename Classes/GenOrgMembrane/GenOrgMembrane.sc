@@ -1,6 +1,6 @@
 GenOrgMembrane : GenOrgHybrid {
 	var freeList;
-	var <group, <input, <output, <synth;
+	var <input, <output, <synth;
 	var <lag, <azimuth = 0, <elevation = 0, <distance = 1;
 	var pauser, cilium;
 
@@ -71,7 +71,6 @@ GenOrgMembrane : GenOrgHybrid {
 	initResources {
 		server.bind({
 			this.makeBusses;
-			this.initGroup;
 			this.initSynth;
 		});
 	}
@@ -91,12 +90,6 @@ GenOrgMembrane : GenOrgHybrid {
 		if(synth.isPlaying, { synth.set(\out, output) })
 	}
 
-	initGroup {
-		group !? { group.free };
-		group = Group.new;
-		group.onFree({ group = nil });
-	}
-
 	initSynth {
 		lag = lag ?? { server.latency  * 0.1 };
 		synth = Synth.newPaused(modules.synthDef.name, [
@@ -105,11 +98,8 @@ GenOrgMembrane : GenOrgHybrid {
 			\lag, lag,
 			\timer, server.latency,
 			\doneAction, 0
-		], group).register;
-		synth.onFree({
-			group !? { group.free };
-			this.freeList;
-		});
+		]).register;
+		synth.onFree({ this.freeList });
 	}
 
 	freeList {
