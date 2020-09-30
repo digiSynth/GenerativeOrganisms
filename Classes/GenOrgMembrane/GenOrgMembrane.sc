@@ -105,8 +105,13 @@ GenOrgMembrane : GenOrgHybrid {
 			freeList = List.new;
 		} !? { freeList.clear };
 		freeList.add({
-			inputCopy.free;
-			outputCopy.free;
+			var freeBus = { | bus |
+				if(bus.isKindOf(Bus) and: { bus.index.notNil }, {
+					bus.free;
+				});
+			};
+			freeBus.value(inputCopy);
+			freeBus.value(outputCopy);
 		});
 	}
 
