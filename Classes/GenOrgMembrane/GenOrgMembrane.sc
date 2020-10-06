@@ -36,7 +36,7 @@ GenOrgMembrane : GenOrgHybrid {
 	initGenOrgHybrid {
 		output = 0;
 		server.makeBundle(
-			server.latency * 0.1,
+			server.latency * 0.2,
 			{
 				input = Bus.audio(server, 1);
 				this.initSynth;

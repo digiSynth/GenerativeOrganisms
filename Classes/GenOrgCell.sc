@@ -33,14 +33,14 @@ GenOrgCell {
 			membrane.output = out;
 			membrane.playMembrane;
 			target !? {
-				membrane.group.moveTo(target, addAction);
+				membrane.synth.moveTo(target, addAction);
 			};
 			nucleus.playNucleus(
 				buffer.value,
 				timescale,
 				membrane.input,
-				membrane.group,
-				\addToHead
+				membrane.synth,
+				\addBefore
 			);
 		});
 	}
