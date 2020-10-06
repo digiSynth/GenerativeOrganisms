@@ -3,7 +3,13 @@ GenOrgCell {
 	var freeList, cilia;
 
 	*new { | buffer, nucleus, membrane, gene, server(Server.default) |
-		^super.newCopyArgs(buffer, nucleus, membrane, gene, server);
+		^super.newCopyArgs(
+			buffer, 
+			nucleus, 
+			membrane, 
+			gene, 
+			server
+		).initCell;
 	}
 
 	initCell {
@@ -11,18 +17,15 @@ GenOrgCell {
 		freeList.add({ this.freeResources });
 	}
 
-	mate { | organism |
-		if(organism.isKindOf(GenOrgCell), {
-			var c_buffer = gene.mutate(buffer.value, organism.buffer.value);
-			var c_nuclues = nucleus.mateWith(organism.nucleus);
-			var c_membrane = GenOrgMembrane(membrane.moduleSet);
-			var c_gene = GenOrgGene(gene.moduleSet);
-			^GenOrgCell(c_buffer, c_nuclues, c_membrane, c_gene);
-		});
-		^nil;
+	reproduceWith { | organism |
+		var c_buffer = gene.mutate(buffer.value, organism.buffer.value);
+		var c_nuclues = nucleus.mateWith(organism.nucleus);
+		var c_membrane = GenOrgMembrane(membrane.moduleSet);
+		var c_gene = GenOrgGene(gene.moduleSet);
+		^GenOrgCell(c_buffer, c_nuclues, c_membrane, c_gene);
 	}
 
-	eat { | organism |
+	mutateWith { | organism |
 		if(organism.isKindOf(GenOrgCell), {
 			buffer = gene.mutate(buffer.value, organism.buffer.value);
 		});
