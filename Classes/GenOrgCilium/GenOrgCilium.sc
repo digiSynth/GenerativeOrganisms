@@ -56,11 +56,15 @@ GenOrgCilium : GenOrgHybrid {
 		});
 	}
 
-	detachCilium {
+	free {
 		if(membrane.notNil and: { synth.isPlaying }, {
 			synth.free;
-			this.makeSynth;
 		});
+	}
+
+	detachCilium { 
+		this.free; 
+		this.makeSynth;
 	}
 
 	moduleSet_{ | newSet, from |
