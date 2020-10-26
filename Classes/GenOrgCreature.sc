@@ -21,7 +21,7 @@ GenOrgCreature {
 		var bool = this.isRelativeOf(creature).not;
 		bool = bool and: { creature.sex !=sex };
 		if(0.1.coin, { this.switchSex });
-		^(bool and: { mates.find([creature.class]).notNil} );
+		^bool;
 	}
 
 	mateWith { | creature |
@@ -32,36 +32,24 @@ GenOrgCreature {
 				var tcell = target[i % tsize]; 
 				cell.reproduceWith(tcell);
 			}).select(_.notNil);
-			var newSpan = lifespan + creature.lifespan 
-			* 0.5 * rrand(0.9, 1.1);
-			var newMates = mates, newPrey = prey;
-			if(newMates!=creature.mates, { 
-				newMates = [newMates, creature.mates].choose;
-			});
-			if(newPrey!=creature.prey, { 
-				newPrey = [newPrey, creature.prey].choose;
-			});
+			var newSpan = lifespan + creature.lifespan * 0.5 * rrand(0.8, 1.2);
 			^GenOrgCreature(
 				newCells, 
 				creature, 
 				this, 
 				newSpan, 
-				newMates, 
-				newPrey
 			);
 		});
 		^nil;
 	}
 
 	eat { | creature |
-		if(prey.find([creature.class]).notNil, { 
-			var target = creature.size;
-			var tsize = target.size; 
-			cell = cell.collect({ | cell, i |
-				cell.mutateWith(target[i % tsize]);
-			});
-			creature.kill;
+		var target = creature.size;
+		var tsize = target.size; 
+		cell = cell.collect({ | cell, i |
+			cell.mutateWith(target[i % tsize]);
 		});
+		creature.kill;
 	}
 
 	isParentOf { | creature |
@@ -92,7 +80,11 @@ GenOrgCreature {
 		bool = bool || this.isSiblingOf(creature);
 		bool = bool || this.isGrandOf(creature);
 		bool = bool || this.isAuntOf(creature);
-		^(bool || this.isCousinOf(creature));
+		bool = bool || this.isCousinOf(creature);
+		bool = bool || creature.isParentOf(this);
+		bool = bool || creature.isGrandOf(this);
+		bool = bool || creature.isAuntOf(this);
+		^bool;
 	}
 
 	lifespan_{ | newSpan |
