@@ -1,25 +1,20 @@
 GenOrgCreature { 
-	var <cells, <father, <mother, <lifespan;
-	var <mates, <prey;
+	var cell, <father, <mother, <lifespan;
 	var <age = 0, time, isKilled = false, <sex;	
+	var <species;
 
-	*new { | cells, father, mother, lifespan, mates, prey |
+	*new { | cell, father, mother, lifespan |
 		^super.newCopyArgs(
-			cells,
+			cell,
 			father, 
 			mother, 
 			lifespan, 
-			mates, 
-			prey
 		).initCreature;
 	}
 
 	initCreature { 
 		time = Main.elapsedTime;
 		sex = [\f, \m].choose;
-		if(cells.isCollection.not, { cells = [cells] });
-		if(mates.isCollection.not, { mates = [mates] });
-		if(prey.isCollection.not, { prey = [prey] });
 	}
 
 	canMateWith { | creature |
@@ -31,9 +26,9 @@ GenOrgCreature {
 
 	mateWith { | creature |
 		if(this.canMateWith(creature), { 
-			var target = creature.cells;
+			var target = creature.cell;
 			var tsize = target.size;
-			var newCells = cells.collect({ | cell, i |
+			var newCells = cell.collect({ | cell, i |
 				var tcell = target[i % tsize]; 
 				cell.reproduceWith(tcell);
 			}).select(_.notNil);
@@ -62,7 +57,7 @@ GenOrgCreature {
 		if(prey.find([creature.class]).notNil, { 
 			var target = creature.size;
 			var tsize = target.size; 
-			cells = cells.collect({ | cell, i |
+			cell = cell.collect({ | cell, i |
 				cell.mutateWith(target[i % tsize]);
 			});
 			creature.kill;
@@ -122,7 +117,7 @@ GenOrgCreature {
 		if(sex==\f, { sex = \m }, { sex = \f });
 	}
 
-	play { | timescale(1), out(0), target, addAction(\addToHead) |
-		cells[0].playCell(timescale, out, target, addAction);
+	playCreature { | timescale(1), out(0), target, addAction(\addToHead) |
+		cell.playCell(timescale, out, target, addAction);
 	}
 }
