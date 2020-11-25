@@ -12,6 +12,8 @@ GenOrgCell {
 		).initCell;
 	}
 
+	asCreature { ^this.as(GenOrgCreature) }
+
 	initCell {
 		case
 		{ buffer.isKindOf(Ref) }{}
@@ -41,11 +43,11 @@ GenOrgCell {
 		^GenOrgCell(c_buffer, c_nuclues, c_membrane, c_gene);
 	}
 
-	/*	mutateWith { | organism |
-	if(organism.isKindOf(GenOrgCell), {
-	buffer = gene.mutate(buffer.value, organism.buffer.value);
-	});
-	}*/
+	mutateWith { | organism |
+		if(organism.isKindOf(GenOrgCell), {
+			buffer = gene.mutate(this.buffer, organism.buffer);
+		});
+	}
 
 	playCell { | timescale(1), out(0), target, addAction(\addToHead) |
 		server.bind({
@@ -79,4 +81,11 @@ GenOrgCell {
 	onFree { | function | freeList.add(function) }
 
 	buffer { ^buffer.value }
+	bufferRef { ^buffer }
+
+	folder { ^gene.folder }
+	folder_{ | newFolder | gene.folder = newFolder }
+
+	fileTemplate { ^gene.fileTemplate }
+	fileTemplate_{ | newTemplate | gene.fileTemplate = newTemplate }
 }

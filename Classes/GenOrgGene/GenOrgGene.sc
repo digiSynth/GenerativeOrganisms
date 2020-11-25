@@ -98,7 +98,7 @@ GenOrgGene : GenOrgHybrid {
 						}
 					);
 					condition.hang;
-					reference.value = buffer;
+					reference.value = buffer.normalize(1);
 				};
 			}
 		);
