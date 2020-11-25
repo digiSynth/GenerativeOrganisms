@@ -28,7 +28,6 @@ GenOrgCell {
 				channels: 0
 			);
 		};
-
 		freeList = List.new;
 		freeList.add({ this.freeResources });
 	}
