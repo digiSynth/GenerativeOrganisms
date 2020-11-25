@@ -38,7 +38,6 @@ GenOrgNucleus : GenOrgHybrid {
 	addSynthDef {
 		this.buildSynthDef;
 		this.generateEnvs;
-		this.buildEnvGens;
 		this.class.processSynthDefs(modules, moduleSet);
 	}
 
@@ -78,6 +77,11 @@ GenOrgNucleus : GenOrgHybrid {
 		});
 	}
 
+	regenerateEnvs {
+		this.generateEnvs;
+		this.class.processSynthDefs(modules, moduleSet);
+	}
+
 	generateEnvs {
 		if(envs.isNil or: { envs.isEmpty }, {
 			var dict = ();
@@ -91,6 +95,7 @@ GenOrgNucleus : GenOrgHybrid {
 			});
 			this.envs = dict;
 		});
+		this.buildEnvGens;
 	}
 
 	envs_{ | newEnvs |
@@ -156,7 +161,7 @@ GenOrgNucleus : GenOrgHybrid {
 			target.moduleSet = moduleSet;
 		});
 		child.envs = this.mutateEnvs(target.envs);
-		^child.setup;
+		^child.initCodex;
 	}
 
 	mutateEnvs { | targetEnvs |

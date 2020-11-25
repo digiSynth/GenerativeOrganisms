@@ -24,6 +24,7 @@ GenOrgGene : GenOrgHybrid {
 		options = server.options.copy
 		.verbosity_(-2)
 		.sampleRate_(48e3)
+		.numOutputBusChannels_(1)
 		.recSampleFormat_("int24");
 		incrementer = incrementer ?? {
 			CodexIncrementer(
@@ -61,12 +62,11 @@ GenOrgGene : GenOrgHybrid {
 			array = array.add(key);
 			array = array.add(value.map(1.0.rand));
 		});
-		array = array++[
+		^(array++[
 			\buffer0, buffer0,
 			\buffer1, buffer1,
 			\timescale, timescale
-		];
-		^array;
+		]);
 	}
 
 	mutate { | buffer0, buffer1, action |

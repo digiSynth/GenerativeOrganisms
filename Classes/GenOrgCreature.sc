@@ -1,18 +1,18 @@
-GenOrgCreature { 
+GenOrgCreature {
 	var cell, <father, <mother, <lifespan;
-	var <age = 0, time, isKilled = false, <sex;	
+	var <age = 0, time, isKilled = false, <sex;
 	var <species;
 
 	*new { | cell, father, mother, lifespan |
 		^super.newCopyArgs(
 			cell,
-			father, 
-			mother, 
-			lifespan, 
+			father,
+			mother,
+			lifespan,
 		).initCreature;
 	}
 
-	initCreature { 
+	initCreature {
 		time = Main.elapsedTime;
 		sex = [\f, \m].choose;
 	}
@@ -20,24 +20,25 @@ GenOrgCreature {
 	canMateWith { | creature |
 		var bool = this.isRelativeOf(creature).not;
 		bool = bool and: { creature.sex !=sex };
+		// bool = bool and: { mates.contains}
 		if(0.1.coin, { this.switchSex });
 		^bool;
 	}
 
 	mateWith { | creature |
-		if(this.canMateWith(creature), { 
+		if(this.canMateWith(creature), {
 			var target = creature.cell;
 			var tsize = target.size;
 			var newCells = cell.collect({ | cell, i |
-				var tcell = target[i % tsize]; 
+				var tcell = target[i % tsize];
 				cell.reproduceWith(tcell);
 			}).select(_.notNil);
 			var newSpan = lifespan + creature.lifespan * 0.5 * rrand(0.8, 1.2);
 			^GenOrgCreature(
-				newCells, 
-				creature, 
-				this, 
-				newSpan, 
+				newCells,
+				creature,
+				this,
+				newSpan,
 			);
 		});
 		^nil;
@@ -45,7 +46,7 @@ GenOrgCreature {
 
 	eat { | creature |
 		var target = creature.size;
-		var tsize = target.size; 
+		var tsize = target.size;
 		cell = cell.collect({ | cell, i |
 			cell.mutateWith(target[i % tsize]);
 		});
@@ -92,9 +93,9 @@ GenOrgCreature {
 	}
 
 	update { | deltaTime |
-		if(deltaTime.notNil, { 
+		if(deltaTime.notNil, {
 			age = age + deltaTime;
-		}, { 
+		}, {
 			var previousTime = time;
 			time = Main.elapsedTime;
 			this.update(time - previousTime);
@@ -105,11 +106,60 @@ GenOrgCreature {
 
 	kill { age = lifespan * 2 }
 
-	switchSex { 
+	switchSex {
 		if(sex==\f, { sex = \m }, { sex = \f });
 	}
 
 	playCreature { | timescale(1), out(0), target, addAction(\addToHead) |
 		cell.playCell(timescale, out, target, addAction);
+	}
+}
+
+GenOrgSpecies {
+	var <prey, <mates;
+
+	*new { | prey, mates |
+		^super.new
+		.prey_(prey)
+		.mates_(mates)
+	}
+
+	prProcessInput { | input |
+		case
+		//If it is nil, return a single-sized array of the instance
+		{ input.isNil }{ ^[ this ] }
+		//If it is not a collection
+		{ input.isCollection.not }{
+
+			if(input.isKindOf(GenOrgSpecies).not){
+				this.prThrowError;
+			};
+			//But it is a GenOrgSpecies, return it in a single-sized array
+			^[ input ]
+		}
+		//Otherwise, filter out the non-species and return.
+		{
+			input = input.select({ | item |
+				item.isKindOf(GenOrgSpecies);
+			});
+
+			if(input.isNil or: { input.isEmpty }){
+				this.prThrowError;
+			};
+
+			^input;
+		};
+	}
+
+	prThrowError {
+		Error("Can only set with instance of GenOrgSpecies").throw;
+	}
+
+	prey_{ | newPrey |
+		prey = this.prProcessInput(newPrey);
+	}
+
+	mates_{ | newMates |
+		mates = this.prProcessInput(newMates);
 	}
 }
