@@ -19,6 +19,10 @@ GenOrgNucleus : GenOrgHybrid {
 		^super.formatName(symbol, nKey);
 	}
 
+	initGenOrgHybrid {
+		CmdPeriod.doOnce({ this.class.removeSynthDefs(modules) });
+	}
+
 	buildSynthDef {
 		modules.add(\synthDef -> SynthDef(\synth, {
 			var buffer = \buffer.kr(0);
@@ -177,6 +181,7 @@ GenOrgNucleus : GenOrgHybrid {
 
 	moduleSet_{ | newSet, from |
 		this.class.removeSynthDefs(modules);
+		modules.clear;
 		super.moduleSet_(newSet, from);
 	}
 

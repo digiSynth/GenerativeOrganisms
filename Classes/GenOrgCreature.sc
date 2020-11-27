@@ -1,9 +1,8 @@
 GenOrgCreature : GenOrgCell {
 	var <father, <mother, <lifespan;
-	var <age = 0, time, isKilled = false, <sex;
-	var <species;
-	var timeSinceEaten, timeSinceMated;
-	var <fitness;
+	var <age = 0, isKilled = false, <sex;
+	var <species, <fitness;
+	var <turnsSinceEaten = 0, <turnsSinceMated = 0;
 	var <>currentFitness = 1;
 
 	*newFrom { | cell |
@@ -30,7 +29,7 @@ GenOrgCreature : GenOrgCell {
 
 	lifespan_{ | newSpan |
 		if(lifespan.isNil){
-			lifespan = newSpan;
+			lifespan = newSpan.asInteger;
 		}{ "This creature already has a lifespan.".warn };
 	}
 
@@ -41,67 +40,106 @@ GenOrgCreature : GenOrgCell {
 	}
 
 	initCreature {
-		time = Main.elapsedTime;
-		timeSinceEaten = time;
 		sex = [\f, \m].choose;
 		if(father.notNil and: { mother.notNil } and: { lifespan.isNil }){
 			this.lifespan = (father.lifespan + mother.lifespan * 0.5) * rrand(0.5, 1.5);
-			fitness = mother.fitness + father.fitness / 2;
+			this.fitness = mother.fitness + father.fitness / 2;
 		} {
-			this.lifespan = 2.pow(exprand(5, 8));
-			fitness = 1.0.rand;
+			species !? {
+				this.lifespanRange(
+					species.lifespanMin,
+					species.lifespanMax
+				);
+
+				this.fitnessRange(
+					species.fitnessMin,
+					species.fitnessMax
+				);
+			} ?? {
+				this.lifespanRange(2, 16);
+				this.fitnessRange(0.1, 1.0);
+			};
 		};
 		currentFitness = fitness;
 	}
 
+	fitnessRange { | min, max |
+		case
+		{ min == 0 or: { max == 0} }{
+			this.fitness = exprand(min + 1, max + 1) - 1;
+		}
+		{ min < 0 or: { max < 0 } }{
+			this.fitness = exprand(min.abs, max.abs);
+		}
+		{ this.fitness = exprand(min, max) };
+	}
+
+	lifespanRange { | min, max |
+		case
+		{ min == 0 or: { max == 0} }{
+			this.lifespan = exprand(min + 1, max + 1) - 1;
+		}
+		{ min < 0 or: { max < 0 } }{
+			this.lifespan = exprand(min.abs, max.abs);
+		}
+		{ this.lifespan = exprand(min, max) };
+	}
+
 	isMature {
 		species ?? { ^true };
-		^(age > (lifespan * species.maturityRatio) and: { timeSinceMated >= species.matingPeriod });
+		^(age > (lifespan * species.maturityRatio) and: { (turnsSinceMated >= species.matingInterval) });
 	}
 
-	isCompatibleWith{ | targetSpecies |
-		species !? {
-			^species.mates.find([targetSpecies]).notNil;
-		};
-		^true;
-	}
+	/*	isCompatibleWith{ | targetSpecies |
+	species !? {
+	^species.mates.find([targetSpecies]).notNil;
+	};
+	^true;
+	}*/
 
 	canMateWith { | creature |
-		if(creature.isKindOf(GenOrgCreature)){
-			var bool = this.isRelativeOf(creature).not;
-			bool = bool and: { creature.sex != sex };
-			if(0.15.coin, { this.switchSex });
+		var bool = creature.buffer.notNil and: { this.buffer.notNil };
+		bool = bool and: { creature.isDead.not };
+		bool = bool and: { this.isRelativeOf(creature).not };
+		bool = bool and: { creature.sex != sex };
+		bool = bool and: { creature.isMature };
+		if((1/3).coin, { this.switchSex });
+		^bool;
+	}
+
+	mateWith { | creature |
+		^super.mateWith(creature)
+		.asCreature
+		.mother_(this)
+		.father_(creature)
+		.species_(species)
+		.initCreature;
+	}
+
+	canEat { | creature |
+		if(creature.isKindOf(GenOrgCell)){
+			var bool = creature.buffer.notNil and: { this.buffer.notNil };
+			creature.species !? {
+				bool = bool and: { creature.species.isPreyOf(this) };
+			} ?? { bool = bool and: { true } };
+			bool = bool and: { creature.isDead.not };
 			^bool;
 		};
 		^false;
 	}
 
-	mateWith { | creature |
-		if(this.canMateWith(creature), {
-			timeSinceMated = Main.elapsedTime;
-			^super.mateWith(creature).asCreature
-			.mother_(this)
-			.father_(creature)
-			.species_(species)
-			.initCreature;
-		});
-		^nil;
-	}
-
 	eat { | creature |
-		if(this.canEat(creature)){
-			this.mutateWith(creature);
-			creature.kill;
-			timeSinceEaten = Main.elapsedTime;
-		};
+		this.mutateWith(creature);
+		creature.kill;
+		turnsSinceEaten = 0;
 	}
 
-	canEat { | targetSpecies |
-		species !? {
-			^species.prey.find([targetSpecies]).notNil;
-		};
-		^true;
-	}
+	/*	canEat { | targetSpecies |
+	species !? {
+	^species.prey.find([targetSpecies]).notNil;
+	};
+	^true;
+	}*/
 
 	isRelativeOf { | creature |
 		var c0, c1;
@@ -132,21 +170,16 @@ GenOrgCreature : GenOrgCell {
 		^(this==creature.father or: { this==creature.mother });
 	}
 
-	update { | deltaTime |
-		if(deltaTime.notNil, {
-			age = age + deltaTime;
-		}, {
-			var previousTime = time;
-			time = Main.elapsedTime;
-			this.update(time - previousTime);
-		});
+	update { | turns(1) |
+		turnsSinceMated = turnsSinceMated + turns;
+		turnsSinceEaten = turnsSinceEaten + turns;
+		age = age + turns;
 	}
 
 	isDead {
 		lifespan !? {
 			^(age >= lifespan or: {
-				((Main.elapsedTime - timeSinceEaten)
-					>= (species.hungerPeriod * species.starvationInterval));
+				turnsSinceEaten >= (species.hungerInterval * species.starvationPeriod).ceil;
 			});
 		} ?? { ^false }
 	}
@@ -166,7 +199,7 @@ GenOrgCreature : GenOrgCell {
 
 	isHungry {
 		if(this.isDead){ ^false };
-		^((Main.elapsedTime - timeSinceEaten) >= species.hungerPeriod);
+		^(turnsSinceEaten >= species.hungerInterval);
 	}
 
 	fitness_{ | newFitness |
@@ -176,6 +209,14 @@ GenOrgCreature : GenOrgCell {
 			};
 		};
 	}
+
+	isPreyOf { | creature |
+		species !? { ^species.isPreyOf(creature) } ?? { ^true };
+	}
+
+	isMateOf { | creature |
+		species !? { ^species.isMateOf(creature) } ?? { ^true };
+	}
 }
 
 GenOrgSpecies {
@@ -183,9 +224,15 @@ GenOrgSpecies {
 	var <>nucleusSet, <>membraneSet, <>geneSet;
 	var <startingPop = 16, <>maxPop = 128;
 	var <buffers, <server;
-	var <>hungerPeriod = 5;
-	var <>starvationInterval = 4;
-	var <>matingPeriod = 2;
+	var <>hungerInterval = 5;
+	var <>starvationPeriod = 4;
+	var <>matingInterval = 2;
+	var <>lifespanMin = 2;
+	var <>lifespanMax = 16;
+	var <>fitnessMin = 0.5;
+	var <>fitnessMax = 1.0;
+	var <>timescaleRatio = 1.0;
+	var <>folder, <>fileTemplate;
 
 	*new { | prey, mates, nucleusSet(\tgrains), membraneSet(\stereo), geneSet(\morph), server(Server.default) |
 		^super.new
@@ -195,6 +242,8 @@ GenOrgSpecies {
 		.membraneSet_(membraneSet)
 		.geneSet_(geneSet)
 		.server_(server)
+		.folder_("~/mutations".standardizePath)
+		.fileTemplate_("mutation.wav");
 	}
 
 	prProcessInput { | input |
@@ -252,4 +301,23 @@ GenOrgSpecies {
 		if(newMin > maxPop, { maxPop = newMin });
 		startingPop = newMin;
 	}
+
+	isPreyOf { | species |
+		if(species.isKindOf(GenOrgCreature)){
+			species.species ?? { ^true } !? {
+				species = species.species;
+			}
+		};
+		^species.prey.find([this]).notNil;
+	}
+
+	isMateOf { | species |
+		if(species.isKindOf(GenOrgCreature)){
+			species.species ?? { ^true } !? {
+				species = species.species;
+			}
+		};
+		^species.mates.find([this]).notNil;
+	}
+
 }

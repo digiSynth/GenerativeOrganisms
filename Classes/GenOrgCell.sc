@@ -68,7 +68,10 @@ GenOrgCell {
 	freeResources {
 		membrane.free;
 		nucleus.free;
-		buffer.free;
+		/*if(this.buffer.index.notNil, {
+		this.buffer.free;
+		buffer = nil;
+		});*/
 	}
 
 	free {
