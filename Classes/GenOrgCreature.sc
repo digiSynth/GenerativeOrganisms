@@ -221,7 +221,7 @@ GenOrgCreature : GenOrgCell {
 
 GenOrgSpecies {
 	var <prey, <mates, <>matingDistance = 4, <>maturityRatio = 0.25;
-	var <>nucleusSet, <>membraneSet, <>geneSet;
+	var <>nucleusSet, <>membraneSet, <>geneSet, <>ciliumSet;
 	var <startingPop = 16, <>maxPop = 128;
 	var <buffers, <server;
 	var <>hungerInterval = 5;
@@ -234,13 +234,14 @@ GenOrgSpecies {
 	var <>timescaleRatio = 1.0;
 	var <>folder, <>fileTemplate;
 
-	*new { | prey, mates, nucleusSet(\tgrains), membraneSet(\stereo), geneSet(\morph), server(Server.default) |
+	*new { | prey, mates, nucleusSet(\tgrains), membraneSet(\stereo), geneSet(\morph), ciliumSet(\lfnoise2), server(Server.default) |
 		^super.new
 		.prey_(prey)
 		.mates_(mates)
 		.nucleusSet_(nucleusSet)
 		.membraneSet_(membraneSet)
 		.geneSet_(geneSet)
+		.ciliumSet_(ciliumSet)
 		.server_(server)
 		.folder_("~/mutations".standardizePath)
 		.fileTemplate_("mutation.wav");

@@ -1,6 +1,6 @@
 GenOrgCell {
 	var buffer, <nucleus, <membrane, <gene, <>server;
-	var freeList, cilia;
+	var freeList, <cilia;
 
 	*new { | buffer, nucleus, membrane, gene, server(Server.default) |
 		^super.newCopyArgs(
@@ -15,7 +15,7 @@ GenOrgCell {
 	asCreature { ^this.as(GenOrgCreature) }
 
 	initCell {
-		cilia ?? { cilia = Dictionary.new }
+		cilia ?? { cilia = IdentityDictionary.new.know_(true) }
 		!? {
 			cilia.asArray.do(_.free);
 			cilia.clear;
@@ -40,12 +40,18 @@ GenOrgCell {
 
 	mateWith { | organism |
 		var c_buffer = gene.mutate(buffer.value, organism.buffer.value);
-		var c_nuclues = nucleus.mateWith(organism.nucleus);
+		var c_nucleus = nucleus.mateWith(organism.nucleus);
 		var c_membrane = GenOrgMembrane(membrane.moduleSet);
 		var c_gene = GenOrgGene(gene.moduleSet)
 		.folder_(gene.folder)
 		.fileTemplate_(gene.fileTemplate);
-		^GenOrgCell(c_buffer, c_nuclues, c_membrane, c_gene);
+		var cell = GenOrgCell(c_buffer, c_nucleus, c_membrane, c_gene);
+		cilia !? {
+			cilia.keysValuesArrayDo { | key, cilium |
+				cell.addCilium(key, GenOrgCilium(cilium.moduleSet));
+			};
+		};
+		^cell;
 	}
 
 	mutateWith { | organism |
@@ -80,6 +86,9 @@ GenOrgCell {
 	freeResources {
 		membrane.free;
 		nucleus.free;
+		cilia !? {
+			cilia.asArray.flat.do(_.free);
+		};
 		/*if(this.buffer.index.notNil, {
 		this.buffer.free;
 		buffer = nil;

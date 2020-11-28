@@ -42,6 +42,9 @@ GenOrgSim {
 							GenOrgGene(species.geneSet),
 							species.server
 						);
+						creature.addAzimuth(GenOrgCilium(species.ciliumSet));
+						creature.addElevation(GenOrgCilium(species.ciliumSet));
+						creature.addDistance(GenOrgCilium(species.ciliumSet));
 						creature.species = species;
 						creature.folder = species.folder;
 						creature.fileTemplate = species.fileTemplate;
@@ -153,8 +156,7 @@ GenOrgSim {
 				var creatures = populations.asArray.flat.scramble;
 				if(populations.asArray.flat.isEmpty, {
 					"!Everything is dead!".postln;
-					fork { routine.stop };
-					0.2.wait;
+					thisThread.stop;
 				});
 				creatures.do{ | creature |
 					var species = creature.species;
@@ -192,13 +194,26 @@ GenOrgSim {
 
 
 	killAll {
-		populations.asArray.flat.do { | creature |
-			if(creature.mother.notNil, {
-				creature.buffer.free;
-			});
-			creature.free;
+		var kill = { | dict |
+			var array = dict.asArray.flat;
+			if(array.isEmpty.not){
+				array.do { | creature |
+					if(creature.mother.notNil){
+						creature.buffer.free
+					};
+					creature.free;
+				};
+			};
 		};
+
+		kill.value(populations);
 		populations.clear;
+
+		kill.value(graveyard);
+		graveyard.clear;
+
+		kill.value(zombies);
+		zombies.clear;
 	}
 
 	*initClass {
@@ -209,10 +224,7 @@ GenOrgSim {
 			// sim.group = ~group.value ? Server.default.defaultGroup;
 			// sim.addAction = ~addAction.value ? \addToHead;
 			sim.out = ~out.value ? 0;
-			if(sim.routine.next.isNil, {
-				sim.makeRoutine;
-				sim.routine.next;
-			});
+			sim.routine.next;
 		});
 	}
 
@@ -253,4 +265,6 @@ GenOrgSim {
 			};
 		};
 	}
+
+	free { this.killAll }
 }
