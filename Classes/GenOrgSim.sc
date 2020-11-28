@@ -2,6 +2,7 @@ GenOrgSim {
 	var <speciesArray, <populations, <routine;
 	var <>out = 0, <>group, <>addAction;
 	var <>delta = 0.1;
+	var <graveyard, <zombies;
 
 	*new { | speciesArray |
 		^super.newCopyArgs(speciesArray)
@@ -10,6 +11,21 @@ GenOrgSim {
 
 	initSim {
 		populations = Dictionary.new;
+
+		graveyard ?? { graveyard = List.new } !? {
+			forkIfNeeded {
+				this.emptyGraveyard;
+				graveyard.clear;
+			};
+		};
+
+		zombies ?? { zombies = List.new } !? {
+			forkIfNeeded {
+				this.emptyGraveyard;
+				zombies.clear;
+			};
+		};
+
 		fork{
 			speciesArray.do { | species |
 				var server = species.server;
@@ -117,8 +133,8 @@ GenOrgSim {
 					var child;
 					//Then try it out.
 					child = creature.mateWith(target);
+					creature.server.sync;
 					child !? {
-						creature.server.sync;
 						//If a child came about, add it to the population.
 						populations[creature.species].add(child);
 					}
@@ -137,15 +153,19 @@ GenOrgSim {
 				var creatures = populations.asArray.flat.scramble;
 				if(populations.asArray.flat.isEmpty, {
 					"!Everything is dead!".postln;
-					thisThread.stop;
+					fork { routine.stop };
+					0.2.wait;
 				});
 				creatures.do{ | creature |
 					var species = creature.species;
 					creature.update;
 					if(creature.isDead, {
+						var corpse = populations[species].remove(creature);
 						"...dead".warn;
-						populations[species].remove(creature).free;
-						// fork{ population.remove(creature).free };
+						graveyard.add(corpse);
+						/*creature.server.bind({
+						creature.free;
+						});*/
 					}, {
 						//Try to eat
 						if(creature.isHungry, {
@@ -165,6 +185,7 @@ GenOrgSim {
 					});
 				};
 				delta.wait;
+				this.emptyGraveyard;
 			}
 		}, 2.pow(20));
 	}
@@ -195,4 +216,41 @@ GenOrgSim {
 		});
 	}
 
+	emptyGraveyard {
+		if(graveyard.isEmpty.not){
+			fork {
+				var server = graveyard[0].species.server;
+				var copyYard = graveyard.copy;
+				graveyard.do(_.free);
+				server.sync;
+				copyYard.do { | creature |
+					var target = graveyard.remove(creature);
+					if(target.membrane.synth.isPlaying){
+						zombies.add(creature);
+					};
+				};
+				server.sync;
+				this.killZombies;
+			};
+		};
+	}
+
+	killZombies {
+		if(zombies.isEmpty.not){
+			fork {
+				var server = zombies[0].species.server;
+				var copyZombies = zombies.copy;
+				zombies.do { | creature |
+					creature.free;
+				};
+				server.sync;
+				copyZombies.do { | creature |
+					if(creature.membrane.synth.isPlaying){
+						creature.membrane.synth.free;
+					};
+					zombies.remove(creature);
+				};
+			};
+		};
+	}
 }

@@ -2,7 +2,7 @@ GenOrgMembrane : GenOrgHybrid {
 	var freeList;
 	var <input, <output, <synth;
 	var <lag, <azimuth = 0, <elevation = 0, <distance = 1;
-	var pauser, cilium;
+	var pauser;
 
 	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
@@ -36,8 +36,8 @@ GenOrgMembrane : GenOrgHybrid {
 	initGenOrgHybrid {
 		output = 0;
 		server.bind({
-				input = Bus.audio(server, 1);
-				this.initSynth;
+			input = Bus.audio(server, 1);
+			this.initSynth;
 		});
 		this.initFree;
 	}
@@ -181,4 +181,5 @@ GenOrgMembrane : GenOrgHybrid {
 		this.free;
 		super.moduleSet_(newSet, from);
 	}
+
 }

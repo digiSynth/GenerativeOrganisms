@@ -1,5 +1,5 @@
 GenOrgCilium : GenOrgHybrid {
-	var bus, synth, membrane;
+	var <bus, <synth;
 
 	*contribute { | versions |
 		var path = Main.packages.asDict.at(\GenOrg)
@@ -25,7 +25,7 @@ GenOrgCilium : GenOrgHybrid {
 				\lo.kr(0),
 				\hi.kr(1)
 			);
-			Out.ar(\out.kr(0), sig);
+			Out.kr(\out.kr(0), sig);
 		});
 	}
 
@@ -38,33 +38,18 @@ GenOrgCilium : GenOrgHybrid {
 		synth !? {
 			if(synth.isPlaying, { synth.free });
 		};
-		synth = Synth(modules.synthDef.name, [
-			\out, bus
-		]).register;
-		synth.onFree({ this.detachCilium });
+		synth = Synth(
+			modules.synthDef.name,
+			[ \out, bus ]
+		).register;
 	}
 
 	initGenOrgHybrid {
 		this.makeBus;
-		this.makeSynth;
-	}
-
-	attachTo { | input, argument |
-		if(input.isKindOf(GenOrgMembrane), {
-			membrane = input;
-			membrane.synth.map(argument, bus);
-		});
 	}
 
 	free {
-		if(membrane.notNil and: { synth.isPlaying }, {
-			synth.free;
-		});
-	}
-
-	detachCilium { 
-		this.free; 
-		this.makeSynth;
+		if(synth.isPlaying){ synth.free };
 	}
 
 	moduleSet_{ | newSet, from |

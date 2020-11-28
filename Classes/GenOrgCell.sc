@@ -15,6 +15,12 @@ GenOrgCell {
 	asCreature { ^this.as(GenOrgCreature) }
 
 	initCell {
+		cilia ?? { cilia = Dictionary.new }
+		!? {
+			cilia.asArray.do(_.free);
+			cilia.clear;
+		};
+
 		case
 		{ buffer.isKindOf(Ref) }{}
 		{ buffer.isNil or: { buffer.value.isKindOf(Buffer).not } }{
@@ -54,6 +60,9 @@ GenOrgCell {
 			membrane.playMembrane;
 			target !? {
 				membrane.synth.moveTo(target, addAction);
+				cilia.asArray.do { | cilium |
+					cilium.synth.moveBefore(membrane.synth);
+				};
 			};
 			nucleus.playNucleus(
 				buffer.value,
@@ -62,6 +71,9 @@ GenOrgCell {
 				membrane.synth,
 				\addBefore
 			);
+			cilia.keysValuesDo { | key, value |
+				membrane.synth.map(key, value.bus);
+			};
 		});
 	}
 
@@ -90,4 +102,29 @@ GenOrgCell {
 
 	fileTemplate { ^gene.fileTemplate }
 	fileTemplate_{ | newTemplate | gene.fileTemplate = newTemplate }
+
+	addCilium { | argument, cilium |
+		if(cilium.isKindOf(GenOrgCilium)){
+			cilia.add(argument -> cilium);
+			server.bind({ cilium.makeSynth });
+		};
+	}
+
+	detachCilium { | argument |
+		if(cilia[argument].notNil){
+			cilia.removeAt(argument).free;
+		};
+	}
+
+	addAzimuth { | cilium |
+		this.addCilium(\azimuth, cilium);
+	}
+
+	addElevation { | cilium |
+		this.addCilium(\elevation, cilium);
+	}
+
+	addDistance { | cilium |
+		this.addCilium(\distance, cilium);
+	}
 }
