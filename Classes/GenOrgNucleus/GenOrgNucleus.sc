@@ -45,7 +45,10 @@ GenOrgNucleus : GenOrgHybrid {
 		this.class.processSynthDefs(modules, moduleSet);
 	}
 
-	*findSynthDefs { | modules |
+	*findSynthDefs { }
+	*namedSynthDefs { }
+
+	/**findSynthDefs { | modules |
 		^modules.select({ | module |
 			module.isKindOf(SynthDef);
 		}).asArray;
@@ -57,14 +60,24 @@ GenOrgNucleus : GenOrgHybrid {
 			synthDef.name = this.formatName(synthDef.name, key);
 		};
 		^synthDefs;
-	}
+	}*/
 
 	*processSynthDefs { | modules, key |
-		processor.add(this.namedSynthDefs(modules, key));
+		var synthDefs = modules.select({ | module |
+			var bool = module.isKindOf(SynthDef);
+			if(bool, {
+				module.name = this.formatName(module.name, key);
+			});
+			bool;
+		});
+		processor.add(synthDefs);
 	}
 
 	*removeSynthDefs { | modules |
-		processor.remove(this.findSynthDefs(modules));
+		var synthDefs = modules.select({ | module |
+			module.isKindOf(SynthDef);
+		});
+		processor.remove(synthDefs);
 	}
 
 	buildEnvGens {
@@ -87,7 +100,7 @@ GenOrgNucleus : GenOrgHybrid {
 	}
 
 	generateEnvs {
-		if(envs.isNil or: { envs.isEmpty }, {
+		if(envs.isNil or: { envs.isEmpty } and: { modules.synthDef.specs.isEmpty.not }, {
 			var dict = ();
 			modules.synthDef.specs.keysValuesDo({ | key, value |
 				var numSegs = exprand(4, 32);
@@ -98,8 +111,8 @@ GenOrgNucleus : GenOrgHybrid {
 				));
 			});
 			this.envs = dict;
+			this.buildEnvGens;
 		});
-		this.buildEnvGens;
 	}
 
 	envs_{ | newEnvs |
@@ -181,12 +194,13 @@ GenOrgNucleus : GenOrgHybrid {
 
 	moduleSet_{ | newSet, from |
 		this.class.removeSynthDefs(modules);
-		modules.clear;
-		super.moduleSet_(newSet, from);
+		moduleSet = newSet;
+		//There is an issue copying module sets from nuclei.
+		this.loadModules(from);
+		this.initHybrid;
 	}
 
 	reloadScripts {
-		this.class.removeSynthDefs(modules);
 		cache.removeModules(this.class.name, moduleSet);
 		this.moduleSet = moduleSet;
 	}
