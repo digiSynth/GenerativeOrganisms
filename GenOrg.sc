@@ -1,3 +1,72 @@
+/*
+GenOrgSimulation is, as its name suggests, supposed to run a simulation of GenOrgs within it, doing so automatically over time.
+
+It should probably have some kind of widget or window for displaying data.
+
+It should be configured by defining and adding GenOrgSpecies to a list. The parameters of the GenOrg species instances -- how long the organisms live, who they can mate with, who they can eat, etc -- will determine the general shape of the simulation.
+
+The simulation will be organized in turns using a simple implementation of a game loop.
+*/
+GenOrgSimulation { }
+
+/*
+GenOrgSpecies is a factory for deploying GenOrgCritters. It should allow the user to specify high-level behaviors and attributes that will apply to every critter stored within a List.
+
+Some behaviors might involve making sure that critters can't mate with their relatives for instance, how often they have to eat, when they can mate, and how long they can live.
+
+Much of this should be specified as ranges so that, for example, not every critter dies of old age at the same age.
+*/
+GenOrgSpecies {
+	var <>lifespan;
+
+	var <>moduleSet;
+	var critters;
+
+	*new { | moduleSet |
+		^super.newCopyArgs(moduleSet).initSpecies;
+	}
+
+	initSpecies {
+		critters = critters ? List.new;
+	}
+
+	*moduleSets { ^GenOrg.moduleSets }
+
+	addCritter { | buffer |
+		var critter = GenOrgCritter(this.moduleSet)
+		.buffer_(buffer);
+
+		critters.add(critter);
+	}
+}
+
+/*
+GenOrgCritter extends the project's metaphor of the organism, establishing "living" traits for GenOrg objects. Notably, it does not inherit from GenOrg but instead stores and operates on instances of it.
+
+The design of this class is similar to what you would expect from a video game character. It will have health, hit points, an age, and an update function, which will advance these traits across "turns."
+
+The critter should also store a linked-list that describes its family tree.
+
+There is an open question about whether or not GenOrgCritter should be able to store a function or a pattern or another type of routine that will allow it to perform client-side sequencing of the GenOrg instance it stores. If the answer is no, it should simply be responsible for calling GenOrg's "resound" method at the appropriate time.
+
+Depending on the answer to the above question, one should consider whether GenOrgCritter should/could hold many instances of GenOrg, each with independent buffers (but defined with the same moduleSet), in order to create even more complex sonic behaviors.
+
+If it can hold many GenOrg objects within it, I would consider renaming the GenOrg class to GenOrgCell because that would be in better keeping with the metaphor at play. I would consider doing this -- in fact I already have, but I would probably keep its name the same in order to establish a practice by which a quark that uses Codex is named after the class within it that inherits from Codex. Conversely, because I am set on calling this quark GenOrg, I should call the central Codex-based class GenOrg as well.
+*/
+GenOrgCritter {
+	var <>moduleSet;
+	var org;
+
+	*new { | moduleSet |
+		^super.newCopyArgs(moduleSet).addOrg;
+	}
+
+	addOrg {
+		org !? { org.free };
+		org = GenOrg(this.moduleSet);
+	}
+}
+
 GenOrg : Codex {
 	classvar <>mutations;
 	var server, nrtServer;
