@@ -34,7 +34,7 @@ GenOrg : Codex {
 				var cachedModules = this.class.cache[ this.moduleSet ];
 
 				~voicing = cachedModules.use {
-					~voicing = SynthDef(("voicing").asSymbol, {
+					~voicing = SynthDef('voicing', {
 						var buffer = \buffer.kr(999);
 						var x, y, z;
 						var sig;
@@ -103,9 +103,9 @@ GenOrg : Codex {
 	mate { | organism, action |
 		var newOrg = GenOrg.basicNew(this.moduleSet);
 
-		newOrg.matingGenes = this.matingGenes.mutateWith(organism.matingGenes);
-		newOrg.voicingGenes = this.voicingGenes.mutateWith(organism.voicingGenes);
-		newOrg.eatingGenes = this.eatingGenes.mutateWith(organism.eatingGenes);
+		newOrg.matingGenes = matingGenes.mutateWith(organism.matingGenes);
+		newOrg.voicingGenes = voicingGenes.mutateWith(organism.voicingGenes);
+		newOrg.eatingGenes = eatingGenes.mutateWith(organism.eatingGenes);
 
 		this.mutateBuffers(
 			organism.buffer,
