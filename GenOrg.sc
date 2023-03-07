@@ -138,7 +138,6 @@ GenOrg : Codex {
 		var oscFile, output;
 		var thisBuffer, thatBuffer;
 		var score = Score.new;
-		var date;
 
 		thisBuffer = Buffer.new(server, server.sampleRate, 1);
 		score = score.add([
@@ -161,12 +160,9 @@ GenOrg : Codex {
 		]);
 
 		score = score.add([ 1.0, 0 ]);
-
 		score.sort;
 
 		oscFile = PathName.tmp +/+ UniqueID.next ++".osc";
-
-		date = Date.getDate;
 
 		output = this.mutations ? this.class.mutations ?? {
 			var f = PathName.tmp
