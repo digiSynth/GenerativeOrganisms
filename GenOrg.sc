@@ -21,9 +21,6 @@ GenOrg : Codex {
 	}
 
 	initCodex {
-		/* NOTE:
-		Depending on what I want ultimately, the below SynthDef implementations might not be ideal.
-		If I do not intend to have unique SynthDefs per instance of a module set, then I should somehow add the SynthDef to the cache instead of rebuilding it per instance or defining a new one per instance, both of which are wastes of resources.*/
 
 		server = server ? Server.default;
 
@@ -125,12 +122,15 @@ GenOrg : Codex {
 			eatingGenes,
 			{ | buffer | this.buffer = buffer }
 		);
-		// organism.die;
+		organism.free;
 	}
 
-	// die { }
+	free {
+		nrtServer.remove;
+		buffer.free;
+	}
 
-	// kill { | organism | try { organism.die } }
+	kill { | organism | try { organism.free } }
 
 	mutateBuffers { | buffer, synthDef, genes, action |
 		var oscFile, outputFile;
@@ -166,8 +166,8 @@ GenOrg : Codex {
 
 		date = Date.getDate;
 
-		outputFile = (PathName.tmp +/+ "GenOrg-Mutations" +/+ date.format("%Y-%m-%d")).mkdir
-		+/+ UniqueID.next ++ ".wav";
+		outputFile = PathName.tmp +/+ "GenOrg-Mutations" +/+ Date.format("%Y-%m-%d");
+		outputFile = outputFile.mkdir +/+ UniqueID.next ++ ".wav";
 
 		score.recordNRT(
 			oscFile,
@@ -349,54 +349,3 @@ GenOrgGene {
 
 	express { ^spec.map(value.linlin(0.0, 1.0, lo, hi)) }
 }
-
-// Class that wraps around a buffer or plays back silence if nothing is (yet) loaded
-/*GenOrgBuffer {
-var buffer;
-
-*new { | buffer |
-^super.new.buffer_(buffer);
-}
-
-buffer {
-var result;
-var error = Error("No valid Buffer or bufnum is stored");
-
-if (buffer.isKindOf(Buffer) || buffer.isInteger || buffer.isNil) {
-^buffer
-};
-
-case
-{ buffer.isCollection } {
-if ((result = buffer.choose).isKindOf(Buffer).not
-&& result.isInteger.not) {
-error.throw;
-}
-}
-{ buffer.isFunction || buffer.isKindOf(Stream) } {
-if ((result = buffer.value).isKindOf(Buffer).not
-&& result.isInteger.not) {
-error.throw;
-}
-} { error.throw };
-
-^result;
-}
-
-buffer_{ | newBuffer |
-if (newBuffer.isKindOf(Buffer) || newBuffer.isKindOf(Stream)
-|| newBuffer.isFunction || newBuffer.isCollection
-|| newBuffer.isInteger || newBuffer.isNil) {
-
-buffer = newBuffer;
-
-} /* else  */ {
-Error("Only objects of type Buffer, Stream, Function, Collection, or Integer can be set.").throw;
-}
-}
-
-doesNotUnderstand { | selector ... args |
-^try { this.buffer.perform(selector, *args) }
-{ this.superPerformList(\doesNotUnderstand, selector, *args) }
-}
-}*/
