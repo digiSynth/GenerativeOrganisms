@@ -1,9 +1,12 @@
 GenOrg : Codex {
+	classvar <>mutations;
 	var server, nrtServer;
 
 	var <>buffer, <>bus = 0, <>server;
 	var player, spatializer, renderer;
 	var <voicingGenes, <matingGenes, <eatingGenes;
+
+	var <>mutations;
 
 	*makeTemplates { | templater |
 		templater.genOrgVoicer("voicingFunc");
@@ -29,7 +32,6 @@ GenOrg : Codex {
 
 			if (~voicing.isNil || ~mating.isNil || ~eating.isNil) {
 				var cachedModules = this.class.cache[ this.moduleSet ];
-				\here.postln;
 
 				~voicing = cachedModules.use {
 					~voicing = SynthDef(("voicing").asSymbol, {
@@ -133,7 +135,7 @@ GenOrg : Codex {
 	kill { | organism | try { organism.free } }
 
 	mutateBuffers { | buffer, synthDef, genes, action |
-		var oscFile, outputFile;
+		var oscFile, output;
 		var thisBuffer, thatBuffer;
 		var score = Score.new;
 		var date;
@@ -166,12 +168,19 @@ GenOrg : Codex {
 
 		date = Date.getDate;
 
-		outputFile = PathName.tmp +/+ "GenOrg-Mutations" +/+ Date.format("%Y-%m-%d");
-		outputFile = outputFile.mkdir +/+ UniqueID.next ++ ".wav";
+		output = this.mutations ? this.class.mutations ?? {
+			var f = PathName.tmp
+			+/+ "GenOrg-Mutations"
+			+/+ Date.getDate.format("%Y-%m-%d");
+
+			this.class.mutations = this.mutations = f;
+			f;
+		};
+		output = output.mkdir +/+ UniqueID.next ++ ".wav";
 
 		score.recordNRT(
 			oscFile,
-			outputFile,
+			output,
 			headerFormat: "wav",
 			sampleFormat: "int24",
 			options: nrtServer.options,
@@ -179,7 +188,7 @@ GenOrg : Codex {
 
 				File.delete(oscFile);
 
-				Buffer.read(server, outputFile, action: { | buf |
+				Buffer.read(server, output, action: { | buf |
 					action.value(buf.normalize);
 				});
 			} }
