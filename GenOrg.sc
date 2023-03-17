@@ -68,14 +68,16 @@ GenOrgCritter {
 }
 
 GenOrg : Codex {
-	classvar <>mutations;
+	classvar mutations = nil;
 	var server, nrtServer;
 
 	var <>buffer, <>bus = 0, <>server;
 	var player, spatializer, renderer;
 	var <voicingGenes, <matingGenes, <eatingGenes;
 
-	var <>mutations;
+	var >mutations;
+
+	var killIt = false, <isPlaying = false, isRendering = false;
 
 	*makeTemplates { | templater |
 		templater.genOrgVoicer("voicingFunc");
@@ -90,6 +92,20 @@ GenOrg : Codex {
 		^super.newCopyArgs(
 			moduleSet ?? { Error("No module set specified").throw }
 		).getModules(from);
+	}
+
+	*mutations {
+		mutations ?? {
+			mutations = PathName.tmp
+			+/+ "GenOrg-Mutations"
+			+/+ Date.getDate.format("%Y-%m-%d");
+		};
+		^mutations;
+	}
+
+	mutations {
+		mutations ?? { mutations = this.class.mutations }
+		^mutations;
 	}
 
 	initCodex {
@@ -170,7 +186,14 @@ GenOrg : Codex {
 	}
 
 	mate { | organism, action |
-		var newOrg = GenOrg.basicNew(this.moduleSet);
+		var newOrg;
+
+		if (this.hasBuffer.not || organism.hasBuffer.not) {
+			"WARNING: Tried to mate without buffers".postln;
+			^nil
+		};
+
+		newOrg = GenOrg.basicNew(this.moduleSet);
 
 		newOrg.matingGenes = matingGenes.mutateWith(organism.matingGenes);
 		newOrg.voicingGenes = voicingGenes.mutateWith(organism.voicingGenes);
@@ -196,17 +219,43 @@ GenOrg : Codex {
 		organism.free;
 	}
 
+	canFree { ^(isPlaying.not && isRendering.not) }
+
 	free {
-		nrtServer.remove;
-		buffer.free;
+		if (this.canFree) {
+			nrtServer.remove;
+			buffer.free;
+			buffer = nil;
+		} /* else */ {
+			killIt = true;
+		};
+	}
+
+	hasBuffer {
+		^(buffer.notNil && (try { buffer.numFrames > 0 } { false }));
 	}
 
 	kill { | organism | try { organism.free } }
 
 	mutateBuffers { | buffer, synthDef, genes, action |
+		if (isRendering) {
+			fork {
+				while { isRendering } {
+					server.sync;
+				};
+				this.prMutate(buffer, synthDef, genes, action);
+			}
+		} /* else */ {
+			this.prMutate(buffer, synthDef, genes, action);
+		};
+	}
+
+	prMutate { | buffer, synthDef, genes, action |
 		var oscFile, output;
 		var thisBuffer, thatBuffer;
 		var score = Score.new;
+
+		isRendering = true;
 
 		thisBuffer = Buffer.new(server, server.sampleRate, 1);
 		score = score.add([
@@ -233,15 +282,8 @@ GenOrg : Codex {
 
 		oscFile = PathName.tmp +/+ UniqueID.next ++".osc";
 
-		output = this.mutations ? this.class.mutations ?? {
-			var f = PathName.tmp
-			+/+ "GenOrg-Mutations"
-			+/+ Date.getDate.format("%Y-%m-%d");
-
-			this.class.mutations = this.mutations = f;
-			f;
-		};
-		output = output.mkdir +/+ UniqueID.next ++ ".wav";
+		output = this.mutations.mkdir;
+		output = output +/+ UniqueID.id.next ++ ".wav";
 
 		score.recordNRT(
 			oscFile,
@@ -249,26 +291,52 @@ GenOrg : Codex {
 			headerFormat: "wav",
 			sampleFormat: "int24",
 			options: nrtServer.options,
-			action: { fork {
+			action: {
+				isRendering = false;
+				fork {
 
-				File.delete(oscFile);
+					File.delete(oscFile);
 
-				Buffer.read(server, output, action: { | buf |
-					action.value(buf.normalize);
-				});
-			} }
+					Buffer.read(server, output, action: { | buf |
+						action.value(buf.normalize);
+					});
+
+					if (killIt) {
+						this.free;
+					};
+				};
+			}
 		);
 	}
 
 	resound { | target, addAction('addToHead') |
-		var args = voicingGenes.expressGenes;
-		args = args.add('out');
-		args = args.add(bus);
+		var genes, synth;
 
-		args = args.add('buffer');
-		args = args.add(buffer);
+		this.hasBuffer ?? { ^nil };
 
-		^Synth(modules.voicing.name, args, target, addAction);
+		isPlaying = true;
+
+		genes = voicingGenes.expressGenes;
+		genes = genes.add('out');
+		genes = genes.add(bus);
+
+		genes = genes.add('buffer');
+		genes = genes.add(buffer);
+
+		synth = Synth(
+			modules.voicing.name,
+			genes,
+			target,
+			addAction
+		);
+
+		synth.register;
+		synth.onFree {
+			isPlaying = false;
+			if (killIt) {
+				this.free;
+			};
+		};
 	}
 
 	voicingGenes_{ | newGenes |
@@ -333,7 +401,8 @@ GenOrgChromosome : IdentityDictionary {
 		var thisGene, thatGene;
 
 		if (chromosome.isKindOf(GenOrgChromosome).not) {
-			^nil
+			// ^nil
+			^this.deepCopy;
 		};
 
 		newGenes = GenOrgChromosome.new(server);
@@ -366,7 +435,7 @@ GenOrgChromosome : IdentityDictionary {
 		this.asArray.do(_.randomize);
 	}
 
-	storeItemsOn { arg stream, itemsPerLine = 5;
+	storeItemsOn { arg stream, itemsPerLine = 10;
 		var itemsPerLinem1 = itemsPerLine - 1;
 		var last = this.size - 1;
 		this.associationsDo({ arg item, i;
@@ -377,7 +446,7 @@ GenOrgChromosome : IdentityDictionary {
 		});
 	}
 
-	printItemsOn { arg stream, itemsPerLine = 5;
+	printItemsOn { arg stream, itemsPerLine = 10;
 		var itemsPerLinem1 = itemsPerLine - 1;
 		var last = this.size - 1;
 		this.associationsDo({ arg item, i;
