@@ -71,13 +71,15 @@ GenOrg : Codex {
 	classvar mutations = nil;
 	var server, nrtServer;
 
-	var <>buffer, <>bus = 0, <>server;
+	var <buffer, <>bus = 0, <>server;
 	var player, spatializer, renderer;
 	var <voicingGenes, <matingGenes, <eatingGenes;
+	var isPlaying = 0, <isRendering = false;
+	var renderRout;
 
 	var >mutations;
 
-	var killIt = false, <isPlaying = false, isRendering = false;
+	var killIt = false;
 
 	*makeTemplates { | templater |
 		templater.genOrgVoicer("voicingFunc");
@@ -95,12 +97,12 @@ GenOrg : Codex {
 	}
 
 	*mutations {
-		mutations ?? {
+		^mutations ?? {
 			mutations = PathName.tmp
 			+/+ "GenOrg-Mutations"
 			+/+ Date.getDate.format("%Y-%m-%d");
+			mutations;
 		};
-		^mutations;
 	}
 
 	mutations {
@@ -109,7 +111,6 @@ GenOrg : Codex {
 	}
 
 	initCodex {
-
 		server = server ? Server.default;
 
 		modules.make {
@@ -185,6 +186,15 @@ GenOrg : Codex {
 		);
 	}
 
+	isPlaying { ^(isPlaying > 0) }
+
+	buffer_{ | newBuffer |
+		if (killIt) {
+			killIt = false
+		};
+		buffer = newBuffer;
+	}
+
 	mate { | organism, action |
 		var newOrg;
 
@@ -210,6 +220,11 @@ GenOrg : Codex {
 	}
 
 	eat { | organism |
+		if (this.hasBuffer.not || organism.hasBuffer.not ) {
+			"WARNING: Tried to mate without buffers".postln;
+			^this
+		};
+
 		this.mutateBuffers(
 			organism.buffer,
 			modules.eating,
@@ -219,11 +234,17 @@ GenOrg : Codex {
 		organism.free;
 	}
 
-	canFree { ^(isPlaying.not && isRendering.not) }
+
+	canFree { ^(this.isPlaying.not && this.isRendering.not) }
 
 	free {
 		if (this.canFree) {
 			nrtServer.remove;
+
+			if (renderRout.isPlaying) {
+				renderRout.stop;
+			};
+
 			buffer.free;
 			buffer = nil;
 		} /* else */ {
@@ -238,16 +259,12 @@ GenOrg : Codex {
 	kill { | organism | try { organism.free } }
 
 	mutateBuffers { | buffer, synthDef, genes, action |
-		if (isRendering) {
-			fork {
-				while { isRendering } {
-					server.sync;
-				};
-				this.prMutate(buffer, synthDef, genes, action);
-			}
-		} /* else */ {
+		renderRout = Routine {
+			while { this.isRendering } {
+				server.sync;
+			};
 			this.prMutate(buffer, synthDef, genes, action);
-		};
+		}.play(SystemClock);
 	}
 
 	prMutate { | buffer, synthDef, genes, action |
@@ -292,29 +309,29 @@ GenOrg : Codex {
 			sampleFormat: "int24",
 			options: nrtServer.options,
 			action: {
-				isRendering = false;
-				fork {
+				File.delete(oscFile);
 
-					File.delete(oscFile);
+				Buffer.read(server, output, action: { | buf |
+					action.value(buf.normalize);
+				});
 
-					Buffer.read(server, output, action: { | buf |
-						action.value(buf.normalize);
-					});
-
-					if (killIt) {
-						this.free;
-					};
+				if (killIt) {
+					this.free;
 				};
-			}
+
+				isRendering = false;
+			};
 		);
 	}
 
 	resound { | target, addAction('addToHead') |
 		var genes, synth;
 
-		this.hasBuffer ?? { ^nil };
+		if (this.hasBuffer.not) {
+			^this;
+		};
 
-		isPlaying = true;
+		isPlaying = isPlaying + 1;
 
 		genes = voicingGenes.expressGenes;
 		genes = genes.add('out');
@@ -332,7 +349,7 @@ GenOrg : Codex {
 
 		synth.register;
 		synth.onFree {
-			isPlaying = false;
+			isPlaying = isPlaying - 1;
 			if (killIt) {
 				this.free;
 			};
